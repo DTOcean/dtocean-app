@@ -1,0 +1,367 @@
+
+#    Copyright (C) 2016 Mathew Topper, Rui Duarte
+#
+#    This program is free software: you can redistribute it and/or modify
+#    it under the terms of the GNU General Public License as published by
+#    the Free Software Foundation, either version 3 of the License, or
+#    (at your option) any later version.
+#
+#    This program is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
+#
+#    You should have received a copy of the GNU General Public License
+#    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# Set up logging
+import logging
+
+module_logger = logging.getLogger(__name__)
+
+from PyQt4 import QtGui, QtCore
+
+from dtocean_core.strategy import StrategyManager
+
+from . import strategies
+from .widgets.dialogs import ListFrameEditor, Message
+from .widgets.display import MPLWidget
+from .widgets.output import OutputDataTable
+
+
+class GUIStrategyManager(ListFrameEditor, StrategyManager):
+    
+    strategy_selected = QtCore.pyqtSignal(object)
+    
+    """Strategy discovery"""
+    
+    def __init__(self, parent=None):
+        
+        StrategyManager.__init__(self)
+        ListFrameEditor.__init__(self, parent, "Strategy Manager")
+        self._shell = None
+        self._strategy = None
+        self._last_df = None
+        self._last_selected = None
+        
+        # Store widget handles
+        self._strategy_widget = None
+                        
+        return
+        
+    def _discover_classes(self):
+
+        '''Retrieve all of the available strategies'''
+
+        cls_map = super(GUIStrategyManager,
+                        self)._discover_classes(strategies,
+                                                "GUIStrategy")
+        
+        return cls_map
+        
+    def _init_ui(self, title=None):
+        
+        super(GUIStrategyManager, self)._init_ui(title)
+                
+        self._init_labels("Current Strategy:",
+                          "Available strategies:",
+                          "Configuration:")
+        self._set_dynamic_label("None")
+        self._init_list()
+        
+        self.listWidget.itemClicked.connect(self._update_configuration)
+        self.buttonBox.button(
+            QtGui.QDialogButtonBox.Reset).clicked.connect(self._reset_strategy)
+        self.buttonBox.button(
+            QtGui.QDialogButtonBox.Apply).clicked.connect(
+                                                    self._configure_strategy)
+        
+        self.buttonBox.button(QtGui.QDialogButtonBox.Apply).setDisabled(True)
+        
+        return
+        
+    def _init_list(self):
+        
+        available_strategies = self.get_available_strategies()
+        super(GUIStrategyManager, self)._update_list(available_strategies)
+        
+        return
+        
+    @QtCore.pyqtSlot()
+    def _config_set_ui_switch(self):
+        
+        self.buttonBox.button(QtGui.QDialogButtonBox.Apply).setEnabled(True)
+        self.buttonBox.button(QtGui.QDialogButtonBox.Apply).setDefault(True)
+        
+        return
+        
+    @QtCore.pyqtSlot()
+    def _config_null_ui_switch(self):
+        
+        self.buttonBox.button(QtGui.QDialogButtonBox.Apply).setDisabled(True)
+        self.buttonBox.button(QtGui.QDialogButtonBox.Reset).setDefault(True)
+        
+        return
+
+    def _discover_names(self):
+        
+        strategy_names = {}
+
+        # Work through the interfaces
+        for cls_name, cls_attr in self._strategy_classes.iteritems():
+
+            name = cls_attr.get_name()
+            strategy_names[name] = cls_name
+
+        return strategy_names
+        
+    def get_available_strategies(self):
+        
+        strategy_names = super(GUIStrategyManager,
+                               self).get_available_strategies()
+        
+        strategy_weights = []
+
+        for strategy_name in strategy_names:
+            
+            cls_name = self._strategy_names[strategy_name]
+            StrategyCls = self._strategy_classes[cls_name]
+            strategy_obj = StrategyCls()
+            
+            strategy_weights.append(strategy_obj.get_weight())
+            
+        sorted_lists = sorted(zip(strategy_names, strategy_weights),
+                              key=lambda x: x[1])
+        
+        (sorted_names,
+         sorted_weights) = [[x[i] for x in sorted_lists] for i in range(2)]
+         
+        monotonic = all(x<y for x, y in zip(sorted_weights,
+                                            sorted_weights[1:]))
+                                                
+        if not monotonic:
+            
+            errStr = ("Interface weights are not monotonic. Found "
+                      "weights: {}").format(sorted_weights)
+            raise ValueError(errStr)
+            
+        return sorted_names
+        
+    def get_strategy(self, strategy_name):
+        
+        if strategy_name not in self.get_available_strategies():
+            
+            errStr = ("Name {} is not a recognised "
+                      "strategy").format(strategy_name)
+            raise KeyError(errStr)
+        
+        cls_name = self._strategy_names[strategy_name]
+        StrategyCls = self._strategy_classes[cls_name]
+        strategy_obj = StrategyCls()
+        
+        return strategy_obj
+        
+    def get_level_values_df(self, shell, var_id, scope, ignore_strategy):
+        
+        if ignore_strategy or shell.strategy is None:
+            strategy = None
+        else:
+            strategy = shell.strategy
+            
+        # Get the table widget
+        df = super(GUIStrategyManager, self).get_level_values_df(shell.core,
+                                                                 shell.project,
+                                                                 var_id,
+                                                                 strategy,
+                                                                 scope=scope)
+        widget = OutputDataTable(shell.core._input_parent,
+                                 df.columns)
+        widget._set_value(df)
+        
+        self._last_df = df
+        
+        return widget
+        
+    def get_level_values_plot(self, shell,
+                                    var_id,
+                                    scope,
+                                    ignore_strategy,
+                                    sim_titles):
+        
+        # Either use the strategy or the list of sim titles
+        if ignore_strategy or shell.strategy is None:
+            strategy = None
+        else:
+            strategy = shell.strategy
+            sim_titles = None
+        
+        fig_handle = super(GUIStrategyManager,
+                           self).get_level_values_plot(shell.core,
+                                                       shell.project,
+                                                       var_id,
+                                                       strategy,
+                                                       sim_titles,
+                                                       scope)
+        
+        widget = MPLWidget(fig_handle, shell.core._input_parent)
+        
+        return widget
+        
+    def get_comparison_values_df(self, shell, 
+                                       var_one_id,
+                                       var_two_id,
+                                       module,
+                                       scope,
+                                       ignore_strategy):
+        
+        if ignore_strategy or shell.strategy is None:
+            strategy = None
+        else:
+            strategy = shell.strategy
+    
+        df = super(GUIStrategyManager,
+                   self).get_comparison_values_df(shell.core,
+                                                  shell.project,
+                                                  var_one_id,
+                                                  var_two_id,
+                                                  module,
+                                                  strategy,
+                                                  scope)
+        
+        widget = OutputDataTable(shell.core._input_parent,
+                                 df.columns)
+        widget._set_value(df)
+        
+        self._last_df = df
+        
+        return widget
+        
+    def get_comparison_values_plot(self, shell, 
+                                         var_one_id,
+                                         var_two_id,
+                                         module,
+                                         scope,
+                                         ignore_strategy):
+        
+        if ignore_strategy or shell.strategy is None:
+            strategy = None
+        else:
+            strategy = shell.strategy
+    
+        fig_handle = super(GUIStrategyManager,
+                           self).get_comparison_values_plot(shell.core,
+                                                            shell.project,
+                                                            var_one_id,
+                                                            var_two_id,
+                                                            module,
+                                                            strategy,
+                                                            scope)
+        
+        widget = MPLWidget(fig_handle, shell.core._input_parent)
+        
+        return widget
+        
+    @QtCore.pyqtSlot(object)
+    def _update_configuration(self, item=None):
+        
+        if item is None:
+            if self._last_selected is None:
+                selected = None
+            else:
+                selected = self._last_selected
+        elif isinstance(item, basestring):
+            selected = item
+            if selected == self._last_selected: return
+        elif isinstance(item, QtGui.QListWidgetItem):
+            selected = str(item.text())
+            if selected == self._last_selected: return
+        else:
+            raise TypeError
+            
+        self._last_selected = selected
+        
+        self.buttonBox.button(
+                          QtGui.QDialogButtonBox.Apply).setDisabled(True)
+        self.buttonBox.button(
+                          QtGui.QDialogButtonBox.Reset).setDefault(True)
+                
+        if selected is None:
+            
+            self._strategy_widget = Message(self,
+                                            "No Strategy Selected")
+            self._set_main_widget(self._strategy_widget)
+            
+            return
+            
+        current_strategy = self.get_strategy(selected)
+            
+        self._strategy_widget = current_strategy.get_widget(self,
+                                                            self._shell)
+        self._strategy_widget.config_set.connect(self._config_set_ui_switch)
+        self._strategy_widget.config_null.connect(self._config_null_ui_switch)
+        self._set_main_widget(self._strategy_widget)
+
+        if (self._strategy is not None and
+            current_strategy.get_name() == self._strategy.get_name()):
+            
+            self.mainWidget.set_configuration(self._strategy.get_config())
+            
+        return
+        
+    @QtCore.pyqtSlot(object)
+    def _reset_strategy(self):
+        
+        self.listWidget.clearSelection()
+    
+        self._last_selected = None
+        self._strategy = None
+        self._strategy_widget = None
+
+        self._update_configuration()
+        self._set_dynamic_label("None")
+        
+        self.strategy_selected.emit(self._strategy)
+        
+        return
+        
+    @QtCore.pyqtSlot(object)
+    def _configure_strategy(self):
+        
+        self._strategy = self.get_strategy(self._last_selected)
+        
+        config = self.mainWidget.get_configuration()
+        self._strategy.configure(**config)
+        self._set_dynamic_label(self._strategy.get_name())
+        
+        self.strategy_selected.emit(self._strategy)
+        
+        return
+        
+    def _get_dump_dict(self, strategy):
+        
+        # Store the additional strategy information
+        stg_dict = StrategyManager._get_dump_dict(self, strategy)
+        stg_dict["strategy_run"] = strategy.strategy_run
+                    
+        return stg_dict
+        
+    def _set_load_dict(self, stg_dict):
+        
+        # Now build the strategy
+        new_strategy = StrategyManager._set_load_dict(self, stg_dict)
+        
+        # Now deserialise the extra data
+        new_strategy.strategy_run = stg_dict["strategy_run"]
+
+        return new_strategy
+        
+    @QtCore.pyqtSlot(object)
+    def show(self, shell):
+        
+        self._shell = shell
+        self._update_configuration()
+        
+        super(GUIStrategyManager, self).show()
+        
+        return
+        
