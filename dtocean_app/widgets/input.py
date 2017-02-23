@@ -25,7 +25,7 @@ import pandas as pd
 import numpy as np
 
 from PyQt4 import QtCore, QtGui
-from pandasqt.models.DataFrameModel import DataFrameModel
+from dtocean_qt.models.DataFrameModel import DataFrameModel
 from shapely.geometry import Polygon, Point
 
 try:

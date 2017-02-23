@@ -18,8 +18,8 @@
 """
 Created on Wed Aug 31 12:18:05 2016
 
-This is a spin on the DataTableWidget defined in the pandas-qt package in the
-file: pandasqt\views\DataTableView.py
+This is a spin on the DataTableWidget defined in the dtocean-qt package in the
+file: dtocean_qt\views\DataTableView.py
 
 Modified under the terms of the MIT Licence:
 https://opensource.org/licenses/MIT
@@ -28,12 +28,12 @@ Copyright: Matthias Ludwig, Marcel Radischat 2016
 
 """
 
-from pandasqt.compat import QtCore, QtGui, Slot
+from dtocean_qt.compat import QtCore, QtGui, Slot
 
-from pandasqt.models.DataFrameModel import DataFrameModel
-from pandasqt.views.CustomDelegates import createDelegate
-from pandasqt.views.DataTableView import DragTable
-from pandasqt.views._ui import icons_rc
+from dtocean_qt.models.DataFrameModel import DataFrameModel
+from dtocean_qt.views.CustomDelegates import createDelegate
+from dtocean_qt.views.DataTableView import DragTable
+from dtocean_qt.views._ui import icons_rc
 
 try:
     _fromUtf8 = QtCore.QString.fromUtf8

@@ -24,7 +24,7 @@ Created on Thu Apr 23 12:51:14 2015
 import pandas as pd
 
 from PyQt4 import QtCore, QtGui
-from pandasqt.models.DataFrameModel import DataFrameModel
+from dtocean_qt.models.DataFrameModel import DataFrameModel
 
 try:
     _fromUtf8 = QtCore.QString.fromUtf8
