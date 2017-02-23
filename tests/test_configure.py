@@ -1,5 +1,5 @@
 
-from dtocean_gui import start_logging
+from dtocean_app import start_logging
 
     
 def test_start_logging():

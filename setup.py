@@ -21,7 +21,7 @@ class Bootstrap(Command):
         
         # Convert all UI files to py files
         ui_search_path = os.path.join("designer", "*.ui")
-        dst_dir = os.path.join("dtocean_gui", "designer")
+        dst_dir = os.path.join("dtocean_app", "designer")
         
         for ui_path in glob.glob(ui_search_path):
             
@@ -37,7 +37,7 @@ class Bootstrap(Command):
             
         # Convert all QRC files to py files
         ui_search_path = os.path.join("designer", "*.qrc")
-        dst_dir = os.path.join("dtocean_gui", "designer")
+        dst_dir = os.path.join("dtocean_app", "designer")
         
         for ui_path in glob.glob(ui_search_path):
             
@@ -137,9 +137,9 @@ class Cleaner(object):
         print "end cleanup"
 
 
-setup(name='dtocean-gui',
+setup(name='dtocean-app',
       version='1.0.0',
-      description='GUI module for the DTOcean tools',
+      description='Main application for the DTOcean tools',
       author='Mathew Topper, Rui Duarte',
       author_email=('damm_horse@yahoo.co.uk, '
                     'Rui.Duarte@france-energies-marines.org'),
@@ -150,7 +150,7 @@ setup(name='dtocean-gui',
            'matplotlib',
            'numpy',
            'pandas',
-           'pandas-qt>=0.2.3',
+           'dtocean-qt>=0.9',
            'pil',
            'polite>=0.9',
           # 'sip',
@@ -159,10 +159,10 @@ setup(name='dtocean-gui',
       entry_points={
           'console_scripts':
               [
-               'dtocean-gui = dtocean_gui:gui_interface',
+               'dtocean-app = dtocean_app:gui_interface',
                ]},
       package_data={'': ['*.png', 'test_images/*.png'],
-                    'dtocean_gui': ['config/*.ini',
+                    'dtocean_app': ['config/*.ini',
                                     'config/*.yaml',
                                     'resources/*.yaml',
                                     'resources/*.png']

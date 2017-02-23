@@ -16,14 +16,14 @@ handlers:
     class : logging.handlers.TimedRotatingFileHandler
     formatter: simple
     level: DEBUG
-    filename: dtocean-gui.log
+    filename: dtocean-app.log
     when: D
   widget:
-    class: dtocean_gui.utils.qtlog.QtHandler
+    class: dtocean_app.utils.qtlog.QtHandler
     level: INFO
     formatter: simple
 loggers:
-  'dtocean_gui':
+  'dtocean_app':
     level: DEBUG
     handlers: [widget, file]
     propagate: no

@@ -31,14 +31,14 @@ def start_logging(debug=False):
 
     # Configure logging
     objdir = ObjDirectory(__name__, "config")
-    datadir = UserDataDirectory("dtocean_gui", "DTOcean", "config")
+    datadir = UserDataDirectory("dtocean_app", "DTOcean", "config")
     dirmap = DirectoryMap(datadir, objdir)
     
     # Disable the logging QtHandler if the debug flag is set
     QtHandler.debug = debug
 
     log = Logger(dirmap)
-    log("dtocean_gui", info_message="Welcome to DTOcean.")
+    log("dtocean_app", info_message="Welcome to DTOcean.")
     
     return
 
@@ -74,13 +74,13 @@ def main(debug=False):
     
 def gui_interface():
 
-    '''Command line interface for dtocean-gui.
+    '''Command line interface for dtocean-app.
     
     Example:
     
         For help::
         
-            $ dtocean-gui --help
+            $ dtocean-app --help
             
     '''
     

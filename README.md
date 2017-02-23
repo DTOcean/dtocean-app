@@ -22,20 +22,20 @@ winmake.bat install
 ### Anaconda
 
 ```
-conda install pandas-qt pyqt=4.11.4
+conda install dtocean-qt pyqt=4.11.4
 ```
 
-### dtocean-gui
+### dtocean-app
 
 ```
-cd \path\to\dtocean-gui
+cd \path\to\dtocean-app
 winmake.bat bootstrap
 ```
 
 ## Running
 
 ```
-dtocean-gui
+dtocean-app
 ```
 
 ## Icons
