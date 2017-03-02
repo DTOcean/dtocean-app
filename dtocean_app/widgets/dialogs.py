@@ -25,6 +25,7 @@ from collections import OrderedDict
 
 import os
 import glob
+import platform
 from itertools import cycle
 
 import sip
@@ -553,15 +554,16 @@ class About(QtGui.QDialog, Ui_AboutDialog):
         
         self.setupUi(self)
         
-        resources_path = os.path.join(DIR_PATH, "..", "resources")
+        arch_str = " ".join(platform.architecture())
         
+        resources_path = os.path.join(DIR_PATH, "..", "resources")
         software_path = os.path.join(resources_path, "software.yaml")
         
         with open(software_path, 'r') as stream:
             software_dict = yaml.load(stream)
             
         software_str = "DTOcean {} ({})".format(software_dict["version"],
-                                                software_dict["platform"])
+                                                arch_str)
         
         self.versionLabel.setText(software_str)
         

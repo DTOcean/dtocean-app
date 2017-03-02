@@ -138,7 +138,7 @@ class Cleaner(object):
 
 
 setup(name='dtocean-app',
-      version='1.0.0',
+      version='1.1.dev0',
       description='Main application for the DTOcean tools',
       author='Mathew Topper, Rui Duarte',
       author_email=('damm_horse@yahoo.co.uk, '
@@ -146,13 +146,13 @@ setup(name='dtocean-app',
       license="GPLv3",
       packages=find_packages(),
       install_requires=[
-           'dtocean-core>=1.0',
+           'dtocean-core==1.0.0',
            'matplotlib',
            'numpy',
-           'pandas',
-           'dtocean-qt>=0.9',
+           'pandas>=0.18',
+           'dtocean-qt==0.9.1',
            'pil',
-           'polite>=0.9',
+           'polite>=0.9,<0.10',
           # 'sip',
           # 'PyQt4',
       ],
