@@ -138,7 +138,7 @@ class Cleaner(object):
 
 
 setup(name='dtocean-app',
-      version='1.0.0',
+      version='1.0.1',
       description='Main application for the DTOcean tools',
       author='Mathew Topper, Rui Duarte',
       author_email=('damm_horse@yahoo.co.uk, '
@@ -150,7 +150,7 @@ setup(name='dtocean-app',
            'matplotlib',
            'numpy',
            'pandas',
-           'dtocean-qt>=0.9',
+           'dtocean-qt>=0.9.1',
            'pil',
            'polite>=0.9',
           # 'sip',
