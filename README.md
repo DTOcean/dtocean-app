@@ -40,10 +40,10 @@ installed separately:
 * [Database](https://setis.ec.europa.eu/dt-ocean/download/file/fid/85)
 * [Manuals](https://setis.ec.europa.eu/dt-ocean/download/file/fid/82)
 
-Note the database requires a PostgresSQL server to be installed on the local
+Note the database requires a PostgreSQL server to be installed on the local
 machine and full instructions are provided within the download.
 
-With the current (1.0.0) version of the installer some user have reported
+With the current (1.0.0) version of the installer some users have reported
 problems related to the installation directory not being found. A temporary
 workaround for this issue is described in the following blog post:
 
@@ -58,14 +58,25 @@ strongly encourage you to create a new issue.
 ### Anaconda Package
 
 The DTOcean application can be installed easily using the [Anaconda Python][2]
-distribution. A prerequist of this is installation of Anaconda Python for Python
+distribution. A prerequisite is installation of the Anaconda distribution for Python
 version 2.7. Additionally, if the full system has not been installed previously
 using the process described in the [Windows Installer](#windows-installer)
-section, the supplementary data pacakage must be installed. The current version
-of the data pacakage can be downloaded from
+section, the supplementary data package must be installed. The current version
+of the data package can be downloaded from
 [SETIS](https://setis.ec.europa.eu/dt-ocean/download/file/fid/88).
 
-Once the above prerequists are installed, it is recommended to install and
+If desired, the example database must also be downloaded and installed
+separately:
+
+* [Database](https://setis.ec.europa.eu/dt-ocean/download/file/fid/85)
+
+Note the database requires a PostgreSQL server to be installed on the local
+machine and full instructions are provided within the download.
+
+Installation of the DTOcean manuals is not currently supported through this
+method but will be included in the near future.
+
+Once the above prerequisites are installed, it is recommended to install and
 run DTOcean from an "environment". The process, using a Windows Command Prompt
 window, is as follows.
 
@@ -97,8 +108,7 @@ conda install dtocean-app
 Follow the prompts and press enter as required. It is assumed that the
 _dtocean environment has not been previously activated.
 
-
-#### Run the application
+#### Run the application (Anaconda)
 
 ```
 activate _dtocean
@@ -112,15 +122,15 @@ If dtocean-app is not started try running in debug mode:
 dtocean-app --debug
 ```
 
-### Manual Install
+### Installing from Source
 
-Although not supported, it is possible to install the DTOcean packages outside
-of the Anaconda development environment.
+Although not supported, it is possible to install the DTOcean packages without
+use of the Anaconda development environment directly from the source code.
 
 #### Dependencies
 
-The full list of dependencies 
-(copied from the output of the Anaconda install) is:
+The full list of dependencies  (copied from the output of the Anaconda install)
+is:
 
 * aneris
 * attrdict
@@ -196,7 +206,7 @@ The full list of dependencies
 #### Installation
 
 Once all the dependencies are installed this package can be installed from
-a Windows Command Prompt in as follows:
+a Windows Command Prompt as follows:
 
 ```
 cd \path\to\dtocean-app
@@ -257,6 +267,161 @@ directory of your environment. You have to change the contents of it to:
 ```
 
 ## Development
+
+It is recommended to conduct development of dtocean-app or another dtocean-*
+package using the Anaconda installation technique described in the
+[Anaconda Package](#anaconda-package) section. This will pull all of the
+prerequisite dependencies so that the developer need only replace the package
+they wish to develop with a local version. The main application can then
+be run using the instructions in the
+[Run the application (Anaconda)](#run-the-application-\(anaconda\)) section
+using the updated code.
+
+### Package Uninstall
+
+The process to remove a dtocean package installed using Anaconda is as follows:
+
+```
+activate _dtocean
+conda remove --force dtocean-*
+```
+
+Here dtocean-* refers to whichever dtocean package is (or packages are) being
+developed and the "force" flag allows the package to be removed without also
+removing the upstream dependencies. This is important if a package that is
+a direct or indirect dependency of dtocean-app is being changed as Anaconda will
+want to remove it if the flag is not provided.
+
+If developing without Anaconda, the "pip" package manager can be used to
+remove a package as follows:
+
+```
+pip uninstall dtocean-*
+```
+
+### Development Version Install
+
+A development version of a package can be installed as a "live" version.  This
+approach will allow the immediate impact of any code change to be examined
+within the overall DTOcean application. To install the live package we use the 
+"pip" package manager.
+
+Firstly, activate your environment, if not active already:
+
+```
+activate _dtocean
+```
+
+If "pip" is not already installed, install it using conda:
+
+```
+conda install pip
+```
+
+Then, to install the development version of the package do:
+
+```
+pip install -e \path\to\dtocean-*
+```
+
+### QtDesigner Files Bootstrapping
+
+For some packages, including dtocean-app, another installation stage is required
+which is called a "bootstrap" stage. The bootstrap stage is only required where
+some external (non-python) files are translated into source code, prior to
+installation. In the case of dtocean-app "ui" files from QtDesigner are
+translated into PyQt code for drawing widgets.
+
+To carry out the bootstrapping stage type:
+
+```
+cd \path\to\dtocean-app
+python setup.py bootstrap
+```
+
+This bootstrapping stage is only required on first installation or if the files
+in the "designer" folder have changed or if new files have been added or
+deleted. The converted files are placed into the dtocean_app\designer folder
+from where they can be imported for use in other parts of the code.
+
+Note, only the __init__.py file should ever be under version control in the
+dtocean_app\designer folder.
+
+Please be aware of the potential [PyQt Bug](#pyQt-bug) for which a solution is
+described above.
+
+### Manual Testing
+
+Testing is an important part of development and a mix of manual and automated
+testing is used within DTOcean. The most basic test for dtocean-app or changes
+to its dependencies is to attempt to start the application with the development
+package installed. 
+
+First, ensure that the Anaconda environment is active:
+
+```
+activate _dtocean
+```
+
+The application is then started in the usual manner:
+
+```
+dtocean-app
+```
+
+If the application fails to start but not output is produced, try running in
+debug mode:
+
+```
+dtocean-app --debug
+```
+
+### Automated Testing
+
+A small automated test suite is provided with dtocean-app. This test suite is
+written using the [pytest](http://doc.pytest.org/en/latest/) framework and the
+tests for dtocean-app are found in the "tests" directory.
+
+To run the tests, remember to start the environment if not already active:
+
+```
+activate _dtocean
+```
+
+Also, ensure that pytest is installed:
+
+```
+conda install pytest
+```
+
+The test suite can then be activated in two ways. Firstly, it can be invoked
+directly from the py.test command as follows:
+
+```
+cd \path\to\dtocean-app
+py.test tests
+```
+
+Alternatively the "winmake.bat" shortcut script can be used to invoke the
+tests:
+
+```
+cd \path\to\dtocean-app
+winmake.bat test
+```
+
+Developers are encouraged to ensure all tests pass before submitting code to
+the official repositories. They are also encouraged to
+develop new automated tests for code that is changed or added. Code that is
+failing tests should not be submitted for inclusion in the official
+repositories.
+
+### Contributing
+
+The process and ethos for contributing to the official DTOcean repositories is
+detailed in the following blog post:
+
+[INSERT BLOG POST HERE]
 
 ## Licences
 
