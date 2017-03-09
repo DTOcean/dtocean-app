@@ -83,7 +83,7 @@ window, is as follows.
 #### Add Anaconda Cloud Channels (First Time Only)
 
 ```
-conda config --append channels conda_forge
+conda config --append channels conda-forge
 conda config --append channels dataonlygreater
 ```
 
