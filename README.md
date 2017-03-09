@@ -14,7 +14,7 @@ following the installation and development instructions given below. Submissions
 to the official DTOcean repositories should follow the instructions given
 in the following blog post:
 
-[DTOcean Development: Repository Management][3]
+[DTOcean Development: Change Management][3]
 
 ## Installation
 
@@ -421,7 +421,7 @@ repositories.
 The process and ethos for contributing to the official DTOcean repositories is
 detailed in the following blog post:
 
-[DTOcean Development: Repository Management][3]
+[DTOcean Development: Change Management][3]
 
 ## Licences
 
@@ -441,4 +441,4 @@ the following open source icon sets:
 
 [1]: https://setis.ec.europa.eu/dt-ocean/
 [2]: https://www.continuum.io/anaconda-overview
-[3]: http://www.dataonlygreater.com/latest/professional/2017/03/09/dtocean-development-repository-management/
+[3]: http://www.dataonlygreater.com/latest/professional/2017/03/09/dtocean-development-change-management/
