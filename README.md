@@ -347,7 +347,7 @@ from where they can be imported for use in other parts of the code.
 Note, only the __init__.py file should ever be under version control in the
 dtocean_app\designer folder.
 
-Please be aware of the potential [PyQt Bug](#pyQt-bug) for which a solution is
+Please be aware of the potential [PyQt Bug](#pyqt-bug) for which a solution is
 described above.
 
 ### Manual Testing
@@ -423,11 +423,11 @@ detailed in the following blog post:
 
 [DTOcean Development: Change Management][3]
 
-## Licences
+## Licenses
 
 ### Software
 
-DTOcean is open source software. Please see the LICENCE.txt file for the full
+DTOcean is open source software. Please see the LICENSE.txt file for the full
 text of the software licence.
 
 ### Icons
