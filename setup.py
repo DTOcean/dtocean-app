@@ -138,7 +138,7 @@ class Cleaner(object):
 
 
 setup(name='dtocean-app',
-      version='1.0.1',
+      version='1.0.2',
       description='Main application for the DTOcean tools',
       author='Mathew Topper, Rui Duarte',
       author_email=('damm_horse@yahoo.co.uk, '
