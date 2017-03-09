@@ -274,7 +274,7 @@ package using the Anaconda installation technique described in the
 prerequisite dependencies so that the developer need only replace the package
 they wish to develop with a local version. The main application can then
 be run using the instructions in the
-[Run the application (Anaconda)](#run-the-application-\(anaconda\)) section
+[Run the application (Anaconda)](#run-the-application-anaconda) section
 using the updated code.
 
 ### Package Uninstall
