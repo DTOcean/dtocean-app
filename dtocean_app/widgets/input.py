@@ -686,7 +686,6 @@ class InputDataTable(QtGui.QWidget):
         
         return
 
-    @QtCore.pyqtSlot(object)
     def _set_value(self, value, dtypes=None):
                 
         # setup a new empty model
@@ -842,7 +841,7 @@ class InputTriStateTable(InputDataTable):
     
     def _get_dataframe(self, value, dtype=None):
         
-        data = super(InputTriStateTable, self)._get_dataframe(value, object)
+        data = super(InputTriStateTable, self)._get_dataframe(value, dtype)
         data = data.replace(["true", "false", "unknown"],
                             ["True", "False", None])
         
