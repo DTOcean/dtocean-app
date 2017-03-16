@@ -15,6 +15,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 - Fix bug in InputTriStateTable widget that stopped input of Observed Receptors
   variable in environmental assessment theme.
+- Fix issue with displaying PointList data (such as the user defined array
+  layout) when z-coordinates are not set.
 
 ### Changed
 
