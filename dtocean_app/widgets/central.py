@@ -56,7 +56,7 @@ class ContextArea(QtGui.QWidget):
         		
         self._top_left = QtGui.QFrame()
         self._top_left.setFrameShape(QtGui.QFrame.StyledPanel)
-        self._top_left.setMinimumWidth(350)
+        self._top_left.setMinimumWidth(375)
         self._top_left.setMinimumHeight(150)
         self._top_left.setMaximumWidth(450)                                       
         self._top_left.setSizePolicy(sizePolicy)
@@ -68,7 +68,7 @@ class ContextArea(QtGui.QWidget):
         
         self._top_right = QtGui.QFrame()
         self._top_right.setFrameShape(QtGui.QFrame.StyledPanel)
-        self._top_right.setMinimumWidth(450)
+        self._top_right.setMinimumWidth(425)
         self._top_right_box = QtGui.QHBoxLayout()
         self._top_right.setLayout(self._top_right_box)
         self._top_right_contents = None
