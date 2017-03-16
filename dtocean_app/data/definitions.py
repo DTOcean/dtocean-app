@@ -1086,11 +1086,15 @@ class PointList(GUIStructure, PointList):
             
             x_vals = [x[0] for x in coords]
             y_vals = [x[1] for x in coords]
-        
-            if len(coords) == 3:
-                z_vals = [x[2] for x in coords]
-            else:
-                z_vals = [None] * len(x_vals)
+            
+            z_vals = []
+            
+            for x in coords:
+                
+                if len(x) == 3:
+                    z_vals.append(x[2])
+                else:
+                    z_vals.append(None)
                 
             raw_dict = {"x": x_vals,
                         "y": y_vals,
