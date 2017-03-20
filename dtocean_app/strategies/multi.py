@@ -28,7 +28,16 @@ from aneris.utilities.misc import OrderedSet
 from dtocean_core.pipeline import Tree
 
 from . import GUIStrategy, StrategyWidget, PyQtABCMeta
-from ..designer.multisensitivity import Ui_MultiSensitivityWidget
+from ..utils.display import is_high_dpi
+
+if is_high_dpi():
+
+    from ..designer.high.multisensitivity import Ui_MultiSensitivityWidget
+    
+else:
+    
+    from ..designer.low.multisensitivity import Ui_MultiSensitivityWidget
+
 
 
 class GUIMultiSensitivity(GUIStrategy, MultiSensitivity):

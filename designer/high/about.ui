@@ -57,8 +57,8 @@
        <rect>
         <x>0</x>
         <y>0</y>
-        <width>472</width>
-        <height>1196</height>
+        <width>481</width>
+        <height>952</height>
        </rect>
       </property>
       <property name="styleSheet">
@@ -90,7 +90,7 @@
           <string/>
          </property>
          <property name="pixmap">
-          <pixmap resource="resources_about.qrc">:/logos/splash_loading.png</pixmap>
+          <pixmap resource="../resources_about.qrc">:/logos/splash_loading.png</pixmap>
          </property>
          <property name="alignment">
           <set>Qt::AlignCenter</set>
@@ -274,7 +274,7 @@
           <string/>
          </property>
          <property name="pixmap">
-          <pixmap resource="resources_about.qrc">:/logos/logo-ec-300.jpg</pixmap>
+          <pixmap resource="../resources_about.qrc">:/logos/logo-ec-300.jpg</pixmap>
          </property>
          <property name="alignment">
           <set>Qt::AlignCenter</set>
@@ -445,6 +445,7 @@
   </layout>
  </widget>
  <resources>
+  <include location="../resources_about.qrc"/>
   <include location="resources_about.qrc"/>
  </resources>
  <connections/>

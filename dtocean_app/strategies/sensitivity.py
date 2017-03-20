@@ -27,7 +27,16 @@ from aneris.utilities.misc import OrderedSet
 from dtocean_core.pipeline import Tree
 
 from . import GUIStrategy, StrategyWidget, PyQtABCMeta
-from ..designer.unitsensitivity import Ui_UnitSensitivityWidget
+from ..utils.display import is_high_dpi
+
+if is_high_dpi():
+    
+    from ..designer.high.unitsensitivity import Ui_UnitSensitivityWidget
+    
+else:
+    
+    from ..designer.low.unitsensitivity import Ui_UnitSensitivityWidget
+
 
 
 class GUIUnitSensitivity(GUIStrategy, UnitSensitivity):

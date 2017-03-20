@@ -33,8 +33,17 @@ except AttributeError:
         return s
 
 from .datatable import DataTableWidget
-from ..designer.labeloutput import Ui_LabelOutput
-from ..designer.textoutput import Ui_TextOutput
+from ..utils.display import is_high_dpi
+
+if is_high_dpi():
+
+    from ..designer.high.labeloutput import Ui_LabelOutput
+    from ..designer.high.textoutput import Ui_TextOutput
+    
+else:
+    
+    from ..designer.low.labeloutput import Ui_LabelOutput
+    from ..designer.low.textoutput import Ui_TextOutput
 
 
 # DOCK WINDOW OUTPUT WIDGETS

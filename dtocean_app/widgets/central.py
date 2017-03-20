@@ -29,11 +29,23 @@ from aneris.utilities.misc import OrderedSet
 from dtocean_core.pipeline import Tree
 
 from .display import get_current_filetypes, save_current_figure
-from ..designer.details import Ui_DetailsWidget
-from ..designer.filemanager import Ui_FileManagerWidget
-from ..designer.plotmanager import Ui_PlotManagerWidget
-from ..designer.levelcomparison import Ui_LevelComparisonWidget
-from ..designer.simcomparison import Ui_SimComparisonWidget
+from ..utils.display import is_high_dpi
+
+if is_high_dpi():
+
+    from ..designer.high.details import Ui_DetailsWidget
+    from ..designer.high.filemanager import Ui_FileManagerWidget
+    from ..designer.high.plotmanager import Ui_PlotManagerWidget
+    from ..designer.high.levelcomparison import Ui_LevelComparisonWidget
+    from ..designer.high.simcomparison import Ui_SimComparisonWidget
+    
+else:
+    
+    from ..designer.low.details import Ui_DetailsWidget
+    from ..designer.low.filemanager import Ui_FileManagerWidget
+    from ..designer.low.plotmanager import Ui_PlotManagerWidget
+    from ..designer.low.levelcomparison import Ui_LevelComparisonWidget
+    from ..designer.low.simcomparison import Ui_SimComparisonWidget
 
 
 class ContextArea(QtGui.QWidget):
@@ -56,9 +68,12 @@ class ContextArea(QtGui.QWidget):
         		
         self._top_left = QtGui.QFrame()
         self._top_left.setFrameShape(QtGui.QFrame.StyledPanel)
-        self._top_left.setMinimumWidth(375)
-        self._top_left.setMinimumHeight(150)
-        self._top_left.setMaximumWidth(450)                                       
+        
+        if is_high_dpi():
+            self._top_left.setMinimumWidth(375)
+        else:
+            self._top_left.setMinimumWidth(290)
+                               
         self._top_left.setSizePolicy(sizePolicy)
         
         self._top_left_box = QtGui.QHBoxLayout()
@@ -68,7 +83,12 @@ class ContextArea(QtGui.QWidget):
         
         self._top_right = QtGui.QFrame()
         self._top_right.setFrameShape(QtGui.QFrame.StyledPanel)
-        self._top_right.setMinimumWidth(425)
+
+        if is_high_dpi():
+            self._top_right.setMinimumWidth(425)
+        else:
+            self._top_right.setMinimumWidth(360)
+            
         self._top_right_box = QtGui.QHBoxLayout()
         self._top_right.setLayout(self._top_right_box)
         self._top_right_contents = None

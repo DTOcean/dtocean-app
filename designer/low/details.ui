@@ -82,9 +82,9 @@
       <property name="geometry">
        <rect>
         <x>0</x>
-        <y>-9</y>
-        <width>469</width>
-        <height>114</height>
+        <y>0</y>
+        <width>495</width>
+        <height>113</height>
        </rect>
       </property>
       <property name="sizePolicy">
@@ -238,8 +238,11 @@
         </spacer>
        </item>
       </layout>
+      <zorder>titleLabel</zorder>
+      <zorder>staticLabel_2</zorder>
+      <zorder>descriptionLabel</zorder>
       <zorder>verticalSpacer</zorder>
-      <zorder></zorder>
+      <zorder>staticLabel_1</zorder>
      </widget>
     </widget>
    </item>

@@ -20,7 +20,7 @@
    <string>DTOcean</string>
   </property>
   <property name="windowIcon">
-   <iconset resource="resources_mainwindow.qrc">
+   <iconset resource="../resources_mainwindow.qrc">
     <normaloff>:/icons/turbine.png</normaloff>:/icons/turbine.png</iconset>
   </property>
   <property name="iconSize">
@@ -67,7 +67,7 @@
      <x>0</x>
      <y>0</y>
      <width>1087</width>
-     <height>26</height>
+     <height>21</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
@@ -236,7 +236,7 @@
     <bool>true</bool>
    </property>
    <property name="icon">
-    <iconset resource="resources_mainwindow.qrc">
+    <iconset resource="../resources_mainwindow.qrc">
      <normaloff>:/icons/document-new.svg</normaloff>:/icons/document-new.svg</iconset>
    </property>
    <property name="text">
@@ -253,7 +253,7 @@
     <bool>true</bool>
    </property>
    <property name="icon">
-    <iconset resource="resources_mainwindow.qrc">
+    <iconset resource="../resources_mainwindow.qrc">
      <normaloff>:/icons/document-open.svg</normaloff>:/icons/document-open.svg</iconset>
    </property>
    <property name="text">
@@ -282,7 +282,7 @@
     <bool>false</bool>
    </property>
    <property name="icon">
-    <iconset resource="resources_mainwindow.qrc">
+    <iconset resource="../resources_mainwindow.qrc">
      <normaloff>:/icons/media-floppy.svg</normaloff>:/icons/media-floppy.svg</iconset>
    </property>
    <property name="text">
@@ -308,7 +308,7 @@
     <bool>false</bool>
    </property>
    <property name="icon">
-    <iconset resource="resources_mainwindow.qrc">
+    <iconset resource="../resources_mainwindow.qrc">
      <normaloff>:/icons/db_update.png</normaloff>:/icons/db_update.png</iconset>
    </property>
    <property name="text">
@@ -320,7 +320,7 @@
     <bool>false</bool>
    </property>
    <property name="icon">
-    <iconset resource="resources_mainwindow.qrc">
+    <iconset resource="../resources_mainwindow.qrc">
      <normaloff>:/icons/db_select.png</normaloff>:/icons/db_select.png</iconset>
    </property>
    <property name="text">
@@ -332,7 +332,7 @@
     <bool>false</bool>
    </property>
    <property name="icon">
-    <iconset resource="resources_mainwindow.qrc">
+    <iconset resource="../resources_mainwindow.qrc">
      <normaloff>:/icons/hardware.png</normaloff>:/icons/hardware.png</iconset>
    </property>
    <property name="text">
@@ -344,7 +344,7 @@
     <bool>false</bool>
    </property>
    <property name="icon">
-    <iconset resource="resources_mainwindow.qrc">
+    <iconset resource="../resources_mainwindow.qrc">
      <normaloff>:/icons/calc.png</normaloff>:/icons/calc.png</iconset>
    </property>
    <property name="text">
@@ -356,7 +356,7 @@
     <bool>false</bool>
    </property>
    <property name="icon">
-    <iconset resource="resources_mainwindow.qrc">
+    <iconset resource="../resources_mainwindow.qrc">
      <normaloff>:/icons/kwin4.png</normaloff>:/icons/kwin4.png</iconset>
    </property>
    <property name="text">
@@ -368,7 +368,7 @@
     <bool>false</bool>
    </property>
    <property name="icon">
-    <iconset resource="resources_mainwindow.qrc">
+    <iconset resource="../resources_mainwindow.qrc">
      <normaloff>:/icons/pipe.png</normaloff>:/icons/pipe.png</iconset>
    </property>
    <property name="text">
@@ -380,7 +380,7 @@
     <bool>false</bool>
    </property>
    <property name="icon">
-    <iconset resource="resources_mainwindow.qrc">
+    <iconset resource="../resources_mainwindow.qrc">
      <normaloff>:/icons/player_end.png</normaloff>:/icons/player_end.png</iconset>
    </property>
    <property name="text">
@@ -403,7 +403,7 @@
     <bool>false</bool>
    </property>
    <property name="icon">
-    <iconset resource="resources_mainwindow.qrc">
+    <iconset resource="../resources_mainwindow.qrc">
      <normaloff>:/icons/colors-window-close.svg</normaloff>:/icons/colors-window-close.svg</iconset>
    </property>
    <property name="text">
@@ -415,7 +415,7 @@
     <bool>false</bool>
    </property>
    <property name="icon">
-    <iconset resource="resources_mainwindow.qrc">
+    <iconset resource="../resources_mainwindow.qrc">
      <normaloff>:/icons/player_play.png</normaloff>:/icons/player_play.png</iconset>
    </property>
    <property name="text">
@@ -427,7 +427,7 @@
     <bool>false</bool>
    </property>
    <property name="icon">
-    <iconset resource="resources_mainwindow.qrc">
+    <iconset resource="../resources_mainwindow.qrc">
      <normaloff>:/icons/editcopy.png</normaloff>:/icons/editcopy.png</iconset>
    </property>
    <property name="text">
@@ -439,7 +439,7 @@
     <bool>false</bool>
    </property>
    <property name="icon">
-    <iconset resource="resources_mainwindow.qrc">
+    <iconset resource="../resources_mainwindow.qrc">
      <normaloff>:/icons/editpaste.png</normaloff>:/icons/editpaste.png</iconset>
    </property>
    <property name="text">
@@ -451,7 +451,7 @@
     <bool>false</bool>
    </property>
    <property name="icon">
-    <iconset resource="resources_mainwindow.qrc">
+    <iconset resource="../resources_mainwindow.qrc">
      <normaloff>:/icons/undo-128.png</normaloff>:/icons/undo-128.png</iconset>
    </property>
    <property name="text">
@@ -463,7 +463,7 @@
     <bool>false</bool>
    </property>
    <property name="icon">
-    <iconset resource="resources_mainwindow.qrc">
+    <iconset resource="../resources_mainwindow.qrc">
      <normaloff>:/icons/redo-128.png</normaloff>:/icons/redo-128.png</iconset>
    </property>
    <property name="text">
@@ -475,7 +475,7 @@
     <bool>true</bool>
    </property>
    <property name="icon">
-    <iconset resource="resources_mainwindow.qrc">
+    <iconset resource="../resources_mainwindow.qrc">
      <normaloff>:/icons/help_index.png</normaloff>:/icons/help_index.png</iconset>
    </property>
    <property name="text">
@@ -498,7 +498,7 @@
     <bool>false</bool>
    </property>
    <property name="icon">
-    <iconset resource="resources_mainwindow.qrc">
+    <iconset resource="../resources_mainwindow.qrc">
      <normaloff>:/icons/data.svg</normaloff>:/icons/data.svg</iconset>
    </property>
    <property name="text">
@@ -513,7 +513,7 @@
     <bool>false</bool>
    </property>
    <property name="icon">
-    <iconset resource="resources_mainwindow.qrc">
+    <iconset resource="../resources_mainwindow.qrc">
      <normaloff>:/icons/plots.png</normaloff>:/icons/plots.png</iconset>
    </property>
    <property name="text">
@@ -528,7 +528,7 @@
     <bool>false</bool>
    </property>
    <property name="icon">
-    <iconset resource="resources_mainwindow.qrc">
+    <iconset resource="../resources_mainwindow.qrc">
      <normaloff>:/icons/ruler.svg</normaloff>:/icons/ruler.svg</iconset>
    </property>
    <property name="text">
@@ -556,7 +556,7 @@
     <bool>false</bool>
    </property>
    <property name="icon">
-    <iconset resource="resources_mainwindow.qrc">
+    <iconset resource="../resources_mainwindow.qrc">
      <normaloff>:/icons/maps.svg</normaloff>:/icons/maps.svg</iconset>
    </property>
    <property name="text">
@@ -568,7 +568,7 @@
     <bool>false</bool>
    </property>
    <property name="icon">
-    <iconset resource="resources_mainwindow.qrc">
+    <iconset resource="../resources_mainwindow.qrc">
      <normaloff>:/icons/player_calc.png</normaloff>:/icons/player_calc.png</iconset>
    </property>
    <property name="text">
@@ -585,7 +585,7 @@
   </action>
   <action name="actionAbout">
    <property name="icon">
-    <iconset resource="resources_mainwindow.qrc">
+    <iconset resource="../resources_mainwindow.qrc">
      <normaloff>:/icons/Information_icon.svg</normaloff>:/icons/Information_icon.svg</iconset>
    </property>
    <property name="text">
@@ -595,7 +595,7 @@
  </widget>
  <layoutdefault spacing="6" margin="11"/>
  <resources>
-  <include location="resources_mainwindow.qrc"/>
+  <include location="../resources_mainwindow.qrc"/>
  </resources>
  <connections>
   <connection>
