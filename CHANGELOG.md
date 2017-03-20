@@ -10,6 +10,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Added
 
 - Add change log.
+- Add high DPI scaling widgets which activate when Windows virtual DPI exceeds
+  100. Improves look and feel on high DPI displays.
 
 ### Fixed
 
