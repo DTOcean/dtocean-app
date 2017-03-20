@@ -35,14 +35,29 @@ except AttributeError:
         return s
 
 from .datatable import DataTableWidget
-from ..designer.listselect import Ui_ListSelect
-from ..designer.floatselect import Ui_FloatSelect
-from ..designer.intselect import Ui_IntSelect
-from ..designer.pointselect import Ui_PointSelect
-from ..designer.stringselect import Ui_StringSelect
-from ..designer.boolselect import Ui_BoolSelect
-from ..designer.pathselect import Ui_PathSelect
-from ..designer.dateselect import Ui_DateSelect
+from ..utils.display import is_high_dpi
+
+if is_high_dpi():
+
+    from ..designer.high.listselect import Ui_ListSelect
+    from ..designer.high.floatselect import Ui_FloatSelect
+    from ..designer.high.intselect import Ui_IntSelect
+    from ..designer.high.pointselect import Ui_PointSelect
+    from ..designer.high.stringselect import Ui_StringSelect
+    from ..designer.high.boolselect import Ui_BoolSelect
+    from ..designer.high.pathselect import Ui_PathSelect
+    from ..designer.high.dateselect import Ui_DateSelect
+    
+else:
+    
+    from ..designer.low.listselect import Ui_ListSelect
+    from ..designer.low.floatselect import Ui_FloatSelect
+    from ..designer.low.intselect import Ui_IntSelect
+    from ..designer.low.pointselect import Ui_PointSelect
+    from ..designer.low.stringselect import Ui_StringSelect
+    from ..designer.low.boolselect import Ui_BoolSelect
+    from ..designer.low.pathselect import Ui_PathSelect
+    from ..designer.low.dateselect import Ui_DateSelect
 
 # DOCK WINDOW INPUT WIDGETS
 

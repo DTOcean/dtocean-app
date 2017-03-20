@@ -23,7 +23,13 @@ except AttributeError:
     def _fromUtf8(s):
         return s
 
-from ..designer import resources_pipeline_rc
+from .display import is_high_dpi
+
+if is_high_dpi():
+    from ..designer.high import resources_pipeline_rc
+else:
+    from ..designer.low import resources_pipeline_rc
+
 
 def make_redicon_pixmap():
 

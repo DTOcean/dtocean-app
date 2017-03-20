@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>FileManagerWidget</class>
- <widget class="QWidget" name="FileManagerWidget">
+ <class>PlotManagerWidget</class>
+ <widget class="QWidget" name="PlotManagerWidget">
   <property name="geometry">
    <rect>
     <x>0</x>
@@ -29,16 +29,13 @@
    <property name="spacing">
     <number>4</number>
    </property>
-   <property name="sizeConstraint">
-    <enum>QLayout::SetDefaultConstraint</enum>
-   </property>
    <property name="margin">
     <number>4</number>
    </property>
    <item>
     <widget class="QLabel" name="headingLabel">
      <property name="text">
-      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Variable File Manager:&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Plot Manager:&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
      </property>
      <property name="textFormat">
       <enum>Qt::RichText</enum>
@@ -55,64 +52,6 @@
    <item>
     <layout class="QHBoxLayout" name="horizontalLayout">
      <item>
-      <widget class="QLabel" name="label_3">
-       <property name="minimumSize">
-        <size>
-         <width>65</width>
-         <height>0</height>
-        </size>
-       </property>
-       <property name="text">
-        <string>File mode: </string>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <widget class="QRadioButton" name="loadButton">
-       <property name="minimumSize">
-        <size>
-         <width>60</width>
-         <height>0</height>
-        </size>
-       </property>
-       <property name="text">
-        <string>LOAD</string>
-       </property>
-       <attribute name="buttonGroup">
-        <string notr="true">modeButtonGroup</string>
-       </attribute>
-      </widget>
-     </item>
-     <item>
-      <widget class="QRadioButton" name="saveButton">
-       <property name="minimumSize">
-        <size>
-         <width>60</width>
-         <height>0</height>
-        </size>
-       </property>
-       <property name="text">
-        <string>SAVE</string>
-       </property>
-       <attribute name="buttonGroup">
-        <string notr="true">modeButtonGroup</string>
-       </attribute>
-      </widget>
-     </item>
-     <item>
-      <spacer name="horizontalSpacer">
-       <property name="orientation">
-        <enum>Qt::Horizontal</enum>
-       </property>
-       <property name="sizeHint" stdset="0">
-        <size>
-         <width>40</width>
-         <height>20</height>
-        </size>
-       </property>
-      </spacer>
-     </item>
-     <item>
       <widget class="QLabel" name="label">
        <property name="sizePolicy">
         <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
@@ -122,17 +61,23 @@
        </property>
        <property name="minimumSize">
         <size>
-         <width>60</width>
+         <width>65</width>
          <height>0</height>
         </size>
        </property>
        <property name="text">
-        <string>File type: </string>
+        <string>Plot name: </string>
        </property>
       </widget>
      </item>
      <item>
-      <widget class="QComboBox" name="extBox">
+      <widget class="QComboBox" name="plotBox">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
        <property name="minimumSize">
         <size>
          <width>75</width>
@@ -163,6 +108,12 @@
     <layout class="QHBoxLayout" name="horizontalLayout_2">
      <item>
       <widget class="QLabel" name="label_2">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
        <property name="minimumSize">
         <size>
          <width>65</width>
@@ -202,7 +153,7 @@
    <item>
     <widget class="QDialogButtonBox" name="buttonBox">
      <property name="standardButtons">
-      <set>QDialogButtonBox::Ok</set>
+      <set>QDialogButtonBox::Ok|QDialogButtonBox::Reset|QDialogButtonBox::Save</set>
      </property>
     </widget>
    </item>
@@ -210,10 +161,8 @@
   <zorder>buttonBox</zorder>
   <zorder>line</zorder>
   <zorder>headingLabel</zorder>
+  <zorder>verticalSpacer_2</zorder>
  </widget>
  <resources/>
  <connections/>
- <buttongroups>
-  <buttongroup name="modeButtonGroup"/>
- </buttongroups>
 </ui>

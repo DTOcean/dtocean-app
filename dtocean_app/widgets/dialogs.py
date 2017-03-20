@@ -33,15 +33,31 @@ import yaml
 import pandas as pd
 from PyQt4 import QtGui, QtCore
 
-from ..designer.projectproperties import Ui_ProjectProperties
-from ..designer.shuttle import Ui_ShuttleDialog
-from ..designer.datacheck import Ui_DataCheckDialog
-from ..designer.mainwindow import Ui_MainWindow
-from ..designer.listtableeditor import Ui_ListTableEditor
-from ..designer.testdatapicker import Ui_TestDataPicker
-from ..designer.progress import Ui_ProgressBar
-from ..designer.listframeeditor import  Ui_ListFrameEditor
-from ..designer.about import  Ui_AboutDialog
+from ..utils.display import is_high_dpi
+
+if is_high_dpi():
+
+    from ..designer.high.projectproperties import Ui_ProjectProperties
+    from ..designer.high.shuttle import Ui_ShuttleDialog
+    from ..designer.high.datacheck import Ui_DataCheckDialog
+    from ..designer.high.mainwindow import Ui_MainWindow
+    from ..designer.high.listtableeditor import Ui_ListTableEditor
+    from ..designer.high.testdatapicker import Ui_TestDataPicker
+    from ..designer.high.progress import Ui_ProgressBar
+    from ..designer.high.listframeeditor import  Ui_ListFrameEditor
+    from ..designer.high.about import  Ui_AboutDialog
+    
+else:
+    
+    from ..designer.low.projectproperties import Ui_ProjectProperties
+    from ..designer.low.shuttle import Ui_ShuttleDialog
+    from ..designer.low.datacheck import Ui_DataCheckDialog
+    from ..designer.low.mainwindow import Ui_MainWindow
+    from ..designer.low.listtableeditor import Ui_ListTableEditor
+    from ..designer.low.testdatapicker import Ui_TestDataPicker
+    from ..designer.low.progress import Ui_ProgressBar
+    from ..designer.low.listframeeditor import  Ui_ListFrameEditor
+    from ..designer.low.about import  Ui_AboutDialog
 
 DIR_PATH = os.path.dirname(__file__)
 

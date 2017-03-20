@@ -9,5 +9,7 @@ dist/
 *.egg-info/
 
 # Bootstrapped files
-dtocean_app/designer/*.py
-!dtocean_app/designer/__init__.py
+dtocean_app/designer/high/*.py
+dtocean_app/designer/low/*.py
+!dtocean_app/designer/high/__init__.py
+!dtocean_app/designer/low/__init__.py

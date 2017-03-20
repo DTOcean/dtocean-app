@@ -23,11 +23,22 @@ Created on Thu Apr 23 12:51:14 2015
 
 from PyQt4 import QtCore, QtGui
 
-from ..designer.listdock import Ui_ListDock
-from ..designer.pipelinedock import Ui_PipeLineDock
-from ..designer.treedock import Ui_TreeDock
-from ..designer.systemdock import Ui_SystemDock
+from ..utils.display import is_high_dpi
 from ..utils.qtlog import XStream
+
+if is_high_dpi():
+
+    from ..designer.high.listdock import Ui_ListDock
+    from ..designer.high.pipelinedock import Ui_PipeLineDock
+    from ..designer.high.treedock import Ui_TreeDock
+    from ..designer.high.systemdock import Ui_SystemDock
+    
+else:
+    
+    from ..designer.low.listdock import Ui_ListDock
+    from ..designer.low.pipelinedock import Ui_PipeLineDock
+    from ..designer.low.treedock import Ui_TreeDock
+    from ..designer.low.systemdock import Ui_SystemDock
 
 
 class DockCloseFilter(QtCore.QObject):

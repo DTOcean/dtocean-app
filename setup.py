@@ -19,9 +19,9 @@ class Bootstrap(Command):
 
     def run(self):
         
-        # Convert all UI files to py files
-        ui_search_path = os.path.join("designer", "*.ui")
-        dst_dir = os.path.join("dtocean_app", "designer")
+        # Convert low DPI UI files to py files
+        ui_search_path = os.path.join("designer", "low", "*.ui")
+        dst_dir = os.path.join("dtocean_app", "designer", "low")
         
         for ui_path in glob.glob(ui_search_path):
             
@@ -37,7 +37,39 @@ class Bootstrap(Command):
             
         # Convert all QRC files to py files
         ui_search_path = os.path.join("designer", "*.qrc")
-        dst_dir = os.path.join("dtocean_app", "designer")
+        dst_dir = os.path.join("dtocean_app", "designer", "low")
+        
+        for ui_path in glob.glob(ui_search_path):
+            
+            _, file_name = os.path.split(ui_path)
+            file_root, _ = os.path.splitext(file_name)  
+            dst_path = os.path.join(dst_dir, file_root + "_rc.py")
+            
+            sys_command = "pyrcc4 -o {} {}".format(dst_path, ui_path)
+            
+            # Convert the files
+            print "create resource file: {}".format(dst_path)
+            os.system(sys_command)
+            
+        # Convert high DPI UI files to py files
+        ui_search_path = os.path.join("designer", "high", "*.ui")
+        dst_dir = os.path.join("dtocean_app", "designer", "high")
+        
+        for ui_path in glob.glob(ui_search_path):
+            
+            _, file_name = os.path.split(ui_path)
+            file_root, _ = os.path.splitext(file_name)  
+            dst_path = os.path.join(dst_dir, file_root + ".py")
+            
+            sys_command = "pyuic4 -o {} {}".format(dst_path, ui_path)
+            
+            # Convert the files
+            print "create ui file: {}".format(dst_path)
+            os.system(sys_command)
+            
+        # Convert all QRC files to py files
+        ui_search_path = os.path.join("designer", "*.qrc")
+        dst_dir = os.path.join("dtocean_app", "designer", "high")
         
         for ui_path in glob.glob(ui_search_path):
             
@@ -146,11 +178,11 @@ setup(name='dtocean-app',
       license="GPLv3",
       packages=find_packages(),
       install_requires=[
-           'dtocean-core==1.0.0',
+           'dtocean-core>=1.0,<1.1',
            'matplotlib',
            'numpy',
            'pandas>=0.18',
-           'dtocean-qt==0.9.1',
+           'dtocean-qt>=0.9,<0.10',
            'pil',
            'polite>=0.9,<0.10',
           # 'sip',
