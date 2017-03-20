@@ -71,9 +71,13 @@ class ContextArea(QtGui.QWidget):
         
         if is_high_dpi():
             self._top_left.setMinimumWidth(375)
+            self._top_left.setMaximumWidth(500)                            
+            self._top_left.setMinimumHeight(175)
         else:
             self._top_left.setMinimumWidth(290)
-                               
+            self._top_left.setMaximumWidth(450)                            
+            self._top_left.setMinimumHeight(150)
+                        
         self._top_left.setSizePolicy(sizePolicy)
         
         self._top_left_box = QtGui.QHBoxLayout()
