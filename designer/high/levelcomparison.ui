@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>FileManagerWidget</class>
- <widget class="QWidget" name="FileManagerWidget">
+ <class>LevelComparisonWidget</class>
+ <widget class="QWidget" name="LevelComparisonWidget">
   <property name="geometry">
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>425</width>
-    <height>232</height>
+    <width>420</width>
+    <height>192</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -18,7 +18,7 @@
   </property>
   <property name="minimumSize">
    <size>
-    <width>425</width>
+    <width>320</width>
     <height>0</height>
    </size>
   </property>
@@ -30,18 +30,24 @@
     <number>4</number>
    </property>
    <property name="sizeConstraint">
-    <enum>QLayout::SetMinimumSize</enum>
+    <enum>QLayout::SetDefaultConstraint</enum>
    </property>
    <property name="margin">
     <number>4</number>
    </property>
    <item>
     <widget class="QLabel" name="headingLabel">
+     <property name="font">
+      <font>
+       <weight>75</weight>
+       <bold>true</bold>
+      </font>
+     </property>
      <property name="text">
-      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Variable File Manager:&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+      <string>Module Comparison:</string>
      </property>
      <property name="textFormat">
-      <enum>Qt::RichText</enum>
+      <enum>Qt::PlainText</enum>
      </property>
     </widget>
    </item>
@@ -53,9 +59,9 @@
     </widget>
    </item>
    <item>
-    <layout class="QHBoxLayout" name="horizontalLayout">
+    <layout class="QHBoxLayout" name="topHorizontalLayout">
      <property name="sizeConstraint">
-      <enum>QLayout::SetMinimumSize</enum>
+      <enum>QLayout::SetDefaultConstraint</enum>
      </property>
      <item>
       <widget class="QLabel" name="label_3">
@@ -67,17 +73,17 @@
        </property>
        <property name="minimumSize">
         <size>
-         <width>85</width>
+         <width>50</width>
          <height>0</height>
         </size>
        </property>
        <property name="text">
-        <string>File mode: </string>
+        <string>Mode:</string>
        </property>
       </widget>
      </item>
      <item>
-      <widget class="QRadioButton" name="loadButton">
+      <widget class="QRadioButton" name="plotButton">
        <property name="sizePolicy">
         <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
          <horstretch>0</horstretch>
@@ -86,12 +92,15 @@
        </property>
        <property name="minimumSize">
         <size>
-         <width>80</width>
+         <width>75</width>
          <height>0</height>
         </size>
        </property>
        <property name="text">
-        <string>LOAD</string>
+        <string>PLOT</string>
+       </property>
+       <property name="checked">
+        <bool>true</bool>
        </property>
        <attribute name="buttonGroup">
         <string notr="true">modeButtonGroup</string>
@@ -99,7 +108,10 @@
       </widget>
      </item>
      <item>
-      <widget class="QRadioButton" name="saveButton">
+      <widget class="QRadioButton" name="dataButton">
+       <property name="enabled">
+        <bool>true</bool>
+       </property>
        <property name="sizePolicy">
         <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
          <horstretch>0</horstretch>
@@ -108,12 +120,12 @@
        </property>
        <property name="minimumSize">
         <size>
-         <width>80</width>
+         <width>75</width>
          <height>0</height>
         </size>
        </property>
        <property name="text">
-        <string>SAVE</string>
+        <string>DATA</string>
        </property>
        <attribute name="buttonGroup">
         <string notr="true">modeButtonGroup</string>
@@ -127,14 +139,17 @@
        </property>
        <property name="sizeHint" stdset="0">
         <size>
-         <width>10</width>
+         <width>40</width>
          <height>20</height>
         </size>
        </property>
       </spacer>
      </item>
      <item>
-      <widget class="QLabel" name="label">
+      <widget class="QCheckBox" name="strategyBox">
+       <property name="enabled">
+        <bool>false</bool>
+       </property>
        <property name="sizePolicy">
         <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
          <horstretch>0</horstretch>
@@ -143,28 +158,24 @@
        </property>
        <property name="minimumSize">
         <size>
-         <width>75</width>
+         <width>150</width>
          <height>0</height>
+        </size>
+       </property>
+       <property name="maximumSize">
+        <size>
+         <width>150</width>
+         <height>16777215</height>
         </size>
        </property>
        <property name="layoutDirection">
-        <enum>Qt::LeftToRight</enum>
+        <enum>Qt::RightToLeft</enum>
        </property>
        <property name="text">
-        <string>File type: </string>
+        <string>Ignore Strategy</string>
        </property>
-       <property name="alignment">
-        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <widget class="QComboBox" name="extBox">
-       <property name="minimumSize">
-        <size>
-         <width>75</width>
-         <height>0</height>
-        </size>
+       <property name="checked">
+        <bool>true</bool>
        </property>
       </widget>
      </item>
@@ -181,13 +192,13 @@
      <property name="sizeHint" stdset="0">
       <size>
        <width>20</width>
-       <height>4</height>
+       <height>2</height>
       </size>
      </property>
     </spacer>
    </item>
    <item>
-    <layout class="QHBoxLayout" name="horizontalLayout_2">
+    <layout class="QHBoxLayout" name="bottomHorizontalLayout">
      <item>
       <widget class="QLabel" name="label_2">
        <property name="minimumSize">
@@ -197,17 +208,17 @@
         </size>
        </property>
        <property name="text">
-        <string>File path: </string>
+        <string>Variable:</string>
        </property>
       </widget>
      </item>
      <item>
-      <widget class="QLineEdit" name="pathEdit"/>
-     </item>
-     <item>
-      <widget class="QToolButton" name="getPathButton">
-       <property name="text">
-        <string>...</string>
+      <widget class="QComboBox" name="varBox">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
        </property>
       </widget>
      </item>
@@ -229,7 +240,7 @@
    <item>
     <widget class="QDialogButtonBox" name="buttonBox">
      <property name="standardButtons">
-      <set>QDialogButtonBox::Ok</set>
+      <set>QDialogButtonBox::Ok|QDialogButtonBox::Save</set>
      </property>
     </widget>
    </item>
@@ -237,6 +248,7 @@
   <zorder>buttonBox</zorder>
   <zorder>line</zorder>
   <zorder>headingLabel</zorder>
+  <zorder>verticalSpacer_2</zorder>
  </widget>
  <resources/>
  <connections/>
