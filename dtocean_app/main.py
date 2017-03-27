@@ -47,7 +47,7 @@ from .core import GUICore
 from .help import HelpWidget
 from .menu import DBSelector
 from .simulation import SimulationDock
-from .strategy import GUIStrategyManager
+from .extensions import GUIStrategyManager
 from .pipeline import (PipeLine,
                        SectionItem,
                        HiddenHub,

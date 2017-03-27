@@ -13,7 +13,7 @@ def test_import_Main():
     
 def test_import_GUIStrategyManager():
     
-    from dtocean_app.strategy import GUIStrategyManager
+    from dtocean_app.extensions import GUIStrategyManager
 
     assert True
     
