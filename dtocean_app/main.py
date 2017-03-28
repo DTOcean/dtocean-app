@@ -47,7 +47,7 @@ from .core import GUICore
 from .help import HelpWidget
 from .menu import DBSelector
 from .simulation import SimulationDock
-from .extensions import GUIStrategyManager
+from .extensions import GUIStrategyManager, GUIToolManager
 from .pipeline import (PipeLine,
                        SectionItem,
                        HiddenHub,
@@ -1205,6 +1205,7 @@ class DTOceanWindow(MainWindow):
     
         # Start WEC Simulator
         self.actionWEC_Simulator.triggered.connect(self._open_wec_simulator)
+        self.actionTest_Tool.triggered.connect(self._constraints_plot)
     
         return
         
@@ -2758,6 +2759,21 @@ class DTOceanWindow(MainWindow):
                                           QtGui.QMessageBox.No)
         
         return reply
+    
+    def _constraints_plot(self):
+        
+        toolman = GUIToolManager()
+        test_tool = toolman.get_tool('Constraints Plot')
+        
+        print "Got Tool"
+        
+        toolman.execute_tool(self._shell.core, self._shell.project, test_tool)
+        
+        print "Got widget"
+        
+        test_tool._widget.show()
+        
+        return
 
     def closeEvent(self, event):
         

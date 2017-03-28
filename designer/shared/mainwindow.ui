@@ -67,7 +67,7 @@
      <x>0</x>
      <y>0</y>
      <width>1087</width>
-     <height>21</height>
+     <height>31</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
@@ -133,6 +133,8 @@
      <string>Tools</string>
     </property>
     <addaction name="actionWEC_Simulator"/>
+    <addaction name="separator"/>
+    <addaction name="actionTest_Tool"/>
    </widget>
    <addaction name="menuFile"/>
    <addaction name="menuSimulation"/>
@@ -590,6 +592,11 @@
    </property>
    <property name="text">
     <string>About DTOcean...</string>
+   </property>
+  </action>
+  <action name="actionTest_Tool">
+   <property name="text">
+    <string>Test Tool</string>
    </property>
   </action>
  </widget>
