@@ -15,13 +15,19 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 - Fix bug in InputTriStateTable widget that stopped input of Observed Receptors
   variable in environmental assessment theme.
-- Fix issue with displaying PointList data (such as the user defined array
-  layout) when z-coordinates are not set.
-  
+
+## [1.0.2] - 2017-03-02
+
 ### Changed
 
-- Changed dtocean-qt dependency to 0.9.1.
-- Updated README.
+- Changed dtocean-qt dependency to 0.9.2
+- Changed dtocean-core dependency to 1.0.1
+
+## [1.0.1] - 2017-03-02
+
+### Changed
+
+- Changed dtocean-qt dependency to 0.9.1
 
 ## [1.0.0] - 2017-02-23
 
@@ -32,5 +38,5 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Changed
 
 - Changed package name to dtocean-app.
-- Changed pandas-qt dependency to dtocean-qt.
+- Changed pandas-qt dependency to dtocean-qt
 
