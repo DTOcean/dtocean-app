@@ -7,14 +7,22 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## [1.0.3] - 2017-03-28
+
 ### Added
 
 - Add change log.
+  
+### Changed
+
+- Changed dtocean-core dependency to 1.0.2
 
 ### Fixed
 
 - Fix bug in InputTriStateTable widget that stopped input of Observed Receptors
   variable in environmental assessment theme.
+- Fix issue with displaying PointList data (such as the user defined array
+  layout) when z-coordinates are not set.
 
 ## [1.0.2] - 2017-03-02
 
