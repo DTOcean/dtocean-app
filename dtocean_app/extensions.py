@@ -21,9 +21,9 @@ module_logger = logging.getLogger(__name__)
 
 from PyQt4 import QtGui, QtCore
 
-from dtocean_core.strategy import StrategyManager
+from dtocean_core.extensions import StrategyManager, ToolManager
 
-from . import strategies
+from . import strategies, tools
 from .widgets.dialogs import ListFrameEditor, Message
 from .widgets.display import MPLWidget
 from .widgets.output import OutputDataTable
@@ -37,7 +37,7 @@ class GUIStrategyManager(ListFrameEditor, StrategyManager):
     
     def __init__(self, parent=None):
         
-        StrategyManager.__init__(self)
+        StrategyManager.__init__(self, strategies, "GUIStrategy")
         ListFrameEditor.__init__(self, parent, "Strategy Manager")
         self._shell = None
         self._strategy = None
@@ -48,16 +48,6 @@ class GUIStrategyManager(ListFrameEditor, StrategyManager):
         self._strategy_widget = None
                         
         return
-        
-    def _discover_classes(self):
-
-        '''Retrieve all of the available strategies'''
-
-        cls_map = super(GUIStrategyManager,
-                        self)._discover_classes(strategies,
-                                                "GUIStrategy")
-        
-        return cls_map
         
     def _init_ui(self, title=None):
         
@@ -102,30 +92,18 @@ class GUIStrategyManager(ListFrameEditor, StrategyManager):
         self.buttonBox.button(QtGui.QDialogButtonBox.Reset).setDefault(True)
         
         return
-
-    def _discover_names(self):
-        
-        strategy_names = {}
-
-        # Work through the interfaces
-        for cls_name, cls_attr in self._strategy_classes.iteritems():
-
-            name = cls_attr.get_name()
-            strategy_names[name] = cls_name
-
-        return strategy_names
-        
+    
     def get_available_strategies(self):
         
         strategy_names = super(GUIStrategyManager,
-                               self).get_available_strategies()
+                               self).get_available()
         
         strategy_weights = []
 
         for strategy_name in strategy_names:
             
-            cls_name = self._strategy_names[strategy_name]
-            StrategyCls = self._strategy_classes[cls_name]
+            cls_name = self._plugin_names[strategy_name]
+            StrategyCls = self._plugin_classes[cls_name]
             strategy_obj = StrategyCls()
             
             strategy_weights.append(strategy_obj.get_weight())
@@ -155,8 +133,8 @@ class GUIStrategyManager(ListFrameEditor, StrategyManager):
                       "strategy").format(strategy_name)
             raise KeyError(errStr)
         
-        cls_name = self._strategy_names[strategy_name]
-        StrategyCls = self._strategy_classes[cls_name]
+        cls_name = self._plugin_names[strategy_name]
+        StrategyCls = self._plugin_classes[cls_name]
         strategy_obj = StrategyCls()
         
         return strategy_obj
@@ -365,3 +343,13 @@ class GUIStrategyManager(ListFrameEditor, StrategyManager):
         
         return
         
+class GUIToolManager(ToolManager):
+        
+    """Tool discovery and execution"""
+        
+    def __init__(self):
+        
+        ToolManager.__init__(self, tools, "GUITool")
+        
+        return
+
