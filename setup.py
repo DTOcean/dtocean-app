@@ -34,6 +34,22 @@ class Bootstrap(Command):
             # Convert the files
             print "create ui file: {}".format(dst_path)
             os.system(sys_command)
+
+        # Convert shared UI files to py files			
+        ui_search_path = os.path.join("designer", "shared", "*.ui")
+        dst_dir = os.path.join("dtocean_app", "designer", "low")
+        
+        for ui_path in glob.glob(ui_search_path):
+            
+            _, file_name = os.path.split(ui_path)
+            file_root, _ = os.path.splitext(file_name)  
+            dst_path = os.path.join(dst_dir, file_root + ".py")
+            
+            sys_command = "pyuic4 -o {} {}".format(dst_path, ui_path)
+            
+            # Convert the files
+            print "create ui file: {}".format(dst_path)
+            os.system(sys_command)
             
         # Convert all QRC files to py files
         ui_search_path = os.path.join("designer", "*.qrc")
@@ -53,6 +69,22 @@ class Bootstrap(Command):
             
         # Convert high DPI UI files to py files
         ui_search_path = os.path.join("designer", "high", "*.ui")
+        dst_dir = os.path.join("dtocean_app", "designer", "high")
+        
+        for ui_path in glob.glob(ui_search_path):
+            
+            _, file_name = os.path.split(ui_path)
+            file_root, _ = os.path.splitext(file_name)  
+            dst_path = os.path.join(dst_dir, file_root + ".py")
+            
+            sys_command = "pyuic4 -o {} {}".format(dst_path, ui_path)
+            
+            # Convert the files
+            print "create ui file: {}".format(dst_path)
+            os.system(sys_command)
+			
+        # Convert shared UI files to py files			
+        ui_search_path = os.path.join("designer", "shared", "*.ui")
         dst_dir = os.path.join("dtocean_app", "designer", "high")
         
         for ui_path in glob.glob(ui_search_path):
