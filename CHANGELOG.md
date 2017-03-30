@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Add change log.
 - Add high DPI scaling widgets which activate when Windows virtual DPI exceeds
   100. Improves look and feel on high DPI displays.
+- Split high low and shared QtDesigner files into separate directories.
 
 ### Fixed
 
@@ -22,8 +23,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Changed
 
-- Changed dtocean-qt dependency to 0.9.1
-- Updated README
+- Changed dtocean-qt dependency to 0.9.1.
+- Updated README.
+- Changed database stored proceedure calls to match changes to database
+  structure.
 
 ## [1.0.0] - 2017-02-23
 
@@ -34,5 +37,5 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Changed
 
 - Changed package name to dtocean-app.
-- Changed pandas-qt dependency to dtocean-qt
+- Changed pandas-qt dependency to dtocean-qt.
 
