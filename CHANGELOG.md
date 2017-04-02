@@ -13,6 +13,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Add high DPI scaling widgets which activate when Windows virtual DPI exceeds
   100. Improves look and feel on high DPI displays.
 - Split high low and shared QtDesigner files into separate directories.
+- Added dynamic generation of tools menu from plugins created in the tools
+  module.
+- Added constraints plot tool.
+
+### Changed
+
+- Changed dtocean-qt dependency to 0.9.1.
+- Updated README.
 
 ### Fixed
 
@@ -21,12 +29,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Fix issue with displaying PointList data (such as the user defined array
   layout) when z-coordinates are not set.
 
-### Changed
-
-- Changed dtocean-qt dependency to 0.9.1.
-- Updated README.
-- Changed database stored proceedure calls to match changes to database
-  structure.
 
 ## [1.0.0] - 2017-02-23
 
