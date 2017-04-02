@@ -258,26 +258,31 @@ class ThreadStrategy(QtCore.QThread):
         return
 
         
-class ThreadWECSim(QtCore.QThread):
+class ThreadTool(QtCore.QThread):
     
     """QThread for executing dtocean-wec"""
     
     error_detected =  QtCore.pyqtSignal(object, object, object)
 
-    def __init__(self):
+    def __init__(self, core, project, tool):
         
-        super(ThreadWECSim, self).__init__()
+        super(ThreadTool, self).__init__()
+        self._tool = tool
+        self._core = core
+        self._project = project
+        
+        self._tool_manager = GUIToolManager()
                 
         return
     
     def run(self):
         
         try:
-        
-            if not which("dtocean-wec.exe"): return
-            
-            subprocess.call("dtocean-wec")
-        
+                    
+            self._tool_manager.execute_tool(self._core,
+                                            self._project,
+                                            self._tool)
+                
         except: 
             
             etype, evalue, etraceback = sys.exc_info()
@@ -889,7 +894,10 @@ class DTOceanWindow(MainWindow):
         
         # Threads
         self._thread_read_raw = None
-        self._thread_wec_sim = None
+        self._thread_tool = None
+        
+        # Tools
+        self._tool_manager = None
         
         # Redirect excepthook
         if not debug: sys.excepthook = self._display_error
@@ -942,7 +950,6 @@ class DTOceanWindow(MainWindow):
         # Collect all saved and unsaved signals        
         shell.project_title_change.connect(self._set_project_unsaved)
         shell.project_activated.connect(self._set_project_unsaved)
-        shell.update_pipeline.connect(self._set_project_unsaved)
         shell.reset_widgets.connect(self._set_project_unsaved)
         shell.update_run_action.connect(self._set_project_unsaved)
         shell.project_saved.connect(self._set_project_saved)
@@ -1202,11 +1209,21 @@ class DTOceanWindow(MainWindow):
         return
         
     def _init_tools_menu(self):
-    
-        # Start WEC Simulator
-        self.actionWEC_Simulator.triggered.connect(self._open_wec_simulator)
-        self.actionTest_Tool.triggered.connect(self._constraints_plot)
-    
+        
+        """Dynamically generate tool menu entries and signal/slots"""
+        
+        self._tool_manager = GUIToolManager()
+        
+        all_tools = self._tool_manager.get_available()
+        
+        for tool_name in all_tools:
+                        
+            new_action = self._add_dynamic_action(tool_name, "menuTools")
+            new_action.triggered.connect(
+                    lambda x, name=tool_name: self._open_tool(name))
+                        
+            self._dynamic_actions[tool_name] = new_action
+                
         return
         
     def _init_help_menu(self):
@@ -1356,8 +1373,15 @@ class DTOceanWindow(MainWindow):
         self.stackedWidget.setCurrentIndex(1)
         self.actionData.setChecked(True)
         
+        # Connect actions
+        self._shell.update_pipeline.connect(self._tool_menu_ui_switch)
+        self._shell.update_pipeline.connect(self._set_project_unsaved)
+        
         # Trigger the pipeline
         self._pipeline_dock._set_top_item()
+        
+        # Trigget tools menu
+        self._tool_menu_ui_switch(self._shell)
 
         return
         
@@ -1454,6 +1478,9 @@ class DTOceanWindow(MainWindow):
         
         # Reset the window title
         self._set_window_title("")
+        
+        # Trigger the tool menu switcher
+        self._tool_menu_ui_switch(self._shell)
 
         return
         
@@ -1649,7 +1676,25 @@ class DTOceanWindow(MainWindow):
             self._sim_comparison.setEnabled(True)
             
         return
+    
+    @QtCore.pyqtSlot(object)
+    def _tool_menu_ui_switch(self, shell):
+        
+        for tool_name, action in self._dynamic_actions.iteritems():
+            
+            tool = self._tool_manager.get_tool(tool_name)
+            
+            if self._tool_manager.can_execute_tool(shell.core,
+                                                   shell.project,
+                                                   tool):
+                
+                action.setEnabled(True)
+                
+            else:
+                
+                action.setDisabled(True)
 
+        return
     @QtCore.pyqtSlot()
     def _set_module_shuttle(self):
                 
@@ -2696,25 +2741,31 @@ class DTOceanWindow(MainWindow):
         
         return
         
-    @QtCore.pyqtSlot()        
-    def _open_wec_simulator(self):
+    @QtCore.pyqtSlot(str)        
+    def _open_tool(self, tool_name):
         
-        if self._thread_wec_sim is not None: return
+        if self._thread_tool is not None: return
+                
+        # Pick up the tool
+        tool = self._tool_manager.get_tool(tool_name)
         
-        self._thread_wec_sim = ThreadWECSim()
-        self._thread_wec_sim.start()
-        self._thread_wec_sim.error_detected.connect(self._display_error)
-        self._thread_wec_sim.finished.connect(self._close_wec_simulator)
-        
-        self.actionWEC_Simulator.setDisabled(True)
-        
+        self._thread_tool = ThreadTool(self._shell.core,
+                                       self._shell.project,
+                                       tool)
+        self._thread_tool.start()
+        self._thread_tool.error_detected.connect(self._display_error)
+        self._thread_tool.finished.connect(lambda: self._close_tool(tool))
+                
         return
         
-    @QtCore.pyqtSlot()        
-    def _close_wec_simulator(self):
+    @QtCore.pyqtSlot(object)        
+    def _close_tool(self, tool):
         
-        self._thread_wec_sim = None
-        self.actionWEC_Simulator.setEnabled(True)
+        if tool.has_widget():
+            widget = tool.get_widget()
+            if widget is not None: widget.show()
+        
+        self._thread_tool = None
         
         return
 
@@ -2759,21 +2810,6 @@ class DTOceanWindow(MainWindow):
                                           QtGui.QMessageBox.No)
         
         return reply
-    
-    def _constraints_plot(self):
-        
-        toolman = GUIToolManager()
-        test_tool = toolman.get_tool('Constraints Plot')
-        
-        print "Got Tool"
-        
-        toolman.execute_tool(self._shell.core, self._shell.project, test_tool)
-        
-        print "Got widget"
-        
-        test_tool._widget.show()
-        
-        return
 
     def closeEvent(self, event):
         

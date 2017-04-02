@@ -33,6 +33,12 @@ import yaml
 import pandas as pd
 from PyQt4 import QtGui, QtCore
 
+try:
+    _fromUtf8 = QtCore.QString.fromUtf8
+except AttributeError:
+    def _fromUtf8(s):
+        return s
+
 from ..utils.display import is_high_dpi
 
 if is_high_dpi():
@@ -68,9 +74,27 @@ class MainWindow(QtGui.QMainWindow, Ui_MainWindow):
         
         super(MainWindow, self).__init__()
         self.setupUi(self)
+        self._dynamic_actions = {}
         
         return
-
+    
+    def _add_dynamic_action(self, action_name, menu_name):
+        
+        action_id = "action{}".format(action_name.replace(" ", "_"))
+        
+        new_action = QtGui.QAction(self)
+        new_action.setCheckable(False)
+        new_action.setEnabled(False)
+        new_action.setShortcutContext(QtCore.Qt.WindowShortcut)
+        new_action.setSoftKeyRole(QtGui.QAction.PositiveSoftKey)
+        new_action.setObjectName(_fromUtf8(action_id))
+        new_action.setText(action_name)
+        
+        menu = getattr(self, menu_name)
+        menu.addAction(new_action)
+        
+        return new_action
+    
 
 class Shuttle(QtGui.QDialog, Ui_ShuttleDialog):
     

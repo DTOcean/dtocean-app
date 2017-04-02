@@ -19,7 +19,8 @@ import logging
 
 module_logger = logging.getLogger(__name__)
 
-from dtocean_core.tools.constraints import ConstraintsTool, plot_constraints
+from dtocean_core.tools.constraints import ConstraintsTool, get_constraints
+from dtocean_electrical.output import plot_devices
 
 from . import GUITool
 from ..widgets.display import MPLWidget
@@ -34,18 +35,47 @@ class GUIConstraintsTool(GUITool, ConstraintsTool):
         
         ConstraintsTool.__init__(self)
         GUITool.__init__(self)
+        self._elec = None
+        self._constrained_lines = None
         
         return
     
+    def get_weight(self):
+
+        '''A method for getting the order of priority of the strategy.
+
+        Returns:
+          int
+        '''
+
+        return 2
+    
+    def has_widget(self):
+
+        return True
+    
+    def get_widget(self):
+        
+        if self._elec is None or self._constrained_lines is None:
+            return None
+        
+        fig = plot_devices(self._elec.grid,
+                           self._constrained_lines,
+                           self._elec.array_data.layout,
+                           self._elec.array_data.landing_point,
+                           self._elec.array_data.device_footprint,
+                           [],
+                           [],
+                           [],
+                           []
+                           )
+        widget = MPLWidget(fig, self.parent)
+        
+        return widget
+    
     def connect(self, **kwargs):
-        
-        print "Calling plot"
-        
-        fig = plot_constraints(self.data)
-        
-        print "Made plot"
-        
-        self._widget = MPLWidget(fig)
+                
+        self._elec, self._constrained_lines = get_constraints(self.data)
 
         return
 

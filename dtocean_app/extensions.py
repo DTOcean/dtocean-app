@@ -72,7 +72,7 @@ class GUIStrategyManager(ListFrameEditor, StrategyManager):
         
     def _init_list(self):
         
-        available_strategies = self.get_available_strategies()
+        available_strategies = self.get_available()
         super(GUIStrategyManager, self)._update_list(available_strategies)
         
         return
@@ -93,7 +93,7 @@ class GUIStrategyManager(ListFrameEditor, StrategyManager):
         
         return
     
-    def get_available_strategies(self):
+    def get_available(self):
         
         strategy_names = super(GUIStrategyManager,
                                self).get_available()
@@ -124,20 +124,6 @@ class GUIStrategyManager(ListFrameEditor, StrategyManager):
             raise ValueError(errStr)
             
         return sorted_names
-        
-    def get_strategy(self, strategy_name):
-        
-        if strategy_name not in self.get_available_strategies():
-            
-            errStr = ("Name {} is not a recognised "
-                      "strategy").format(strategy_name)
-            raise KeyError(errStr)
-        
-        cls_name = self._plugin_names[strategy_name]
-        StrategyCls = self._plugin_classes[cls_name]
-        strategy_obj = StrategyCls()
-        
-        return strategy_obj
         
     def get_level_values_df(self, shell, var_id, scope, ignore_strategy):
         
@@ -352,4 +338,35 @@ class GUIToolManager(ToolManager):
         ToolManager.__init__(self, tools, "GUITool")
         
         return
+    
+    def get_available(self):
+        
+        tool_names = super(GUIToolManager, self).get_available()
+        
+        tool_weights = []
+
+        for tool_name in tool_names:
+            
+            cls_name = self._plugin_names[tool_name]
+            ToolCls = self._plugin_classes[cls_name]
+            tool_obj = ToolCls()
+            
+            tool_weights.append(tool_obj.get_weight())
+            
+        sorted_lists = sorted(zip(tool_names, tool_weights),
+                              key=lambda x: x[1])
+        
+        (sorted_names,
+         sorted_weights) = [[x[i] for x in sorted_lists] for i in range(2)]
+         
+        monotonic = all(x<y for x, y in zip(sorted_weights,
+                                            sorted_weights[1:]))
+                                                
+        if not monotonic:
+            
+            errStr = ("Interface weights are not monotonic. Found "
+                      "weights: {}").format(sorted_weights)
+            raise ValueError(errStr)
+            
+        return sorted_names
 
