@@ -132,9 +132,7 @@
     <property name="title">
      <string>Tools</string>
     </property>
-    <addaction name="actionWEC_Simulator"/>
     <addaction name="separator"/>
-    <addaction name="actionTest_Tool"/>
    </widget>
    <addaction name="menuFile"/>
    <addaction name="menuSimulation"/>

@@ -14,6 +14,38 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import abc
+
 class GUITool(object):
     
-    """Plugin Discovery"""    
+    __metaclass__ = abc.ABCMeta
+    
+    """Plugin Discovery"""
+    
+    def __init__(self):
+        
+        self.parent = None
+        
+        return
+    
+    @abc.abstractmethod
+    def get_weight(self):
+
+        '''A method for getting the order of priority of the tool.
+
+        Returns:
+          int
+        '''
+
+        return
+    
+    @abc.abstractmethod
+    def has_widget(self):
+
+        '''A method for indicating if the tool creates a widget
+
+        Returns:
+          bool
+        '''
+
+        return
