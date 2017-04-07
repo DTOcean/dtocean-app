@@ -87,7 +87,7 @@ class DBSelector(ListTableEditor):
         selected = str(item.text())
         db_dict = self._data_menu.get_database_dict(selected)
         
-        key_order =  ['host', 'dbname', 'schema', 'user', 'pwd']
+        key_order =  ['host', 'dbname', 'user', 'pwd']
         value_order = []        
         
         for key in key_order:
