@@ -1,0 +1,6 @@
+# .coveragerc to control coverage.py
+[run]
+branch = True
+omit =
+    # omit pyqt auto generated files
+    dtocean_app/designer*
