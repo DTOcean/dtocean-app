@@ -1,7 +1,7 @@
 # REQUIREMENTS FOR CONDA INSTALLATION
 
 # INSTALLATION REQUIRED DEPENDENCIES
-dtocean-core >=1.0
+dtocean-core >=1.1.0.dev0
 matplotlib
 numpy
 pandas >=0.18
