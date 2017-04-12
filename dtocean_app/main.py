@@ -664,9 +664,10 @@ class Shell(QtCore.QObject):
         systems_available = self.core.has_data(self.project,
                                                "hidden.available_systems")
                                                
-        if sites_available and systems_available:
+        if sites_available or systems_available:
             self.project_menu.initiate_options(self.core, self.project)
-            self.filter_active.emit()
+        
+        if sites_available: self.filter_active.emit()
             
         self.pipeline_active.emit()
         
