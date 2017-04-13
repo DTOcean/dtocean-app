@@ -9,7 +9,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Added
 
-- Add change log.
 - Add high DPI scaling widgets which activate when Windows virtual DPI exceeds
   100. Improves look and feel on high DPI displays.
 - Split high low and shared QtDesigner files into separate directories.
@@ -18,6 +17,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Added constraints plot tool.
 - Allow filtering of database when only sites or only devices are defined.
 - Add test for opening main window. Requires pytest-qt and pytest-mock.
+- Add tests for scenario activation upto and including pipeline activation
+  without a database connected.
+- Add change log.
 
 ### Changed
 
