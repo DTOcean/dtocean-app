@@ -12,3 +12,5 @@ pyqt =4.11.4
 
 # TEST DEPENDENCIES
 pytest-cov
+pytest-mock
+pytest-qt
