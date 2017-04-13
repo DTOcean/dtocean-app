@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
   module.
 - Added constraints plot tool.
 - Allow filtering of database when only sites or only devices are defined.
+- Add test for opening main window. Requires pytest-qt and pytest-mock.
 
 ### Changed
 
