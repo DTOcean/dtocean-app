@@ -148,6 +148,19 @@ def test_initiate_pipeline(qtbot, mock):
     # Initiate the pipeline
     init_pipeline_button = \
         window.scenarioToolBar.widgetForAction(window.actionInitiate_Pipeline)
-    qtbot.mouseClick(init_pipeline_button, QtCore.Qt.LeftButton)  
+    qtbot.mouseClick(init_pipeline_button, QtCore.Qt.LeftButton)
     
-    assert tree_widget.headerItem().text(0) == "Define scenario selections..."
+    data_check = window._data_check
+    
+    def data_check_visible(): assert data_check.isVisible()
+    
+    qtbot.waitUntil(data_check_visible)
+    
+    qtbot.mouseClick(data_check.buttonBox.button(QtGui.QDialogButtonBox.Ok),
+                     QtCore.Qt.LeftButton)
+    
+    def check_dataflow(): assert window.actionInitiate_Dataflow.isEnabled()
+    
+    qtbot.waitUntil(check_dataflow)
+    
+    assert True
