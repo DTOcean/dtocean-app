@@ -13,6 +13,7 @@ only_commits:
     - designer/
     - dtocean_app/
     - test/
+    - setup.py
     
 skip_commits:
   files:
