@@ -263,7 +263,18 @@ class IndexTable(GUIStructure, IndexTable):
     @staticmethod
     def auto_output(self):
         
-        TableData.auto_output(self)
+        widget = OutputDataTable(self.parent,
+                                 self.meta.result.labels,
+                                 self.meta.result.units)
+        
+        if self.data.result is not None:
+            df = self.data.result.reset_index()
+        else:
+            df = None
+            
+        widget._set_value(df)
+        
+        self.data.result = widget
 
         return
 
@@ -917,9 +928,12 @@ class SimpleDict(GUIStructure, SimpleDict):
                                  labels,
                                  units)
         
-        raw_dict = {"Key": self.data.result.keys(),
-                    "Value": self.data.result.values()}
-        df = pd.DataFrame(raw_dict)
+        df = None
+        
+        if self.data.result is not None:
+            raw_dict = {"Key": self.data.result.keys(),
+                        "Value": self.data.result.values()}
+            df = pd.DataFrame(raw_dict)            
         
         widget._set_value(df)
         
@@ -1028,6 +1042,25 @@ class DateTimeData(GUIStructure, DateTimeData):
 
 class DateTimeDict(GUIStructure, DateTimeDict):
     """Overloading DateTimeDict class"""
+    
+    @staticmethod
+    def auto_output(self):
+        
+        labels = ["Key", "DateTime"]
+        
+        widget = OutputDataTable(self.parent,
+                                 labels)
+        
+        df = None
+        
+        if self.data.result is not None:
+            raw_dict = {"Key": self.data.result.keys(),
+                        "DateTime": self.data.result.values()}
+            df = pd.DataFrame(raw_dict)
+        
+        widget._set_value(df)
+        
+        self.data.result = widget
     
 
 class TriStateData(GUIStructure, TriStateData):
