@@ -744,28 +744,31 @@ class VarItem(BaseItem):
 
         if status == "satisfied":
 
+            self.setHidden(False)
             self.setDisabled(False)
             self._set_icon_green()
 
         elif status == "required":
 
+            self.setHidden(False)
             self.setDisabled(False)
             self._set_icon_red()
 
         elif status == "optional":
 
+            self.setHidden(False)
             self.setDisabled(False)
             self._set_icon_blue()
 
         elif "unavailable" in status:
 
-            self._set_icon_cancel()
+            self.setHidden(False)
             self.setDisabled(True)
+            self._set_icon_cancel()
             
-        elif status ==  "overwritten":
+        elif "overwritten" in status:
 
-            self._set_icon_cancel()
-            self.setDisabled(True)
+            self.setHidden(True)
 
         self._status = status
 
