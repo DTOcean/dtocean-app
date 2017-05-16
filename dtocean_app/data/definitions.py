@@ -18,7 +18,6 @@ import numpy as np
 import pandas as pd
 
 from dtocean_core.data.definitions import  (UnknownData,
-                                            DateTimeData,
                                             SeriesData,
                                             TimeSeries,
                                             TimeSeriesColumn,
@@ -65,6 +64,8 @@ from dtocean_core.data.definitions import  (UnknownData,
                                             DirectoryDataColumn,
                                             SimpleListColumn,
                                             SimpleDictColumn,
+                                            DateTimeData,
+                                            DateTimeDict,
                                             TriStateData,
                                             PointData,
                                             PointList,
@@ -114,31 +115,6 @@ class GUIStructure(object):
 
 class UnknownData(GUIStructure, UnknownData):
     """Overloading UnknownData class"""
-
-
-class DateTimeData(GUIStructure, DateTimeData):
-    """Overloading DateTimeData class"""
-
-    @staticmethod
-    def auto_input(self):
-    
-        input_widget = DateSelect(self.parent)
-        input_widget._set_value(self.data.result)
-            
-        self.data.result = input_widget
-    
-        return
-        
-    @staticmethod
-    def auto_output(self):
-        
-        output_widget = LabelOutput(self.parent,
-                                    None)
-        output_widget._set_value(self.data.result)
-            
-        self.data.result = output_widget
-
-        return
 
 
 class SeriesData(GUIStructure, SeriesData):
@@ -1023,6 +999,35 @@ class SimpleListColumn(GUIStructure, SimpleListColumn):
 
 class SimpleDictColumn(GUIStructure, SimpleDictColumn):
     """Overloading SimpleDictColumn class"""
+    
+    
+class DateTimeData(GUIStructure, DateTimeData):
+    """Overloading DateTimeData class"""
+
+    @staticmethod
+    def auto_input(self):
+    
+        input_widget = DateSelect(self.parent)
+        input_widget._set_value(self.data.result)
+            
+        self.data.result = input_widget
+    
+        return
+        
+    @staticmethod
+    def auto_output(self):
+        
+        output_widget = LabelOutput(self.parent,
+                                    None)
+        output_widget._set_value(self.data.result)
+            
+        self.data.result = output_widget
+
+        return
+    
+
+class DateTimeDict(GUIStructure, DateTimeDict):
+    """Overloading DateTimeDict class"""
     
 
 class TriStateData(GUIStructure, TriStateData):
