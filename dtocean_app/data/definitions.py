@@ -1012,6 +1012,20 @@ class SimpleListColumn(GUIStructure, SimpleListColumn):
 class SimpleDictColumn(GUIStructure, SimpleDictColumn):
     """Overloading SimpleDictColumn class"""
     
+    @staticmethod
+    def auto_input(self):
+        
+        SimpleDict.auto_input(self)
+        
+        return
+        
+    @staticmethod
+    def auto_output(self):
+        
+        SimpleDict.auto_output(self)
+        
+        return
+
     
 class DateTimeData(GUIStructure, DateTimeData):
     """Overloading DateTimeData class"""
