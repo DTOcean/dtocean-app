@@ -931,7 +931,7 @@ class SimpleDict(GUIStructure, SimpleDict):
         if self.data.result is not None:
             raw_dict = {"Key": self.data.result.keys(),
                         "Value": self.data.result.values()}
-            df = pd.DataFrame(raw_dict)            
+            df = pd.DataFrame(raw_dict)
         
         widget._set_value(df)
         
