@@ -17,8 +17,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Added constraints plot tool.
 - Allow filtering of database when only sites or only devices are defined.
 - Add test for opening main window. Requires pytest-qt and pytest-mock.
-- Add tests for scenario activation upto and including pipeline activation
+- Add tests for scenario activation up to and including pipeline activation
   without a database connected.
+- Add DateTimeDict structure and set up output widget.
+- Add input and output widgets for SimpleDictColumn.
 - Add change log.
 
 ### Changed
@@ -26,6 +28,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Changed dtocean-qt dependency to 0.9.1.
 - Updated README.
 - Removed "schema" from database configuration dialog.
+- Hide input variables labelled as overwritten and output variables labelled
+  as unavailable or overwritten.
+- Move ListWidget ui file to shared directory and add specific unit label.
 
 ### Fixed
 
@@ -33,7 +38,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
   variable in environmental assessment theme.
 - Fix issue with displaying PointList data (such as the user defined array
   layout) when z-coordinates are not set.
-
+- Fixed issue with missing data in IndexTable and SimpleDict widgets.
 
 ## [1.0.0] - 2017-02-23
 
