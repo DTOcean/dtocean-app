@@ -742,6 +742,8 @@ class VarItem(BaseItem):
         
     def _update_status(self, status):
 
+        self._status = status
+
         if status == "satisfied":
 
             self.setHidden(False)
@@ -759,18 +761,6 @@ class VarItem(BaseItem):
             self.setHidden(False)
             self.setDisabled(False)
             self._set_icon_blue()
-
-        elif "unavailable" in status:
-
-            self.setHidden(False)
-            self.setDisabled(True)
-            self._set_icon_cancel()
-            
-        elif "overwritten" in status:
-
-            self.setHidden(True)
-
-        self._status = status
 
         return
         
@@ -814,6 +804,22 @@ class VarItem(BaseItem):
 
 
 class InputVarItem(VarItem):
+    
+    def _update_status(self, status):
+
+        if "unavailable" in status:
+
+            self.setHidden(False)
+            self.setDisabled(True)
+            self._set_icon_cancel()
+            
+        elif "overwritten" in status:
+
+            self.setHidden(True)
+        
+        super(InputVarItem, self)._update_status(status)
+
+        return
         
     def _get_data_widget(self, shell):
         
@@ -838,6 +844,15 @@ class InputVarItem(VarItem):
     
 
 class OutputVarItem(VarItem):
+    
+    def _update_status(self, status):
+
+        if "unavailable" in status or "overwritten" in status:
+            self.setHidden(True)
+        
+        super(OutputVarItem, self)._update_status(status)
+
+        return
         
     def _get_data_widget(self, shell):
         
