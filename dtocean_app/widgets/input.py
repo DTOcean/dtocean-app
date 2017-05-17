@@ -111,24 +111,28 @@ class CancelWidget(QtGui.QWidget):
 
 class ListSelect(QtGui.QWidget, Ui_ListSelect):
 
-    def __init__(self, parent, data, question=None):
+    def __init__(self, parent, data, unit=None, question=None):
 
         QtGui.QWidget.__init__(self, parent)
         Ui_ListSelect.__init__(self)
         
         self.setupUi(self)
-        self._init_ui(data, question=question)
+        self._init_ui(data, unit=unit, question=question)
 
         return
 
-    def _init_ui(self, data, value=None, question=None):
+    def _init_ui(self, data, value=None, unit=None, question=None):
 
         for item in data:
             self.comboBox.addItem(item)
 
         self.comboBox.setCurrentIndex(-1)
-        
         self._set_value(value)
+        
+        if unit is not None:
+            self.unitsLabel.setText(unit)
+        else:
+            self.unitsLabel.setText("")
         
         if question is not None:
             self.questionLabel.setText(question)
