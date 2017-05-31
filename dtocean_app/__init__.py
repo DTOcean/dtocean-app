@@ -17,6 +17,8 @@
 import os
 import sys
 import argparse
+import warnings
+import traceback
 
 from PyQt4 import QtGui, QtCore
 
@@ -26,6 +28,23 @@ from polite.configuration import Logger
 from .utils.qtlog import QtHandler
 
 module_path = os.path.realpath(__file__)
+
+def warn_with_traceback(message,
+                        category,
+                        filename,
+                        lineno,
+                        file=None,
+                        line=None):
+
+    log = file if hasattr(file,'write') else sys.stderr
+    traceback.print_stack(file=log)
+    log.write(warnings.formatwarning(message,
+                                     category,
+                                     filename,
+                                     lineno,
+                                     line))
+    
+    return
 
 def start_logging(debug=False):
 
@@ -42,9 +61,12 @@ def start_logging(debug=False):
     
     return
 
-def main(debug=False):
+def main(debug=False, trace_warnings=False):
 
     """Run the DTOcean tool"""
+    
+    # Add traces to warnings
+    if trace_warnings: warnings.showwarning = warn_with_traceback
     
     # Bring up the logger
     start_logging(debug)
@@ -94,11 +116,16 @@ def gui_interface():
     parser.add_argument("--debug",
                         help=("disable stream redirection"),
                         action='store_true')
+    
+    parser.add_argument("--trace-warnings",
+                        help=("add stack trace to warnings"),
+                        action='store_true')
                                      
     args = parser.parse_args()
     debug = args.debug
+    trace_warnings = args.trace_warnings
         
-    main(debug)
+    main(debug=debug, trace_warnings=trace_warnings)
 
     return
 
