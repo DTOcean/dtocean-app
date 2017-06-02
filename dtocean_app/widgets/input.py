@@ -26,7 +26,7 @@ import numpy as np
 
 from PyQt4 import QtCore, QtGui
 from dtocean_qt.models.DataFrameModel import DataFrameModel
-from shapely.geometry import Polygon, Point
+from shapely.geometry import Point
 
 try:
     _fromUtf8 = QtCore.QString.fromUtf8
@@ -40,7 +40,6 @@ from ..utils.display import is_high_dpi
 if is_high_dpi():
 
     from ..designer.high.listselect import Ui_ListSelect
-    from ..designer.high.floatselect import Ui_FloatSelect
     from ..designer.high.intselect import Ui_IntSelect
     from ..designer.high.pointselect import Ui_PointSelect
     from ..designer.high.stringselect import Ui_StringSelect
@@ -51,13 +50,14 @@ if is_high_dpi():
 else:
     
     from ..designer.low.listselect import Ui_ListSelect
-    from ..designer.low.floatselect import Ui_FloatSelect
     from ..designer.low.intselect import Ui_IntSelect
     from ..designer.low.pointselect import Ui_PointSelect
     from ..designer.low.stringselect import Ui_StringSelect
     from ..designer.low.boolselect import Ui_BoolSelect
     from ..designer.low.pathselect import Ui_PathSelect
     from ..designer.low.dateselect import Ui_DateSelect
+
+from .scientificselect import Ui_ScientificSelect
 
 # DOCK WINDOW INPUT WIDGETS
 
@@ -166,14 +166,14 @@ class ListSelect(QtGui.QWidget, Ui_ListSelect):
         return self.buttonBox.button(QtGui.QDialogButtonBox.Cancel).clicked
 
 
-class FloatSelect(QtGui.QWidget, Ui_FloatSelect):
+class FloatSelect(QtGui.QWidget, Ui_ScientificSelect):
     
     read_value = QtCore.pyqtSignal()
 
-    def __init__(self, parent, units=None):
+    def __init__(self, parent=None, units=None):
 
         QtGui.QWidget.__init__(self, parent)
-        Ui_FloatSelect.__init__(self)
+        Ui_ScientificSelect.__init__(self)
         
         self.setupUi(self)
         self._init_ui(units)
@@ -234,7 +234,7 @@ class IntSelect(QtGui.QWidget, Ui_IntSelect):
     def __init__(self, parent, units=None):
 
         QtGui.QWidget.__init__(self, parent)
-        Ui_FloatSelect.__init__(self)
+        Ui_IntSelect.__init__(self)
         
         self.setupUi(self)
         self._init_ui(units)
@@ -1027,4 +1027,3 @@ class InputTimeSeries(InputDataTable):
         series = df.ix[:,0]
         
         return series
-
