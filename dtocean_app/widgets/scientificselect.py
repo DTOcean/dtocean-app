@@ -24,7 +24,7 @@ Created on Thu Apr 23 12:51:14 2015
 import re
 
 from PyQt4 import QtCore, QtGui
-from PyQt4.QtGui import QValidator,QDoubleSpinBox
+from PyQt4.QtGui import QValidator, QDoubleSpinBox
 
 try:
     _fromUtf8 = QtCore.QString.fromUtf8
@@ -59,7 +59,7 @@ class FloatValidator(QValidator):
         if valid_float_string(string):
 
             return (QValidator.Acceptable, position)
-        if string == "" or string[position-1] in 'e.-+':
+        if string == "" or string[position - 1] in 'e.-+':
             return (QValidator.Intermediate, position)
 
         return(QValidator.Invalid, position)
@@ -72,7 +72,7 @@ class FloatValidator(QValidator):
 class ScientificDoubleSpinBox(QDoubleSpinBox):
 
     def __init__(self, *args, **kwargs):
-        super(QDoubleSpinBox,self).__init__(*args, **kwargs)
+        super(QDoubleSpinBox, self).__init__(*args, **kwargs)
         self.setMinimum(1.e-18)
         self.setMaximum(1.e+18)
         self.validator = FloatValidator()
@@ -169,7 +169,7 @@ class Ui_ScientificSelect(object):
         self.verticalLayout.addItem(spacerItem)
         self.buttonBox = QtGui.QDialogButtonBox(FloatSelect)
         self.buttonBox.setStandardButtons(
-                QtGui.QDialogButtonBox.Cancel|QtGui.QDialogButtonBox.Ok)
+                QtGui.QDialogButtonBox.Cancel | QtGui.QDialogButtonBox.Ok)
         self.buttonBox.setCenterButtons(False)
         self.buttonBox.setObjectName(_fromUtf8("buttonBox"))
         self.verticalLayout.addWidget(self.buttonBox)
@@ -199,4 +199,3 @@ def format_float(value):
     string = "{:g}".format(value).replace("e+", "e")
     string = re.sub("e(-?)0*(\d+)", r"e\1\2", string)
     return string
-        
