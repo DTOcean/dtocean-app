@@ -21,6 +21,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
   without a database connected.
 - Add DateTimeDict structure and set up output widget.
 - Add input and output widgets for SimpleDictColumn.
+- Added ScientificDoubleSpinBox widget to allow scientific notation for floats.
+- Created static version of Ui_FloatSelect (called Ui_ScientificSelect) which
+  uses ScientificDoubleSpinBox.
 - Add change log.
 
 ### Changed
@@ -31,6 +34,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Hide input variables labelled as overwritten and output variables labelled
   as unavailable or overwritten.
 - Move ListWidget ui file to shared directory and add specific unit label.
+- FloatSelect widget now subclasses Ui_ScientificSelect.
 
 ### Fixed
 
@@ -39,6 +43,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Fix issue with displaying PointList data (such as the user defined array
   layout) when z-coordinates are not set.
 - Fixed issue with missing data in IndexTable and SimpleDict widgets.
+
+### Removed
+
+- Removed floatselect.ui as the widget is now built inside the package.
+
 
 ## [1.0.0] - 2017-02-23
 
