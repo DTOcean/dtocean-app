@@ -37,6 +37,8 @@ except AttributeError:
 from .datatable import DataTableWidget
 from ..utils.display import is_high_dpi
 
+from .scientificselect import Ui_ScientificSelect
+
 if is_high_dpi():
 
     from ..designer.high.listselect import Ui_ListSelect
@@ -56,8 +58,6 @@ else:
     from ..designer.low.boolselect import Ui_BoolSelect
     from ..designer.low.pathselect import Ui_PathSelect
     from ..designer.low.dateselect import Ui_DateSelect
-
-from .scientificselect import Ui_ScientificSelect
 
 # DOCK WINDOW INPUT WIDGETS
 
