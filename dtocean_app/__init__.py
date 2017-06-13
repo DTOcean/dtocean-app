@@ -144,9 +144,9 @@ def gui_interface():
             
     '''
     
-    epiStr = ('''Mathew Topper, Tecnalia (c) 2016.''')
+    epiStr = ('''Mathew Topper, Tecnalia (c) 2017.''')
               
-    desStr = "Run the DTOcean GUI."
+    desStr = "Run the DTOcean graphical application."
 
     parser = argparse.ArgumentParser(description=desStr,
                                      epilog=epiStr)
