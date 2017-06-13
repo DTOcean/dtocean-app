@@ -22,7 +22,11 @@ import traceback
 
 from PyQt4 import QtGui, QtCore
 
-from polite.paths import ObjDirectory, UserDataDirectory, DirectoryMap
+from polite.configuration import ReadINI
+from polite.paths import (Directory,
+                          ObjDirectory,
+                          UserDataDirectory,
+                          DirectoryMap)
 from polite.configuration import Logger
 
 from .utils.qtlog import QtHandler
@@ -63,17 +67,33 @@ def warn_with_traceback(message,
 
 
 def start_logging(debug=False):
-
-    # Configure logging
-    objdir = ObjDirectory(__name__, "config")
+    
     datadir = UserDataDirectory("dtocean_app", "DTOcean", "config")
-    dirmap = DirectoryMap(datadir, objdir)
+    
+    files_ini = ReadINI(datadir, "files.ini")
+    files_config = files_ini.get_config()
+    
+    appdir_path = datadir.get_path("..")
+    log_folder = files_config["logs"]["path"]
+    log_path = os.path.join(appdir_path, log_folder)
+    logdir = Directory(log_path)
     
     # Disable the logging QtHandler if the debug flag is set
     QtHandler.debug = debug
-
-    log = Logger(dirmap)
-    log("dtocean_app", info_message="Welcome to DTOcean.")
+    
+    log = Logger(datadir)
+    log_config_dict = log.read()
+    
+    # Update the file logger if present
+    if "file" in log_config_dict["handlers"]:
+        log_filename = log_config_dict["handlers"]["file"]["filename"]
+        log_path = logdir.get_path(log_filename)
+        log_config_dict["handlers"]["file"]["filename"] = log_path
+        logdir.makedir()
+    
+    log.configure_logger(log_config_dict)
+    log.add_named_logger("dtocean_app",
+                         info_message="Welcome to DTOcean")
     
     return
 
