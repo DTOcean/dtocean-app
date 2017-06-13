@@ -24,7 +24,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Added ScientificDoubleSpinBox widget to allow scientific notation for floats.
 - Created static version of Ui_FloatSelect (called Ui_ScientificSelect) which
   uses ScientificDoubleSpinBox.
-- Add change log.
+- Added configuration file for setting the location of logs using the files.ini
+  configuration file (found in User\AppData\Roaming\DTOcean\dtocean_core\config
+  folder).
 
 ### Changed
 
@@ -35,6 +37,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
   as unavailable or overwritten.
 - Move ListWidget ui file to shared directory and add specific unit label.
 - FloatSelect widget now subclasses Ui_ScientificSelect.
+- Changed setup.py to copy configuration files from source code to AppData as a
+  post-install step.
 
 ### Fixed
 
