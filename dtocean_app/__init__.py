@@ -29,6 +29,21 @@ from .utils.qtlog import QtHandler
 
 module_path = os.path.realpath(__file__)
 
+
+def init_config():
+    
+    """Copy config files to user data directory"""
+    
+    objdir = ObjDirectory(__name__, "config")
+    datadir = UserDataDirectory("dtocean_app", "DTOcean", "config")
+    dirmap = DirectoryMap(datadir, objdir)
+    
+    dirmap.copy_file("logging.yaml")
+    dirmap.copy_file("files.ini")
+    
+    return
+
+
 def warn_with_traceback(message,
                         category,
                         filename,
@@ -46,6 +61,7 @@ def warn_with_traceback(message,
     
     return
 
+
 def start_logging(debug=False):
 
     # Configure logging
@@ -60,6 +76,7 @@ def start_logging(debug=False):
     log("dtocean_app", info_message="Welcome to DTOcean.")
     
     return
+
 
 def main(debug=False, trace_warnings=False):
 
@@ -93,7 +110,8 @@ def main(debug=False, trace_warnings=False):
     sys.exit(app.exec_())
     
     return
-    
+
+
 def gui_interface():
 
     '''Command line interface for dtocean-app.
