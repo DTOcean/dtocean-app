@@ -108,8 +108,10 @@ def test_start_logging(mocker, tmpdir):
 
     start_logging()
     
-    assert True
+    logdir = config_tmpdir.join("..", "logs")
     
+    assert len(logdir.listdir()) == 1
+
     
 def test_start_logging_debug(mocker, tmpdir):
     
@@ -122,7 +124,9 @@ def test_start_logging_debug(mocker, tmpdir):
 
     start_logging(debug=True)
     
-    assert True
+    logdir = config_tmpdir.join("..", "logs")
+    
+    assert len(logdir.listdir()) == 1
 
 
 def test_start_logging_user(mocker, tmpdir):
@@ -141,8 +145,10 @@ def test_start_logging_user(mocker, tmpdir):
     
     start_logging()
     
-    assert True
+    logdir = config_tmpdir.join("..", "logs")
     
+    assert len(logdir.listdir()) == 1
+
 
 def test_get_install_paths(mocker, tmpdir):
     
