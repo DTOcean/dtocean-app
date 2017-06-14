@@ -55,16 +55,17 @@ def warn_with_traceback(message,
 def start_logging(debug=False):
     
     # Pick up the configuration from the user directory if it exists
-    configdir = UserDataDirectory("dtocean_app", "DTOcean", "config")
+    userdir = UserDataDirectory("dtocean_app", "DTOcean", "config")
             
-    if not (configdir.isfile("files.ini") and
-            configdir.isfile("logging.yaml")):
+    if userdir.isfile("files.ini") and userdir.isfile("logging.yaml"):
+        configdir = userdir
+    else:
         configdir = ObjDirectory("dtocean_app", "config")
     
     files_ini = ReadINI(configdir, "files.ini")
     files_config = files_ini.get_config()
     
-    appdir_path = configdir.get_path("..")
+    appdir_path = userdir.get_path("..")
     log_folder = files_config["logs"]["path"]
     log_path = os.path.join(appdir_path, log_folder)
     logdir = Directory(log_path)
