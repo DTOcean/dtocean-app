@@ -5,29 +5,7 @@ import sys
 import glob
 
 from setuptools import Command, find_packages, setup
-from setuptools.command.develop import develop
-from setuptools.command.install import install
 from setuptools.command.test import test as TestCommand
-
-
-class PostDevelopCommand(develop):
-    """Post-installation for development mode."""
-    def run(self):
-        # PUT YOUR PRE-INSTALL SCRIPT HERE or CALL A FUNCTION
-        develop.run(self)
-        # PUT YOUR POST-INSTALL SCRIPT HERE or CALL A FUNCTION
-        from dtocean_app import init_config
-        init_config()
-
-
-class PostInstallCommand(install):
-    """Post-installation for installation mode."""
-    def run(self):
-        # PUT YOUR PRE-INSTALL SCRIPT HERE or CALL A FUNCTION
-        install.run(self)
-        # PUT YOUR POST-INSTALL SCRIPT HERE or CALL A FUNCTION
-        from dtocean_app import init_config
-        init_config()
 
       
 class Bootstrap(Command):
@@ -233,13 +211,13 @@ setup(name='dtocean-app',
       license="GPLv3",
       packages=find_packages(),
       install_requires=[
-           'dtocean-core==1.1.dev3',
+           'dtocean-core==1.1.dev4',
            'matplotlib',
            'numpy',
            'pandas>=0.18',
            'dtocean-qt>=0.9',
            'pil',
-           'polite==0.10.dev0',
+           'polite==0.10.dev1',
           # 'sip',
           # 'PyQt4',
       ],
@@ -247,6 +225,7 @@ setup(name='dtocean-app',
           'console_scripts':
               [
                'dtocean-app = dtocean_app:gui_interface',
+               'dtocean-app-config = dtocean_app:init_config_interface'
                ]},
       package_data={'': ['*.png', 'test_images/*.png'],
                     'dtocean_app': ['config/*.ini',
@@ -256,9 +235,7 @@ setup(name='dtocean-app',
                     },
       zip_safe=False, # Important for reading data files
       # scripts=['post-install.py'],
-      cmdclass={'develop': PostDevelopCommand,
-                'install': PostInstallCommand,
-                'bootstrap': Bootstrap,
+      cmdclass={'bootstrap': Bootstrap,
                 'test': PyTest,
                 'cleantest': CleanTest
                 },
