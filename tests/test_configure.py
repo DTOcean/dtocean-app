@@ -109,6 +109,20 @@ def test_start_logging(mocker, tmpdir):
     start_logging()
     
     assert True
+    
+    
+def test_start_logging_debug(mocker, tmpdir):
+    
+    # Make a source directory with some files
+    config_tmpdir = tmpdir.mkdir("config")
+    mock_dir = Directory(str(config_tmpdir))
+        
+    mocker.patch('dtocean_app.UserDataDirectory',
+                 return_value=mock_dir)
+
+    start_logging(debug=True)
+    
+    assert True
 
 
 def test_start_logging_user(mocker, tmpdir):
