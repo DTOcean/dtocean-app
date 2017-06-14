@@ -34,20 +34,6 @@ from .utils.qtlog import QtHandler
 module_path = os.path.realpath(__file__)
 
 
-def init_config():
-    
-    """Copy config files to user data directory"""
-    
-    objdir = ObjDirectory(__name__, "config")
-    datadir = UserDataDirectory("dtocean_app", "DTOcean", "config")
-    dirmap = DirectoryMap(datadir, objdir)
-    
-    dirmap.copy_file("logging.yaml")
-    dirmap.copy_file("files.ini")
-    
-    return
-
-
 def warn_with_traceback(message,
                         category,
                         filename,
@@ -68,12 +54,17 @@ def warn_with_traceback(message,
 
 def start_logging(debug=False):
     
-    datadir = UserDataDirectory("dtocean_app", "DTOcean", "config")
+    # Pick up the configuration from the user directory if it exists
+    configdir = UserDataDirectory("dtocean_app", "DTOcean", "config")
+            
+    if not (configdir.isfile("files.ini") and
+            configdir.isfile("logging.yaml")):
+        configdir = ObjDirectory("dtocean_app", "config")
     
-    files_ini = ReadINI(datadir, "files.ini")
+    files_ini = ReadINI(configdir, "files.ini")
     files_config = files_ini.get_config()
     
-    appdir_path = datadir.get_path("..")
+    appdir_path = configdir.get_path("..")
     log_folder = files_config["logs"]["path"]
     log_path = os.path.join(appdir_path, log_folder)
     logdir = Directory(log_path)
@@ -81,7 +72,7 @@ def start_logging(debug=False):
     # Disable the logging QtHandler if the debug flag is set
     QtHandler.debug = debug
     
-    log = Logger(datadir)
+    log = Logger(configdir)
     log_config_dict = log.read()
     
     # Update the file logger if present
@@ -95,6 +86,71 @@ def start_logging(debug=False):
     log.add_named_logger("dtocean_app",
                          info_message="Welcome to DTOcean")
     
+    return
+
+
+def init_config(install=False, overwrite=False):
+    
+    """Copy config files to user data directory"""
+    
+    objdir = ObjDirectory(__name__, "config")
+    datadir = UserDataDirectory("dtocean_app", "DTOcean", "config")
+    dirmap = DirectoryMap(datadir, objdir)
+    
+    dirmap.copy_file("logging.yaml", overwrite=overwrite)
+    dirmap.copy_file("files.ini", overwrite=overwrite)
+    
+    # Copy the manuals installation configuration
+    if install:
+        dirmap.copy_file("install.ini", overwrite=overwrite)
+    
+    return
+
+
+def init_config_parser(args):
+    
+    '''Command line parser for init_config.
+    
+    Example:
+    
+        To get help::
+        
+            $ dtocean-app-config -h
+            
+    '''
+    
+    epiStr = ('Mathew Topper (c) 2017.')
+              
+    desStr = ("Copy user modifiable configuration files to "
+              "User\AppData\Roaming\DTOcean\dtocean-app\config")
+
+    parser = argparse.ArgumentParser(description=desStr,
+                                     epilog=epiStr)
+
+    parser.add_argument("--install",
+                        help=("add path configuration for manuals"),
+                        action="store_true")
+
+    parser.add_argument("--overwrite",
+                        help=("overwrite any existing configuration files"),
+                        action="store_true")
+                        
+    args = parser.parse_args(args)
+
+    install = args.install
+    overwrite = args.overwrite
+    
+    return install, overwrite
+
+
+def init_config_interface():
+    
+    '''Command line interface for init_config.'''
+    
+    install, overwrite = init_config_parser(sys.argv[1:])
+    dir_path = init_config(install=install, overwrite=overwrite)
+    print "Copying configuration files to {}".format(dir_path)
+
     return
 
 
