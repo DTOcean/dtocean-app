@@ -25,8 +25,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Created static version of Ui_FloatSelect (called Ui_ScientificSelect) which
   uses ScientificDoubleSpinBox.
 - Added configuration file for setting the location of logs using the files.ini
-  configuration file (found in User\AppData\Roaming\DTOcean\dtocean_core\config
+  configuration file (found in User\AppData\Roaming\DTOcean\dtocean_app\config
   folder).
+- Added configuration file generator called dtocean-app-config which copies
+  the default configuration to the
+  User\AppData\Roaming\DTOcean\dtocean_app\config folder.
 
 ### Changed
 
@@ -37,8 +40,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
   as unavailable or overwritten.
 - Move ListWidget ui file to shared directory and add specific unit label.
 - FloatSelect widget now subclasses Ui_ScientificSelect.
-- Changed setup.py to copy configuration files from source code to AppData as a
-  post-install step.
+- Using default configuration files in source code unless a user configuration
+  is found.
 
 ### Fixed
 
