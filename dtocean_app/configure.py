@@ -19,23 +19,19 @@
 """
 
 # Helpers for configuration files
-from polite.paths import (ObjDirectory,
-                          SiteDataDirectory,
-                          UserDataDirectory,
-                          DirectoryMap)
+from polite.paths import SiteDataDirectory, UserDataDirectory
 from polite.configuration import ReadINI
 
-def get_install_paths(install_config_name="install.ini"):
+
+def get_install_paths():
     
     """Pick the necessary paths to configure the external files for the wave
     and tidal packages."""
     
-    source_dir = ObjDirectory(__name__, "config")
+    install_config_name = "install.ini"
+    
     user_data = UserDataDirectory("dtocean_doc", "DTOcean", "config")
-    user_data_map = DirectoryMap(user_data, source_dir)
-    user_data_map.safe_copy_file(install_config_name,
-                                 "{}.txt".format(install_config_name))
-    user_ini_reader = ReadINI(user_data_map, install_config_name)
+    user_ini_reader = ReadINI(user_data, install_config_name)
     
     # Get the root path from the site data path.
     site_data = SiteDataDirectory("DTOcean Manuals", "DTOcean")
@@ -48,8 +44,8 @@ def get_install_paths(install_config_name="install.ini"):
     else:
         return None
                  
-    path_dict = {"man_user_path"        : config["man"]["user_path"],
-                 "man_technical_path"   : config["man"]["technical_path"]}
+    path_dict = {"man_user_path": config["man"]["user_path"],
+                 "man_technical_path": config["man"]["technical_path"]}
 
     return path_dict
 
