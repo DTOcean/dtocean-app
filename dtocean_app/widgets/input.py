@@ -832,23 +832,20 @@ class InputLineTable(InputDataTable):
     
     null_signal = QtCore.pyqtSignal()
     
-    def __init__(self, parent):
+    def __init__(self, parent=None, units=None):
         
         columns = ["val1", "val2"]
-        InputDataTable.__init__(self, parent, columns)
+        InputDataTable.__init__(self, parent,
+                                      columns,
+                                      units=units)
         
         return
     
     def _get_result(self):
         
-        model = self.datatable.model()
-        df = model.dataFrame()
+        df = super(InputLineTable, self)._get_result()
+        if df is None: return
         
-        # Nullify the variable if the dataframe is empty
-        if df.empty: return
-            
-        first_row = df.iloc[0]
-        df.append(first_row, ignore_index=True)
         df = df.apply(pd.to_numeric)
         
         return df.values
@@ -868,14 +865,8 @@ class InputTriStateTable(InputDataTable):
         
     def _get_result(self):
         
-        model = self.datatable.model()
-        df = model.dataFrame()
-        
-        # Nullify the variable if the dataframe is empty
-        if df.empty: return
-        
-        # Rename the columns
-        df.columns = self._columms
+        df = super(InputTriStateTable, self)._get_result()
+        if df is None: return
         
         get_cols = range(1, len(df.columns))
         
@@ -891,41 +882,13 @@ class InputTriStateTable(InputDataTable):
                         ["true", "false", "unknown", "unknown", "unknown"])
 
         return df
-        
-        
-class InputPointTable(InputDataTable):
-    
-    null_signal = QtCore.pyqtSignal()
-    
-    def __init__(self, parent):
-        
-        columns = ["x", "y", "z"]
-        InputDataTable.__init__(self, parent, columns)
-        
-        return
-    
-    def _get_result(self):
-        
-        model = self.datatable.model()
-        df = model.dataFrame()
-        
-        # Nullify the variable if the dataframe is empty
-        if df.empty: return
-            
-        first_row = df.iloc[0]
-        df.append(first_row, ignore_index=True)
-        df = df.apply(pd.to_numeric)
-        
-        if df["z"].isnull().any(): df = df.drop("z", 1)
-        
-        return df.values
-        
+
 
 class InputDictTable(InputDataTable):
     
     null_signal = QtCore.pyqtSignal()
     
-    def __init__(self, parent,
+    def __init__(self, parent=None,
                        units=None,
                        fixed_index_names=None):
         
@@ -942,49 +905,105 @@ class InputDictTable(InputDataTable):
     
     def _get_result(self):
         
-        model = self.datatable.model()
-        df = model.dataFrame()
+        df = super(InputDictTable, self)._get_result()
+        if df is None: return
         
-        # Nullify the variable if the dataframe is empty or all values are
-        # None
-        if df.empty: return None
-        
+        # Nullify the variable if all values are None
         df = df.replace(["None", ""],
                         [None, None])
             
-        unique_values = df["Value"].unique()
+        unique_values = np.unique(df["Value"])
         if len(unique_values) == 1 and unique_values[0] is None: return None 
       
         var_dict = {k: v for k, v in zip(df["Key"], df["Value"])}
         
         return var_dict
 
-
-class InputHistogram(InputDataTable):
-    
-    def __init__(self, parent):
         
-        columns = ["bins", "values"]
+class InputPointTable(InputDataTable):
+    
+    null_signal = QtCore.pyqtSignal()
+    
+    def __init__(self, parent=None):
+        
+        columns = ["x", "y", "z"]
         InputDataTable.__init__(self, parent, columns)
         
         return
     
     def _get_result(self):
         
-        model = self.datatable.model()
-        df = model.dataFrame()
+        df = super(InputPointTable, self)._get_result()
+        if df is None: return
         
-        # Nullify the variable if the dataframe is empty
-        if df.empty: return
-            
-        first_row = df.iloc[0]
-        df.append(first_row, ignore_index=True)
         df = df.apply(pd.to_numeric)
         
-        values = df['values'].values
-        bins = np.append(0,df['bins'].values)
+        if df["z"].isnull().any(): df = df.drop("z", 1)
+        
+        return df.values
 
-        hist = (values,bins)
+
+class InputPointDictTable(InputDataTable):
+    
+    null_signal = QtCore.pyqtSignal()
+    
+    def __init__(self, parent=None,
+                       fixed_index_names=None):
+        
+        columns = ["Key", "x", "y", "z"]        
+        InputDataTable.__init__(self, parent,
+                                      columns,
+                                      fixed_index_col="Key",
+                                      fixed_index_names=fixed_index_names)
+        
+        return
+    
+    def _get_result(self):
+        
+        df = super(InputPointDictTable, self)._get_result()
+        if df is None: return
+
+        # Nullify the variable if all values are None
+        df = df.replace(["None", ""],
+                        [None, None])
+            
+        unique_values = np.unique(df[["x", "y", "z"]])
+        if len(unique_values) == 1 and unique_values[0] is None: return None
+              
+        # Split off the keys and the values
+        keyseries = df["Key"]
+        
+        valsdf = df[["x", "y", "z"]]
+        valsdf = valsdf.apply(pd.to_numeric)
+        
+        if valsdf["z"].isnull().any(): valsdf = valsdf.drop("z", 1)
+      
+        point_dict = {k: v for k, v in zip(keyseries, valsdf.values)}
+        
+        return point_dict
+
+
+class InputHistogram(InputDataTable):
+    
+    def __init__(self, parent=None):
+        
+        columns = ["Bin Separators", "Values"]
+        InputDataTable.__init__(self, parent, columns)
+        
+        return
+    
+    def _get_result(self):
+        
+        df = super(InputHistogram, self)._get_result()
+        if df is None: return
+        
+        bins = df["Bin Separators"].values
+        
+        valuesdf = df['Values'].iloc[:-1]
+        valuesdf = valuesdf.apply(pd.to_numeric)
+        values = valuesdf.values
+
+        hist = (bins, values)
         
         return hist
 
@@ -993,7 +1012,7 @@ class InputTimeSeries(InputDataTable):
     
     null_signal = QtCore.pyqtSignal()
 
-    def __init__(self, parent, labels, units=None):
+    def __init__(self, parent=None, labels=None, units=None):
 
         columns = ["DateTime", labels[0]]
 
@@ -1017,12 +1036,9 @@ class InputTimeSeries(InputDataTable):
         
     def _get_result(self):
         
-        model = self.datatable.model()
-        df = model.dataFrame()
+        df = super(InputTimeSeries, self)._get_result()
+        if df is None: return
         
-        # Nullify the variable if the dataframe is empty
-        if df.empty: return
-            
         df = df.set_index("DateTime")
         series = df.ix[:,0]
         
