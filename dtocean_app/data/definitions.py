@@ -100,6 +100,7 @@ from ..widgets.input import (ListSelect,
                              InputDataTable,
                              InputDictTable,
                              InputPointTable,
+                             InputPointDictTable,
                              InputLineTable,
                              InputTimeTable,
                              InputTimeSeries,
@@ -480,7 +481,8 @@ class NumpyLine(GUIStructure, NumpyLine):
                         
             vals_df = pd.DataFrame(raw_dict)
         
-        widget = InputLineTable(self.parent)
+        widget = InputLineTable(self.parent,
+                                self.meta.result.units)
         widget._set_value(vals_df)
         
         self.data.result = widget
@@ -578,9 +580,8 @@ class Histogram(GUIStructure, Histogram):
             bins = hist['bins']
             values = hist['values']
 
-                        
-            raw_dict = {"bins": bins[1:],
-                        "values": values,
+            raw_dict = {"Bin Separators": bins,
+                        "Values": values + [None],
                         }
                         
             hist_df = pd.DataFrame(raw_dict)
@@ -591,7 +592,6 @@ class Histogram(GUIStructure, Histogram):
         self.data.result = widget
         
         return
-
 
     @staticmethod
     def auto_output(self):
@@ -903,6 +903,7 @@ class SimpleDict(GUIStructure, SimpleDict):
             df_dict = {"Key": var_dict.keys(),
                        "Value": var_dict.values()}
             value = pd.DataFrame(df_dict)
+            value = value.sort_values(by="Key")
         else:
             value = None
         
@@ -932,6 +933,7 @@ class SimpleDict(GUIStructure, SimpleDict):
             raw_dict = {"Key": self.data.result.keys(),
                         "Value": self.data.result.values()}
             df = pd.DataFrame(raw_dict)
+            df = df.sort_values(by="Key")
         
         widget._set_value(df)
         
@@ -1069,6 +1071,7 @@ class DateTimeDict(GUIStructure, DateTimeDict):
             raw_dict = {"Key": self.data.result.keys(),
                         "DateTime": self.data.result.values()}
             df = pd.DataFrame(raw_dict)
+            df = df.sort_values(by="Key")
         
         widget._set_value(df)
         
@@ -1162,6 +1165,80 @@ class PointList(GUIStructure, PointList):
 
 class PointDict(GUIStructure, PointDict):
     """Overloading PointDict class"""
+    
+    @staticmethod
+    def auto_input(self):
+        
+        point_dict = self.data.result
+        
+        point_df = None
+            
+        if point_dict is not None:
+        
+            coord_dict = {k: v.coords[0] for k, v in point_dict.items()}
+            
+            x_vals = [x[0] for x in coord_dict.values()]
+            y_vals = [x[1] for x in coord_dict.values()]
+            
+            z_vals = []
+            
+            for x in coord_dict.values():
+                
+                if len(x) == 3:
+                    z_vals.append(x[2])
+                else:
+                    z_vals.append(None)
+                
+            raw_dict = {"Key": coord_dict.keys(),
+                        "x": x_vals,
+                        "y": y_vals,
+                        "z": z_vals}
+                        
+            point_df = pd.DataFrame(raw_dict)
+            point_df = point_df.sort_values(by="Key")
+        
+        widget = InputPointDictTable(self.parent,
+                                     self.meta.result.valid_values)
+        
+        val_types = [object, float, float, float]        
+        widget._set_value(point_df, dtypes=val_types)
+        
+        self.data.result = widget
+        
+        return
+    
+    @staticmethod
+    def auto_output(self):
+        
+        labels = ["Key", "x", "y", "z"]
+        
+        widget = OutputDataTable(self.parent,
+                                 labels)
+        
+        df = None
+        
+        if self.data.result is not None:
+            
+            point_array = np.array([np.array(el) for el in
+                                                  self.data.result.values()])
+
+            data = {"Key": self.data.result.keys(),
+                    "x": point_array[:, 0],
+                    "y": point_array[:, 1]}
+                              
+            if point_array.shape[1] == 3:
+                data["z"] = point_array[:, 2]
+            else:
+                data["z"] = [None] * len(self.data.result)
+        
+            df = pd.DataFrame(data)
+            df = df.sort_values(by="Key")
+        
+        widget._set_value(df)
+        
+        self.data.result = widget
+
+        return
 
 
 class PointDataColumn(GUIStructure, PointDataColumn):
