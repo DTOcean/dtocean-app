@@ -1200,7 +1200,7 @@ class PointDict(GUIStructure, PointDict):
         widget = InputPointDictTable(self.parent,
                                      self.meta.result.valid_values)
         
-        val_types = [object, float, float, float]        
+        val_types = [object, float, float, float]
         widget._set_value(point_df, dtypes=val_types)
         
         self.data.result = widget

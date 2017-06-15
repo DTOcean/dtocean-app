@@ -913,7 +913,7 @@ class InputDictTable(InputDataTable):
                         [None, None])
             
         unique_values = np.unique(df["Value"])
-        if len(unique_values) == 1 and unique_values[0] is None: return None 
+        if len(unique_values) == 1 and unique_values[0] is None: return None
       
         var_dict = {k: v for k, v in zip(df["Key"], df["Value"])}
         
@@ -950,7 +950,7 @@ class InputPointDictTable(InputDataTable):
     def __init__(self, parent=None,
                        fixed_index_names=None):
         
-        columns = ["Key", "x", "y", "z"]        
+        columns = ["Key", "x", "y", "z"]
         InputDataTable.__init__(self, parent,
                                       columns,
                                       fixed_index_col="Key",
