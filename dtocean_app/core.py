@@ -246,11 +246,11 @@ class GUICore(QtCore.QObject, Core):
         
         return
         
-    def set_interface_status(self, project):
+    def set_interface_status(self, project, simulation=None):
         
         """Emit a signal on status update"""
                 
-        super(GUICore, self).set_interface_status(project)
+        super(GUICore, self).set_interface_status(project, simulation)
         self.status_updated.emit()
 
         return
