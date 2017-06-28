@@ -30,6 +30,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Added configuration file generator called dtocean-app-config which copies
   the default configuration to the
   User\AppData\Roaming\DTOcean\dtocean_app\config folder.
+- Added save file robustness compatibility with dtocean-core.
+
 
 ### Changed
 
@@ -42,6 +44,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - FloatSelect widget now subclasses Ui_ScientificSelect.
 - Using default configuration files in source code unless a user configuration
   is found.
+- Changed timed rotating file logger for a standard rotating file logger that
+  is rolled over at the beginning of each session.
 
 ### Fixed
 
