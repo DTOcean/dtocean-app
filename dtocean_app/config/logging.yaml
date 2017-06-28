@@ -18,6 +18,7 @@ handlers:
     level: DEBUG
     filename: dtocean-app.log
     backupCount: 99
+    delay: True
   widget:
     class: dtocean_app.utils.qtlog.QtHandler
     level: INFO
