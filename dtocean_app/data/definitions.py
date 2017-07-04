@@ -753,6 +753,20 @@ class CartesianList(GUIStructure, CartesianList):
     
 class CartesianListColumn(GUIStructure, CartesianListColumn):
     """Overloading CartesianListColumn class"""
+    
+    @staticmethod
+    def auto_input(self):
+        
+        CartesianList.auto_input(self)
+        
+        return
+
+    @staticmethod
+    def auto_output(self):
+        
+        CartesianList.auto_output(self)
+        
+        return
 
 
 class CartesianDict(GUIStructure, CartesianDict):

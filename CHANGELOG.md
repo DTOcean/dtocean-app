@@ -31,7 +31,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
   the default configuration to the
   User\AppData\Roaming\DTOcean\dtocean_app\config folder.
 - Added save file robustness compatibility with dtocean-core.
-
+- Add widgets for CartesianListColumn structure.
 
 ### Changed
 
