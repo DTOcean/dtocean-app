@@ -5,12 +5,13 @@ from attrdict import AttrDict
 from dtocean_app.data.definitions import (CartesianList,
                                           CartesianListColumn)
 
+
 def setup_none(structure):
 
     structure.parent = None
     structure.meta = AttrDict({'result': AttrDict({"identifier": "test",
                                                    "structure": "test",
-                                                   "title": "test"})}) 
+                                                   "title": "test"})})
     
     structure.data = AttrDict({'result': None})
     
@@ -22,7 +23,7 @@ def setup_data(structure):
     structure.parent = None
     structure.meta = AttrDict({'result': AttrDict({"identifier": "test",
                                                    "structure": "test",
-                                                   "title": "test"})}) 
+                                                   "title": "test"})})
     
     test_data = np.array([(0, 1),
                           (1, 2)])
