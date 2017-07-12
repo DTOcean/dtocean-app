@@ -32,6 +32,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
   User\AppData\Roaming\DTOcean\dtocean_app\config folder.
 - Added save file robustness compatibility with dtocean-core.
 - Add widgets for CartesianListColumn structure.
+- Added Alt key shortcuts to menus.
+- Added Export and Import actions to the Data menu to create and load datastate
+  files. These save the data in the active datastate and can be reused in any
+  project.
 
 ### Changed
 
