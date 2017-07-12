@@ -108,17 +108,20 @@
    </widget>
    <widget class="QMenu" name="menuData">
     <property name="title">
-     <string>Data</string>
+     <string>&amp;Data</string>
     </property>
     <addaction name="actionSelect_Database"/>
     <addaction name="separator"/>
     <addaction name="actionInitiate_Pipeline"/>
     <addaction name="actionInitiate_Bathymetry"/>
     <addaction name="actionInitiate_Dataflow"/>
+    <addaction name="separator"/>
+    <addaction name="actionExport"/>
+    <addaction name="actionImport"/>
    </widget>
    <widget class="QMenu" name="menuView">
     <property name="title">
-     <string>View</string>
+     <string>&amp;View</string>
     </property>
     <addaction name="actionShow_Simulations"/>
     <addaction name="actionShow_Pipeline"/>
@@ -595,6 +598,22 @@
   <action name="actionTest_Tool">
    <property name="text">
     <string>Test Tool</string>
+   </property>
+  </action>
+  <action name="actionExport">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string>Export...</string>
+   </property>
+  </action>
+  <action name="actionImport">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string>Import...</string>
    </property>
   </action>
  </widget>

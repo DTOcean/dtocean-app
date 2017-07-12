@@ -1169,6 +1169,10 @@ class DTOceanWindow(MainWindow):
         self.actionInitiate_Bathymetry.triggered.connect(
                                                      self._initiate_bathymetry)
         self.actionInitiate_Dataflow.triggered.connect(self._initiate_dataflow)
+        
+        # Data export / import functions
+        self.actionExport.triggered.connect(self._export_data)
+        self.actionImport.triggered.connect(self._import_data)
     
         return
         
@@ -1305,6 +1309,8 @@ class DTOceanWindow(MainWindow):
         self.actionPlots.setEnabled(True)
         self.actionInitiate_Pipeline.setEnabled(True)
         self.actionSelect_Database.setEnabled(True)
+        self.actionExport.setEnabled(True)
+        self.actionImport.setEnabled(True)
         
         # Activate the pipeline
         start_branch_map = [{"hub": SectionItem,
@@ -1407,6 +1413,8 @@ class DTOceanWindow(MainWindow):
         self.actionRun_Current.setDisabled(True)
         self.actionRun_Themes.setDisabled(True)
         self.actionRun_Strategy.setDisabled(True)
+        self.actionExport.setDisabled(True)
+        self.actionImport.setDisabled(True)
 
         # Enable actions
         self.actionNew.setEnabled(True)
@@ -2415,6 +2423,41 @@ class DTOceanWindow(MainWindow):
         reply = self._project_close_warning()
         
         if reply == QtGui.QMessageBox.Yes: self._shell.close_project()
+        
+        return
+    
+    @QtCore.pyqtSlot()
+    def _export_data(self):
+        
+        msg = "Export Data"
+        valid_exts = "Datastate Files (*.dts)"
+        
+        file_path = QtGui.QFileDialog.getSaveFileName(None,
+                                                      msg,
+                                                      '.',
+                                                      valid_exts)
+                
+        if file_path:
+            self._shell.core.dump_datastate(self._shell.project,
+                                            str(file_path))
+        
+        return
+    
+    @QtCore.pyqtSlot()
+    def _import_data(self):
+        
+        msg = "Import Data"
+        valid_exts = "Datastate Files (*.dts)"
+        
+        file_path = QtGui.QFileDialog.getOpenFileName(None,
+                                                      msg,
+                                                      '.',
+                                                      valid_exts)
+        
+        if file_path:
+            self._shell.core.load_datastate(self._shell.project,
+                                            str(file_path),
+                                            exclude="hidden")
         
         return
         
