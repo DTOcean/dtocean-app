@@ -36,6 +36,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Added Export and Import actions to the Data menu to create and load datastate
   files. These save the data in the active datastate and can be reused in any
   project.
+- Allow text to be selected in variable details widget.
 
 ### Changed
 
@@ -58,6 +59,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Fix issue with displaying PointList data (such as the user defined array
   layout) when z-coordinates are not set.
 - Fixed issue with missing data in IndexTable and SimpleDict widgets.
+- Correctly, order columns of DatetimeDict output widget.
+
 
 ### Removed
 
