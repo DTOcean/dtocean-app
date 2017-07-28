@@ -1086,6 +1086,7 @@ class DateTimeDict(GUIStructure, DateTimeDict):
                         "DateTime": self.data.result.values()}
             df = pd.DataFrame(raw_dict)
             df = df.sort_values(by="Key")
+            df = df[["Key", "DateTime"]]
         
         widget._set_value(df)
         
