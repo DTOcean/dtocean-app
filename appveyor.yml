@@ -31,7 +31,8 @@ environment:
     - PYTHON_VERSION: 2.7
       MINICONDA: C:\Miniconda-x64
       ARCH: "64"
-
+      
+os: unstable  # add desktop support
 
 init:
   - "ECHO %PYTHON_VERSION% %MINICONDA%"
