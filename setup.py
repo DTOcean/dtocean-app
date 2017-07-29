@@ -211,7 +211,7 @@ setup(name='dtocean-app',
       license="GPLv3",
       packages=find_packages(),
       install_requires=[
-           'dtocean-core==1.1.dev5',
+           'dtocean-core==1.1.dev6',
            'matplotlib',
            'numpy',
            'pandas>=0.18',
