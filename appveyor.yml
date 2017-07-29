@@ -32,9 +32,8 @@ environment:
       MINICONDA: C:\Miniconda-x64
       ARCH: "64"
       
-os: unstable  # add desktop support
-
 init:
+  - ps: iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1')) # RDP
   - "ECHO %PYTHON_VERSION% %MINICONDA%"
 
 install:
