@@ -2,7 +2,6 @@
 
 # INSTALLATION REQUIRED DEPENDENCIES
 dtocean-core =1.1.dev6
-dtocean-electrical =1.1.dev0
 matplotlib
 numpy
 pandas >=0.18
