@@ -23,3 +23,11 @@ def test_start_logging():
     start_logging()
     
     assert True
+    
+
+def test_start_logging_twice():
+    
+    start_logging()
+    start_logging()
+    
+    assert True

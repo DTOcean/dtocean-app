@@ -898,6 +898,32 @@ class DirectoryData(GUIStructure, DirectoryData):
 
 class SimpleList(GUIStructure, SimpleList):
     """Overloading SimpleList class"""
+    
+    @staticmethod
+    def auto_output(self):
+        
+        labels = ["Value"]
+        
+        if self.meta.result.units is not None:
+            units = self.meta.result.units[0]
+        else:
+            units = None
+        
+        widget = OutputDataTable(self.parent,
+                                 labels,
+                                 units)
+        
+        df = None
+        
+        if self.data.result is not None:
+            raw_dict = {"Value": self.data.result}
+            df = pd.DataFrame(raw_dict)
+        
+        widget._set_value(df)
+        
+        self.data.result = widget
+
+        return
 
 
 class SimpleDict(GUIStructure, SimpleDict):
@@ -1023,6 +1049,13 @@ class DirectoryDataColumn(GUIStructure, DirectoryDataColumn):
 
 class SimpleListColumn(GUIStructure, SimpleListColumn):
     """Overloading SimpleListColumn class"""
+    
+    @staticmethod
+    def auto_output(self):
+        
+        SimpleList.auto_output(self)
+        
+        return
 
 
 class SimpleDictColumn(GUIStructure, SimpleDictColumn):

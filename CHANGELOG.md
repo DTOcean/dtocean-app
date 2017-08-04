@@ -37,6 +37,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
   files. These save the data in the active datastate and can be reused in any
   project.
 - Allow text to be selected in variable details widget.
+- Add output widget for SimpleList structure.
 
 ### Changed
 
@@ -60,6 +61,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
   layout) when z-coordinates are not set.
 - Fixed issue with missing data in IndexTable and SimpleDict widgets.
 - Correctly, order columns of DatetimeDict output widget.
+- Fix bug with log file rollover when opening two or more sessions.
 
 
 ### Removed
