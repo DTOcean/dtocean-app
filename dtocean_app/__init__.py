@@ -89,7 +89,10 @@ def start_logging(debug=False):
     # Rotate any rotating file handlers
     for handler in logger.handlers:
         if handler.__class__.__name__ == 'RotatingFileHandler':
-            handler.doRollover()
+            try:
+                handler.doRollover()
+            except WindowsError:
+                pass
             
     logger.info("Welcome to DTOcean")
     
