@@ -33,6 +33,8 @@ from dtocean_qt.compat import QtCore, QtGui, Slot
 from dtocean_qt.models.DataFrameModel import DataFrameModel
 from dtocean_qt.views.CustomDelegates import createDelegate
 from dtocean_qt.views.DataTableView import DragTable
+from dtocean_qt.views.EditDialogs import (AddAttributesDialog,
+                                          RemoveAttributesDialog)
 from dtocean_qt.views._ui import icons_rc
 
 try:
@@ -341,7 +343,9 @@ class DataTableWidget(QtGui.QWidget):
         model = self.tableView.model()
 
         if model is not None:
-            model.removeDataFrameColumns(columnNames)
+            sane_names = [(pos, str(name.toPyObject()))
+                                                for pos, name in columnNames]
+            model.removeDataFrameColumns(sane_names)
 
         self.removeColumnButton.setChecked(False)
 
