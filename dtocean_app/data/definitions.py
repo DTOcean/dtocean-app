@@ -24,6 +24,7 @@ from dtocean_core.data.definitions import  (UnknownData,
                                             TableData,
                                             TableDataColumn,
                                             LineTable,
+                                            LineTableExpand,
                                             LineTableColumn,
                                             TimeTable,
                                             TimeTableColumn,
@@ -312,6 +313,85 @@ class LineTable(GUIStructure, LineTable):
     def auto_output(self):
         
         IndexTable.auto_output(self)
+        
+        return
+    
+    
+class LineTableExpand(GUIStructure, LineTableExpand):
+    """Overloading LineTableExpand class"""
+    
+    @staticmethod
+    def auto_input(self):
+        
+        if self.data.result is not None:
+            
+            df = self.data.result.reset_index()
+            labels = df.columns
+            
+            if self.meta.result.units is not None:
+                
+                units = self.meta.result.units[:1]
+                n_extra = len(labels) - 1
+                
+                if len(self.meta.result.units) > 1:
+                    add_units = [self.meta.result.units[1]] * n_extra
+                else:
+                    add_units = [None] *  n_extra
+                    
+                units += add_units
+            
+        else:
+            
+            df = None
+            labels = self.meta.result.labels
+            units = self.meta.result.units
+        
+        widget = InputDataTable(self.parent,
+                                labels,
+                                units,
+                                self.meta.result.labels[0],
+                                self.meta.result.valid_values,
+                                True)
+        
+        widget._set_value(df)
+        
+        self.data.result = widget
+        
+        return
+
+    @staticmethod
+    def auto_output(self):
+        
+        if self.data.result is not None:
+            
+            df = self.data.result.reset_index()
+            labels = df.columns
+            
+            if self.meta.result.units is not None:
+                
+                units = self.meta.result.units[:1]
+                n_extra = len(labels) - 1
+                
+                if len(self.meta.result.units) > 1:
+                    add_units = [self.meta.result.units[1]] * n_extra
+                else:
+                    add_units = [None] *  n_extra
+                    
+                units += add_units
+            
+        else:
+            
+            df = None
+            labels = None
+            units = None
+            
+        widget = OutputDataTable(self.parent,
+                                 labels,
+                                 units)
+            
+        widget._set_value(df)
+        
+        self.data.result = widget
         
         return
 
