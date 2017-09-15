@@ -645,13 +645,15 @@ class InputDataTable(QtGui.QWidget):
                        columns,
                        units=None,
                        fixed_index_col=None,
-                       fixed_index_names=None):
+                       fixed_index_names=None,
+                       edit_cols=False):
 
         QtGui.QWidget.__init__(self, parent)
         self._columms = columns
         self._units = units
         self._fixed_index_col = fixed_index_col
         self._fixed_index_names = fixed_index_names
+        self._edit_cols = edit_cols
         
         self._setup_ui()
         self._init_ui()
@@ -672,11 +674,11 @@ class InputDataTable(QtGui.QWidget):
         
         if (self._fixed_index_col is not None and
                 self._fixed_index_names is not None):
-            self.datatable = DataTableWidget(self, edit_cols=False,
+            self.datatable = DataTableWidget(self, edit_cols=self._edit_cols,
                                                    edit_rows=False,
                                                    edit_cells=True)
         else:
-            self.datatable = DataTableWidget(self, edit_cols=False)
+            self.datatable = DataTableWidget(self, edit_cols=self._edit_cols)
         
         sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Expanding,
                                        QtGui.QSizePolicy.Expanding)
@@ -787,7 +789,11 @@ class InputDataTable(QtGui.QWidget):
         if df.empty: return
         
         # Rename the columns
-        df.columns = self._columms
+        if self._edit_cols:
+            new_cols = [x.split(" [")[0] for x in df.columns]
+            df.columns = new_cols
+        else:
+            df.columns = self._columms
 
         return df
         

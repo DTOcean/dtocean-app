@@ -38,6 +38,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
   project.
 - Allow text to be selected in variable details widget.
 - Add output widget for SimpleList structure.
+- Add LineTableExpand structure and input and output widgets.
 
 ### Changed
 
@@ -52,6 +53,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
   is found.
 - Changed timed rotating file logger for a standard rotating file logger that
   is rolled over at the beginning of each session.
+- Expose add and remove column buttons for InputDataTable widget for use by
+  LineTableExpand structure.
 
 ### Fixed
 
@@ -62,7 +65,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Fixed issue with missing data in IndexTable and SimpleDict widgets.
 - Correctly, order columns of DatetimeDict output widget.
 - Fix bug with log file rollover when opening two or more sessions.
-
+- Fix bug caused by QVariant APIv2 when removing columns from a
+  DataTableWidget.
 
 ### Removed
 
