@@ -114,7 +114,7 @@ def init_config(install=False, overwrite=False):
     if install:
         dirmap.copy_file("install.ini", overwrite=overwrite)
     
-    return
+    return datadir.get_path()
 
 
 def init_config_parser(args):
@@ -132,13 +132,13 @@ def init_config_parser(args):
     epiStr = ('Mathew Topper (c) 2017.')
               
     desStr = ("Copy user modifiable configuration files to "
-              "User\AppData\Roaming\DTOcean\dtocean-app\config")
+              "<UserName>\AppData\Roaming\DTOcean\dtocean-app\config")
 
     parser = argparse.ArgumentParser(description=desStr,
                                      epilog=epiStr)
 
     parser.add_argument("--install",
-                        help=("add path configuration for manuals"),
+                        help=("create new configuration files"),
                         action="store_true")
 
     parser.add_argument("--overwrite",
