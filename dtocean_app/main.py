@@ -825,6 +825,12 @@ class Shell(QtCore.QObject):
         
         self.strategy.strategy_run = self.strategy.allow_rerun
         
+        # If the strategy is no longer active release the hidden variables
+        if not self.strategy.strategy_run:
+            
+            [sim.set_unavailable_variables()
+                                        for sim in self.project._simulations]
+        
         return
         
     @QtCore.pyqtSlot(str)
