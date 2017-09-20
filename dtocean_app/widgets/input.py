@@ -311,7 +311,7 @@ class StringSelect(QtGui.QWidget, Ui_StringSelect):
         
         self.unitsLabel.setText(unitsStr)
         
-        self.lineEdit.textChanged.connect(self._emit_read)
+        self.lineEdit.returnPressed.connect(self._emit_read)
         self.buttonBox.button(QtGui.QDialogButtonBox.Ok).clicked.connect(
                                           self._emit_read)
 
@@ -366,7 +366,7 @@ class DirectorySelect(QtGui.QWidget, Ui_PathSelect):
     def _init_ui(self):
 
         self.toolButton.clicked.connect(self._set_path)
-        self.lineEdit.textChanged.connect(self._emit_read)
+        self.lineEdit.returnPressed.connect(self._emit_read)
         self.buttonBox.button(QtGui.QDialogButtonBox.Ok).clicked.connect(
                                           self._emit_read)
 
