@@ -447,7 +447,10 @@ class Shell(QtCore.QObject):
         self.project = self.project_menu.new_project(self.core, title)
         self.project_path = None
         
+        # Update the active project
         self.project_activated.emit()
+        active_sim_title = self.project.get_simulation_title()
+        self.project.active_index_changed.emit(active_sim_title)
         
         # Relay active simulation change
         self.project.active_index_changed.connect(
@@ -2391,6 +2394,10 @@ class DTOceanWindow(MainWindow):
                     
         self._pipeline_dock._set_branch_map(new_branch_map)
         self._active_dataflow_ui_switch()
+        
+        # Update the active project
+        active_sim_title = self._shell.project.get_simulation_title()
+        self._shell.project.active_index_changed.emit(active_sim_title)
         
         self._shell.core.status_updated.emit()
         self._set_project_saved()
