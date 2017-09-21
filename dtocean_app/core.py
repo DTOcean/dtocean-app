@@ -100,7 +100,7 @@ class GUIProject(QtCore.QObject, Project):
     
     # PyQt signals
     sims_updated = QtCore.pyqtSignal(object)
-    active_index_changed = QtCore.pyqtSignal()
+    active_index_changed = QtCore.pyqtSignal(str)
     
     '''Project class with signals'''
     
@@ -110,12 +110,22 @@ class GUIProject(QtCore.QObject, Project):
         Project.__init__(self, title)
         
         return
+    
+    def add_simulation(self, simulation, set_active=False):
+        
+        super(GUIProject, self).add_simulation(simulation, set_active)
+        
+        active_sim_title = self.get_simulation_title()
+        self.active_index_changed.emit(active_sim_title)
+        
+        return
         
     def _set_active_index(self, index):
         
         super(GUIProject, self)._set_active_index(index)
         
-        self.active_index_changed.emit()
+        active_sim_title = self.get_simulation_title()
+        self.active_index_changed.emit(active_sim_title)
         
         return
     

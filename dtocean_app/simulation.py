@@ -64,7 +64,7 @@ class SimulationDock(ListDock):
 
         return
         
-    def _update_list(self, names=None):
+    def _update_list(self, names=None, bold_signal=None):
         
         self.listWidget.clear()
         
@@ -73,6 +73,10 @@ class SimulationDock(ListDock):
         for name in names:
             
             sim_item = SimulationItem(self.listWidget, name)
+            
+            if bold_signal is not None:
+                bold_signal.connect(sim_item._set_bold)
+            
             self.listWidget.addItem(sim_item)
             
         return
@@ -93,7 +97,7 @@ class SimulationDock(ListDock):
             self._update_list()
         else:
             sim_titles = project.get_simulation_titles()
-            self._update_list(sim_titles)
+            self._update_list(sim_titles, project.active_index_changed)
         
         return
         
@@ -179,5 +183,19 @@ class SimulationItem(QtGui.QListWidgetItem):
         self.setText(title)
         self._title = title
 
+        return
+    
+    @QtCore.pyqtSlot(str) 
+    def _set_bold(self, value):
+                
+        if value == self._get_title():
+            x = True
+        else:
+            x = False
+        
+        item_font = self.font()
+        item_font.setBold(x)
+        self.setFont(item_font)
+                    
         return
 
