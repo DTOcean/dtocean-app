@@ -116,6 +116,9 @@ class GUIProject(QtCore.QObject, Project):
         super(GUIProject, self).add_simulation(simulation, set_active)
         
         active_sim_title = self.get_simulation_title()
+
+        if active_sim_title is None: return
+                
         self.active_index_changed.emit(active_sim_title)
         
         return
