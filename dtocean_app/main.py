@@ -1730,6 +1730,7 @@ class DTOceanWindow(MainWindow):
                 action.setDisabled(True)
 
         return
+
     @QtCore.pyqtSlot()
     def _set_module_shuttle(self):
                 

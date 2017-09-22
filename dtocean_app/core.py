@@ -138,6 +138,8 @@ class GUIProject(QtCore.QObject, Project):
         
         self.sims_updated.emit(self)
         
+        if self._active_index is None: return
+        
         # Simulation dock needs informed which is active after item reset
         active_sim_title = self.get_simulation_title()
         self.active_index_changed.emit(active_sim_title)
