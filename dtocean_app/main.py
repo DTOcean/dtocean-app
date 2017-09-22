@@ -631,7 +631,24 @@ class Shell(QtCore.QObject):
                                                              new_title)
         module_logger.debug(msg)
         
-        self.project.set_simulation_title(new_title, title=old_title)
+        current_sim_titles = self.project.get_simulation_titles()
+        
+        if new_title in current_sim_titles:
+            
+            logMsg = ("Simulation title '{}' is already in list of current "
+                      "titles").format(new_title)
+            module_logger.error(logMsg)
+            
+            # Reset the list in the simulation dock
+            self.project.sims_updated.emit(self.project)
+        
+            # Simulation dock needs informed which is active after item reset
+            active_sim_title = self.project.get_simulation_title()
+            self.project.active_index_changed.emit(active_sim_title)
+            
+        else:
+        
+            self.project.set_simulation_title(new_title, title=old_title)
                 
         return
         
