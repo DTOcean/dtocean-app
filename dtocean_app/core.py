@@ -14,14 +14,8 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-# Set up logging
 import logging
-import warnings
-
-module_logger = logging.getLogger(__name__)
-
-import pickle
-
+from copy import deepcopy
 from PyQt4 import QtCore
 
 from aneris.boundary.interface import (AutoInterface,
@@ -29,7 +23,6 @@ from aneris.boundary.interface import (AutoInterface,
 from aneris.control.data import DataStorage
 from aneris.control.pipeline import Sequencer
 from aneris.control.simulation import Controller, Loader
-
 from dtocean_core import interfaces as core_interfaces
 from dtocean_core.core import (Core,
                                Project,
@@ -42,6 +35,9 @@ from dtocean_core.core import (Core,
 
 from . import data as gui_data
 from . import interfaces as gui_interfaces
+
+# Set up logging
+module_logger = logging.getLogger(__name__)
 
 
 class WidgetInterface(MetaInterface):
@@ -99,8 +95,9 @@ class AutoOutput(AutoInterface, OutputWidgetInterface):
 class GUIProject(QtCore.QObject, Project):
     
     # PyQt signals
-    sims_updated = QtCore.pyqtSignal(object)
-    active_index_changed = QtCore.pyqtSignal(str)
+    sims_updated = QtCore.pyqtSignal()
+    active_index_changed = QtCore.pyqtSignal(object)
+    active_title_changed = QtCore.pyqtSignal(str)
     
     '''Project class with signals'''
     
@@ -114,12 +111,16 @@ class GUIProject(QtCore.QObject, Project):
     def add_simulation(self, simulation, set_active=False):
         
         super(GUIProject, self).add_simulation(simulation, set_active)
+        self.sims_updated.emit()
         
-        active_sim_title = self.get_simulation_title()
-
-        if active_sim_title is None: return
-                
-        self.active_index_changed.emit(active_sim_title)
+        return
+    
+    def set_simulation_title(self, new_title, index=None, title=None):
+        
+        super(GUIProject, self).set_simulation_title(new_title,
+                                                     index,
+                                                     title)
+        self.sims_updated.emit()
         
         return
         
@@ -127,24 +128,16 @@ class GUIProject(QtCore.QObject, Project):
         
         super(GUIProject, self)._set_active_index(index)
         
+        # Copy the project before status update
+        project_copy = deepcopy(self)
+        self.active_index_changed.emit(project_copy)
+        
         active_sim_title = self.get_simulation_title()
-        self.active_index_changed.emit(active_sim_title)
+        
+        if active_sim_title is not None:
+            self.active_title_changed.emit(active_sim_title)
         
         return
-    
-    def _set_simulation(self, simulation, index=None):
-
-        index = super(GUIProject, self)._set_simulation(simulation, index)
-        
-        self.sims_updated.emit(self)
-        
-        if self._active_index is None: return
-        
-        # Simulation dock needs informed which is active after item reset
-        active_sim_title = self.get_simulation_title()
-        self.active_index_changed.emit(active_sim_title)
-        
-        return index
         
     def _dump(self):
         
@@ -174,7 +167,7 @@ class GUICore(QtCore.QObject, Core):
     '''
 
     # PyQt signals
-    status_updated = QtCore.pyqtSignal()
+    status_updated = QtCore.pyqtSignal(object)
     pipeline_reset = QtCore.pyqtSignal()
     
     # Extend the sockets for widgets
@@ -270,7 +263,10 @@ class GUICore(QtCore.QObject, Core):
         """Emit a signal on status update"""
                 
         super(GUICore, self).set_interface_status(project, simulation)
-        self.status_updated.emit()
+        
+        # Copy the project before status update
+        project_copy = deepcopy(project)
+        self.status_updated.emit(project_copy)
 
         return
         
