@@ -95,10 +95,17 @@ class SimulationDock(ListDock):
                 
         if project is None:
             self._update_list()
-        else:
-            sim_titles = project.get_simulation_titles()
-            self._update_list(sim_titles, project.active_index_changed)
+            return
         
+        sim_titles = project.get_simulation_titles()
+        self._update_list(sim_titles,
+                          project.active_title_changed)
+        
+        active_sim_title = project.get_simulation_title()
+        
+        if active_sim_title is not None:
+            project.active_title_changed.emit(active_sim_title)
+                
         return
         
     @QtCore.pyqtSlot(object)    
@@ -198,4 +205,3 @@ class SimulationItem(QtGui.QListWidgetItem):
         self.setFont(item_font)
                     
         return
-

@@ -34,6 +34,8 @@ import tarfile
 import tempfile
 import traceback
 import subprocess
+from copy import deepcopy
+from collections import namedtuple
 
 import sip
 import pandas as pd
@@ -351,8 +353,7 @@ class Shell(QtCore.QObject):
         core = GUICore()
         
         # Relay status updated signal
-        core.status_updated.connect(
-            lambda: self.update_pipeline.emit(self))
+        core.status_updated.connect(self._emit_update_pipeline)
         core.status_updated.connect(
             lambda: self.reset_widgets.emit())
         
@@ -449,12 +450,9 @@ class Shell(QtCore.QObject):
         
         # Update the active project
         self.project_activated.emit()
-        active_sim_title = self.project.get_simulation_title()
-        self.project.active_index_changed.emit(active_sim_title)
         
         # Relay active simulation change
-        self.project.active_index_changed.connect(
-            lambda: self.update_pipeline.emit(self))
+        self.project.active_index_changed.connect(self._emit_update_pipeline)
         self.project.active_index_changed.connect(
             lambda: self.reset_widgets.emit())
         self.project.active_index_changed.connect(
@@ -531,8 +529,7 @@ class Shell(QtCore.QObject):
         self.project_title_change.emit(load_project.title)
         
         # Relay active simulation change
-        self.project.active_index_changed.connect(
-            lambda: self.update_pipeline.emit(self))
+        self.project.active_index_changed.connect(self._emit_update_pipeline)
         self.project.active_index_changed.connect(
             lambda: self.reset_widgets.emit())
         self.project.active_index_changed.connect(
@@ -640,11 +637,11 @@ class Shell(QtCore.QObject):
             module_logger.error(logMsg)
             
             # Reset the list in the simulation dock
-            self.project.sims_updated.emit(self.project)
+            self.project.sims_updated.emit()
         
             # Simulation dock needs informed which is active after item reset
             active_sim_title = self.project.get_simulation_title()
-            self.project.active_index_changed.emit(active_sim_title)
+            self.project.active_title_changed.emit(active_sim_title)
             
         else:
         
@@ -877,7 +874,17 @@ class Shell(QtCore.QObject):
         self._active_thread = None
         
         return
+    
+    @QtCore.pyqtSlot(object)
+    def _emit_update_pipeline(self, project):
         
+        Husk = namedtuple('Husk', ['core', 'project'])
+        husk = Husk(self.core, project)
+        
+        self.update_pipeline.emit(husk)
+        
+        return
+                    
     
 class DTOceanWindow(MainWindow):
 
@@ -1359,7 +1366,8 @@ class DTOceanWindow(MainWindow):
         # Link the project to the simulation dock and initialise the list
         self._simulation_dock.setDisabled(True)
         self._shell.project.sims_updated.connect(
-                                     self._simulation_dock._update_simulations)
+            lambda: self._simulation_dock._update_simulations(
+                                                  self._shell.project))
         self._simulation_dock._update_simulations(self._shell.project)
         
         # Set up details widget on the data context area
@@ -1413,8 +1421,12 @@ class DTOceanWindow(MainWindow):
         # Trigger the pipeline
         self._pipeline_dock._set_top_item()
         
-        # Trigget tools menu
+        # Trigger tools menu (not likely concurrent)
         self._tool_menu_ui_switch(self._shell)
+        
+        # Update the active sim title
+        active_sim_title = self._shell.project.get_simulation_title()
+        self._shell.project.active_title_changed.emit(active_sim_title)
 
         return
         
@@ -1511,11 +1523,11 @@ class DTOceanWindow(MainWindow):
         self._last_data_item_status = None
         self._last_plot_id = None
         
+        # Trigger the tool menu switcher (not likely concurrent)
+        self._tool_menu_ui_switch(self._shell)
+
         # Reset the window title
         self._set_window_title("")
-        
-        # Trigger the tool menu switcher
-        self._tool_menu_ui_switch(self._shell)
 
         return
         
@@ -2415,9 +2427,12 @@ class DTOceanWindow(MainWindow):
         
         # Update the active project
         active_sim_title = self._shell.project.get_simulation_title()
-        self._shell.project.active_index_changed.emit(active_sim_title)
+        self._shell.project.active_title_changed.emit(active_sim_title)
         
-        self._shell.core.status_updated.emit()
+        # Copy the project before emitting
+        project_copy = deepcopy(self._shell.project)
+        
+        self._shell.core.status_updated.emit(project_copy)
         self._set_project_saved()
         
         return
