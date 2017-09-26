@@ -2429,10 +2429,7 @@ class DTOceanWindow(MainWindow):
         active_sim_title = self._shell.project.get_simulation_title()
         self._shell.project.active_title_changed.emit(active_sim_title)
         
-        # Copy the project before emitting
-        project_copy = deepcopy(self._shell.project)
-        
-        self._shell.core.status_updated.emit(project_copy)
+        self._shell.core.status_updated.emit(self._shell.project)
         self._set_project_saved()
         
         return
