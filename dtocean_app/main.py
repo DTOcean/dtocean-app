@@ -1205,7 +1205,9 @@ class DTOceanWindow(MainWindow):
         
         # Data export / import functions
         self.actionExport.triggered.connect(self._export_data)
+        self.actionExport_mask.triggered.connect(self._export_data_mask)
         self.actionImport.triggered.connect(self._import_data)
+        self.actionImport_skip.triggered.connect(self._import_data_skip)
     
         return
         
@@ -1303,9 +1305,14 @@ class DTOceanWindow(MainWindow):
     def _set_project_saved(self):
         
         if self._shell.project is None: return
+                
+        if self._shell.project_path is None:
+            window_title = self._shell.project.title
+        else:
+            window_title = "{} ({})".format(self._shell.project.title,
+                                            self._shell.project_path)
         
-        proj_title = self._shell.project.title
-        self._set_window_title(proj_title)
+        self._set_window_title(window_title)
 
         return
         
@@ -1314,8 +1321,13 @@ class DTOceanWindow(MainWindow):
         
         if self._shell.project is None: return
         
-        proj_title = "{}*".format(self._shell.project.title)
-        self._set_window_title(proj_title)
+        if self._shell.project_path is None:
+            window_title = "{}*".format(self._shell.project.title)
+        else:
+            window_title = "{} ({})*".format(self._shell.project.title,
+                                             self._shell.project_path)
+        
+        self._set_window_title(window_title)
 
         return
         
@@ -1343,7 +1355,9 @@ class DTOceanWindow(MainWindow):
         self.actionInitiate_Pipeline.setEnabled(True)
         self.actionSelect_Database.setEnabled(True)
         self.actionExport.setEnabled(True)
+        self.actionExport_mask.setEnabled(True)
         self.actionImport.setEnabled(True)
+        self.actionImport_skip.setEnabled(True)
         
         # Activate the pipeline
         start_branch_map = [{"hub": SectionItem,
@@ -1452,7 +1466,9 @@ class DTOceanWindow(MainWindow):
         self.actionRun_Themes.setDisabled(True)
         self.actionRun_Strategy.setDisabled(True)
         self.actionExport.setDisabled(True)
+        self.actionExport_mask.setDisabled(True)
         self.actionImport.setDisabled(True)
+        self.actionImport_skip.setDisabled(True)
 
         # Enable actions
         self.actionNew.setEnabled(True)
@@ -2485,6 +2501,25 @@ class DTOceanWindow(MainWindow):
                                             str(file_path))
         
         return
+        
+    @QtCore.pyqtSlot()
+    def _export_data_mask(self):
+        
+        msg = "Export Data (Mask Outputs)"
+        valid_exts = "Datastate Files (*.dts)"
+        
+        file_path = QtGui.QFileDialog.getSaveFileName(None,
+                                                      msg,
+                                                      '.',
+                                                      valid_exts)
+                
+        if file_path:
+            self._shell.core.dump_datastate(
+                                        self._shell.project,
+                                        str(file_path),
+                                        self._shell.core._markers["output"])
+        
+        return
     
     @QtCore.pyqtSlot()
     def _import_data(self):
@@ -2504,6 +2539,25 @@ class DTOceanWindow(MainWindow):
         
         return
         
+    @QtCore.pyqtSlot()
+    def _import_data_skip(self):
+        
+        msg = "Import Data (Skip Satisfied)"
+        valid_exts = "Datastate Files (*.dts)"
+        
+        file_path = QtGui.QFileDialog.getOpenFileName(None,
+                                                      msg,
+                                                      '.',
+                                                      valid_exts)
+        
+        if file_path:
+            self._shell.core.load_datastate(self._shell.project,
+                                            str(file_path),
+                                            exclude="hidden",
+                                            overwrite=False)
+        
+        return
+    
     @QtCore.pyqtSlot()
     def _initiate_pipeline(self):
         
