@@ -67,6 +67,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Fix bug with log file rollover when opening two or more sessions.
 - Fix bug caused by QVariant APIv2 when removing columns from a
   DataTableWidget.
+- Fixed issue with CoordSelect widget not setting value for z coordinate.
 
 ### Removed
 

@@ -573,12 +573,13 @@ class CoordSelect(QtGui.QWidget, Ui_PointSelect):
             if len(value) == 3:
   
                 self.checkBox.setChecked(True)
-                valueStr = str((value[0],value[1],value[2]))
+                self.doubleSpinBox_3.setValue(value[2])
+                valueStr = str((value[0], value[1], value[2]))
                 
             else:
                 
                 self.checkBox.setChecked(False)
-                valueStr = str((value[0],value[1]))
+                valueStr = str((value[0], value[1]))
                 
         else:
             
