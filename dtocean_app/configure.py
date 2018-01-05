@@ -25,8 +25,8 @@ from polite.configuration import ReadINI
 
 def get_install_paths():
     
-    """Pick the necessary paths to configure the external files for the wave
-    and tidal packages."""
+    """Pick the necessary paths to configure the external files for the 
+    manuals."""
     
     install_config_name = "install.ini"
     
