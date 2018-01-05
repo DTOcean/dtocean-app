@@ -57,7 +57,8 @@ def start_logging(debug=False):
     # Pick up the configuration from the user directory if it exists
     userdir = UserDataDirectory("dtocean_app", "DTOcean", "config")
             
-    if userdir.isfile("files.ini") and userdir.isfile("logging.yaml"):
+    # Look for files.ini
+    if userdir.isfile("files.ini"):
         configdir = userdir
     else:
         configdir = ObjDirectory("dtocean_app", "config")
@@ -72,6 +73,12 @@ def start_logging(debug=False):
     
     # Disable the logging QtHandler if the debug flag is set
     QtHandler.debug = debug
+    
+    # Look for logging.yaml
+    if userdir.isfile("logging.yaml"):
+        configdir = userdir
+    else:
+        configdir = ObjDirectory("dtocean_app", "config")
     
     log = Logger(configdir)
     log_config_dict = log.read()
@@ -99,20 +106,19 @@ def start_logging(debug=False):
     return
 
 
-def init_config(install=False, overwrite=False):
+def init_config(logging=False, files=False, install=False, overwrite=False):
     
     """Copy config files to user data directory"""
+    
+    if not any([logging, files, install]): return
     
     objdir = ObjDirectory(__name__, "config")
     datadir = UserDataDirectory("dtocean_app", "DTOcean", "config")
     dirmap = DirectoryMap(datadir, objdir)
     
-    dirmap.copy_file("logging.yaml", overwrite=overwrite)
-    dirmap.copy_file("files.ini", overwrite=overwrite)
-    
-    # Copy the manuals installation configuration
-    if install:
-        dirmap.copy_file("install.ini", overwrite=overwrite)
+    if logging: dirmap.copy_file("logging.yaml", overwrite=overwrite)
+    if files: dirmap.copy_file("files.ini", overwrite=overwrite)
+    if install: dirmap.copy_file("install.ini", overwrite=overwrite)
     
     return datadir.get_path()
 
@@ -136,30 +142,45 @@ def init_config_parser(args):
 
     parser = argparse.ArgumentParser(description=desStr,
                                      epilog=epiStr)
-
-    parser.add_argument("--install",
-                        help=("create new configuration files"),
+    
+    parser.add_argument("--logging",
+                        help=("copy logging configuration"),
                         action="store_true")
-
+    
+    parser.add_argument("--files",
+                        help=("copy log file location configuration"),
+                        action="store_true")
+    
+    parser.add_argument("--install",
+                        help=("copy manuals installation path configuration"),
+                        action="store_true")
+    
     parser.add_argument("--overwrite",
-                        help=("overwrite any existing configuration files"),
+                        help=("overwrite existing configuration files"),
                         action="store_true")
                         
     args = parser.parse_args(args)
 
+    logging = args.logging
+    files = args.files
     install = args.install
     overwrite = args.overwrite
     
-    return install, overwrite
+    return logging, files, install, overwrite
 
 
 def init_config_interface():
     
     '''Command line interface for init_config.'''
     
-    install, overwrite = init_config_parser(sys.argv[1:])
-    dir_path = init_config(install=install, overwrite=overwrite)
-    print "Copying configuration files to {}".format(dir_path)
+    logging, files, install, overwrite = init_config_parser(sys.argv[1:])
+    dir_path = init_config(logging=logging,
+                           files=files,
+                           install=install,
+                           overwrite=overwrite)
+    
+    if dir_path is not None:
+        print "Copying configuration files to {}".format(dir_path)
 
     return
 
