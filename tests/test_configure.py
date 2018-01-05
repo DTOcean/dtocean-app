@@ -16,11 +16,11 @@ def test_init_config(mocker, tmpdir):
     mocker.patch('dtocean_app.UserDataDirectory',
                  return_value=mock_dir)
                  
-    init_config()
+    init_config(logging=True, files=True)
         
     assert len(config_tmpdir.listdir()) == 2
               
-    init_config()
+    init_config(logging=True, files=True)
     
     assert len(config_tmpdir.listdir()) == 4
               
@@ -34,11 +34,11 @@ def test_init_config_overwrite(mocker, tmpdir):
     mocker.patch('dtocean_app.UserDataDirectory',
                  return_value=mock_dir)
                  
-    init_config()
+    init_config(logging=True, files=True)
         
     assert len(config_tmpdir.listdir()) == 2
               
-    init_config(overwrite=True)
+    init_config(logging=True, files=True, overwrite=True)
     
     assert len(config_tmpdir.listdir()) == 2
               
@@ -52,32 +52,31 @@ def test_init_config_install(mocker, tmpdir):
     mocker.patch('dtocean_app.UserDataDirectory',
                  return_value=mock_dir)
                  
-    init_config(install=True)
+    init_config(logging=True, files=True, install=True)
         
     assert len(config_tmpdir.listdir()) == 3
 
     
 def test_init_config_parser():
     
-    install, overwrite = init_config_parser([])
+    args = init_config_parser([])
     
-    assert not overwrite
-    assert not install
+    assert not any(args)
 
 
 def test_init_config_parser_overwrite():
     
-    install, overwrite = init_config_parser(["--overwrite"])
+    args = init_config_parser(["--overwrite"])
     
-    assert overwrite
-    assert not install
+    assert args[-1]
+    assert not any(args[:-1])
     
     
 def test_init_config_parser_install():
     
-    install, overwrite = init_config_parser(["--install"])
+    logging, files, install, overwrite = init_config_parser(["--install"])
     
-    assert not overwrite
+    assert not any([logging, files, overwrite])
     assert install
     
     
@@ -90,7 +89,7 @@ def test_init_config_interface(mocker, tmpdir):
     mocker.patch('dtocean_app.UserDataDirectory',
                  return_value=mock_dir)
     mocker.patch('dtocean_app.init_config_parser',
-                 return_value=(False, False))
+                 return_value=(True, True, False, False))
                  
     init_config_interface()
         
@@ -138,8 +137,9 @@ def test_start_logging_user(mocker, tmpdir):
     mocker.patch('dtocean_app.UserDataDirectory',
                  return_value=mock_dir)
                  
-    init_config()
+    init_config(logging=True, files=True)
     
+    # This will raise if the logging file is not in the user directory
     mocker.patch('dtocean_app.ObjDirectory',
                  return_value=None)
     
