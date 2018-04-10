@@ -133,7 +133,10 @@ class ThreadDataFlow(QtCore.QThread):
         try:
         
             # Check if filters can be initiated
-            if self.shell.project.get_database_credentials() is not None:
+            if ("Database Filtering Interface" in
+                self.shell.project_menu.get_active(self.shell.core,
+                                                   self.shell.project)):
+                
                 self.project_menu.initiate_filter(self.shell.core,
                                                   self.shell.project)
             
@@ -2618,8 +2621,10 @@ class DTOceanWindow(MainWindow):
         required_address = None
                 
         # Check if filters can be initiated
-        if self._shell.project.get_database_credentials() is not None: 
-        
+        if ("Database Filtering Interface" in
+                self._shell.project_menu.get_active(self._shell.core,
+                                                    self._shell.project)):
+                
             # Find the "Database Filtering Interface" branch
             branch_item = self._pipeline_dock._find_item(
                                                 "Database Filtering Interface",
