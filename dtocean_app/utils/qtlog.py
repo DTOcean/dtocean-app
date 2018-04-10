@@ -49,7 +49,7 @@ class QtHandler(logging.Handler):
 
         record = self.format(record)
 
-        if record: XStream.stdout().write('{}\n'.format(record));
+        if record: XStream.stdout().write('{}'.format(record));
 
         return
 

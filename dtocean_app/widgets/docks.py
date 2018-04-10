@@ -113,12 +113,13 @@ class ListDock(QtGui.QDockWidget, Ui_ListDock):
 
 class LogDock(QtGui.QDockWidget, Ui_SystemDock):
 
-    def __init__(self, parent):
+    def __init__(self, parent, max_lines=1e5 - 1):
     
         QtGui.QDockWidget.__init__(self, "Dockable", parent)
         Ui_SystemDock.__init__(self)
         
         self._init_ui()
+        self._set_max_lines(max_lines)
         
         self._close_filter = DockCloseFilter(self)
         self.installEventFilter(self._close_filter)
@@ -135,7 +136,7 @@ class LogDock(QtGui.QDockWidget, Ui_SystemDock):
         textc = QtGui.QColor(255, 255, 255)
         pal.setColor(QtGui.QPalette.Text, textc)
         
-        self._console = QtGui.QTextBrowser(self)
+        self._console = QtGui.QPlainTextEdit(self)
         self._console.setPalette(pal)
 
         self._layout = QtGui.QVBoxLayout()
@@ -149,11 +150,17 @@ class LogDock(QtGui.QDockWidget, Ui_SystemDock):
 
         return
     
+    def _set_max_lines(self, max_lines):
+        
+        self._console.setMaximumBlockCount(max_lines)
+        
+        return
+    
     @QtCore.pyqtSlot(str)
     def _add_text(self, arg1):
         """ C++: void _add_text(QString) """
-        
-        self._console.insertPlainText(arg1)
+                
+        self._console.appendPlainText(arg1)
         self._console.moveCursor(QtGui.QTextCursor.End)
         
         return
