@@ -812,6 +812,18 @@ class InputDataTable(QtGui.QWidget):
         self.null_signal.emit()
         
         return
+    
+    def _disable(self):
+        
+        self.buttonBox.setDisabled(True)
+                
+        self.datatable.view().setSelectionMode(
+                                        QtGui.QAbstractItemView.NoSelection)
+        self.datatable.view().setFocusPolicy(QtCore.Qt.NoFocus)
+        
+        self.datatable.buttonFrame.setDisabled(True)
+        
+        return
 
 
 class InputTimeTable(InputDataTable):
