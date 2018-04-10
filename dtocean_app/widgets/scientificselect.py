@@ -73,7 +73,7 @@ class ScientificDoubleSpinBox(QDoubleSpinBox):
 
     def __init__(self, *args, **kwargs):
         super(QDoubleSpinBox, self).__init__(*args, **kwargs)
-        self.setMinimum(1.e-18)
+        self.setMinimum(-1.e+18)
         self.setMaximum(1.e+18)
         self.validator = FloatValidator()
         self.setDecimals(1000)
