@@ -788,9 +788,9 @@ class VarItem(BaseItem):
                                                             "AutoPlot",
                                                             plot_name)
 
-        if (interface is None or 
-            not shell.core.has_data(shell.project,
-                                    self._variable._id)): return None
+        if (interface is None or
+            not shell.core.can_load_interface(shell.project,
+                                              interface)): return None
         
         self._variable._write_interface(shell.core, 
                                         shell.project,
