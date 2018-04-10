@@ -2036,7 +2036,12 @@ class DTOceanWindow(MainWindow):
         widget._get_nullify_event().connect(
             lambda: self._read_raw(var_item._variable, None))
             
-        if "unavailable" in var_item._status: widget.setDisabled(True)
+        if "unavailable" in var_item._status:
+            
+            if "_disable" in dir(widget):
+                widget._disable()
+            else:
+                widget.setDisabled(True)
                 
         return
         
