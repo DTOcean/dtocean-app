@@ -29,7 +29,9 @@ from PyQt4 import QtGui, QtCore
 from matplotlib.backends.backend_qt4agg import (
                                         FigureCanvasQTAgg as FigureCanvas)
 import matplotlib.pyplot as plt
+
 plt.style.use('ggplot')
+plt.rcParams['svg.fonttype'] = 'none'
 
 module_path = os.path.realpath(__file__)
 test_image_path = os.path.join(module_path, '..', 'test_images')
