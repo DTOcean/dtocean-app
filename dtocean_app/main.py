@@ -440,6 +440,8 @@ class Shell(QtCore.QObject):
         
     def get_scheduled_themes(self):
         
+        if self.theme_menu.get_force_completed(self.project): return []
+        
         module_names = self.theme_menu.get_scheduled(self.core,
                                                      self.project)
                                                    
@@ -1687,17 +1689,13 @@ class DTOceanWindow(MainWindow):
             self.actionRun_Strategy.setDisabled(True)
                     
             if modules_scheduled:
-                
                 self.actionRun_Current.setEnabled(True)
-                
-                if themes_scheduled:
-                    self.actionRun_Themes.setEnabled(True)
-                else:
-                    self.actionRun_Themes.setDisabled(True)
-                
             else:
-                
                 self.actionRun_Current.setDisabled(True)
+                
+            if themes_scheduled:
+                self.actionRun_Themes.setEnabled(True)
+            else:
                 self.actionRun_Themes.setDisabled(True)
       
         else:
