@@ -548,7 +548,10 @@ class ProgressBar(QtGui.QDialog, Ui_ProgressBar):
     
     def __init__(self, parent=None, allow_close=False):
         
-        super(ProgressBar, self).__init__(parent)
+        flags = (QtCore.Qt.WindowMinimizeButtonHint |
+                 QtCore.Qt.WindowMaximizeButtonHint)
+        
+        super(ProgressBar, self).__init__(parent, flags=flags)
         self.setupUi(self)
         
         self.allow_close = allow_close
@@ -570,6 +573,15 @@ class ProgressBar(QtGui.QDialog, Ui_ProgressBar):
             event.ignore()
             
         return
+    
+    def changeEvent(self, event):
+        
+        if event.type() == QtCore.QEvent.WindowStateChange:
+            
+            if self.windowState() & QtCore.Qt.WindowMinimized:
+                self.parent().showMinimized()
+            else:
+                self.parent().showMaximized()
         
         
 class About(QtGui.QDialog, Ui_AboutDialog):
