@@ -9,7 +9,10 @@ import Tkinter as tk
 
 def is_high_dpi(dpi_freshold=100.):
     
-    root = tk.Tk()
+    try:
+        root = tk.Tk()
+    except tk.TclError:
+        return False
     
     width_px = root.winfo_screenwidth()
     height_px = root.winfo_screenheight()
