@@ -161,3 +161,10 @@ def save_current_figure(figure_path):
 
     return
 
+def get_current_figure_size():
+    
+    fig = plt.gcf()
+    
+    if not fig: return
+    
+    return fig.get_size_inches()
