@@ -664,15 +664,22 @@ class Shell(QtCore.QObject):
         
         return
         
-    @QtCore.pyqtSlot(object)
-    def select_database(self, identifier):
+    @QtCore.pyqtSlot(str, dict)
+    def select_database(self, identifier, credentials):
         
-        if identifier is None:
-            self.data_menu.select_database(self.project, None)
-            self.database_updated.emit("None")
-        else:
-            self.data_menu.select_database(self.project, str(identifier))
-            self.database_updated.emit(identifier)
+        if identifier is None: identifier = "Unnamed"
+        
+        self.data_menu.select_database(self.project,
+                                           credentials=credentials)
+        self.database_updated.emit(identifier)
+        
+        return
+            
+    @QtCore.pyqtSlot()
+    def deselect_database(self):
+        
+        self.data_menu.deselect_database(self.project)
+        self.database_updated.emit("None")
         
         return
         
@@ -1056,6 +1063,8 @@ class DTOceanWindow(MainWindow):
         self._db_selector = DBSelector(self, self._shell.data_menu)
         self._db_selector.database_selected.connect(
                                     self._shell.select_database)
+        self._db_selector.database_deselected.connect(
+                                    self._shell.deselect_database)
         self._shell.database_updated.connect(
                                     self._db_selector._update_current)
         

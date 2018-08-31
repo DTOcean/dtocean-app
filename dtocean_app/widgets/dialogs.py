@@ -426,6 +426,20 @@ class ListTableEditor(QtGui.QDialog, Ui_ListTableEditor):
         self.listWidget.addItems(names)
             
         return
+    
+    def _add_item(self, name):
+        
+        item = QtGui.QListWidgetItem(name)
+        self.listWidget.addItem(item)
+        
+        return item
+    
+    def _delete_selected(self):
+        
+        self.listWidget.takeItem(self.listWidget.currentRow())
+        self.tableWidget.clear()
+        
+        return
         
     def _update_table(self, dataframe, freeze_cols=None):
         

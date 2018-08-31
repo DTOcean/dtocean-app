@@ -28,6 +28,9 @@ Copyright: Matthias Ludwig, Marcel Radischat 2016
 
 """
 
+import io
+import csv
+
 from dtocean_qt.compat import QtCore, QtGui, Slot
 
 from dtocean_qt.models.DataFrameModel import DataFrameModel
@@ -194,6 +197,7 @@ class DataTableWidget(QtGui.QWidget):
         sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Expanding,
                                        QtGui.QSizePolicy.Expanding)
         self.tableView.setSizePolicy(sizePolicy)
+        self.tableView.installEventFilter(self)
         
         self.gridLayout.addWidget(self.buttonFrame, 0, 0, 1, 1)
         self.gridLayout.addWidget(self.tableView, 1, 0, 1, 1)
@@ -205,8 +209,118 @@ class DataTableWidget(QtGui.QWidget):
         self.buttonFrame.setVisible(visible)
         
     def hideVerticalHeader(self, arg=True):
-        self.tableView.verticalHeader().setVisible(not arg)        
+        self.tableView.verticalHeader().setVisible(not arg)
         return
+    
+    def setViewModel(self, model):
+        """Sets the model for the enclosed TableView in this widget.
+
+        Args:
+            model (DataFrameModel): The model to be displayed by
+                the Table View.
+
+        """
+        if isinstance(model, DataFrameModel):
+            self.enableEditing(False)
+            self.uncheckButton()
+            
+            selectionModel = self.tableView.selectionModel()
+            self.tableView.setModel(model)
+            model.dtypeChanged.connect(self.updateDelegate)
+            model.dataChanged.connect(self.updateDelegates)
+            del selectionModel
+            
+    def setModel(self, model):
+        """Sets the model for the enclosed TableView in this widget.
+
+        Args:
+            model (DataFrameModel): The model to be displayed by
+                the Table View.
+
+        """
+        self.setViewModel(model)
+
+    def model(self):
+        """Gets the viewModel"""
+        return self.view().model()
+
+    def viewModel(self):
+        """Gets the viewModel"""
+        return self.view().model()
+
+    def view(self):
+        """Gets the enclosed TableView
+
+        Returns:
+            QtGui.QTableView: A Qt TableView object.
+
+        """
+        return self.tableView
+
+    def updateDelegate(self, column, dtype):
+        """update the delegates for a specific column
+        
+        Args:
+            column (int): column index.
+            dtype (str): data type of column.
+        
+        """
+        # as documented in the setDelegatesFromDtype function
+        # we need to store all delegates, so going from
+        # type A -> type B -> type A
+        # would cause a segfault if not stored.
+        createDelegate(dtype, column, self.tableView)
+
+    def updateDelegates(self):
+        """reset all delegates"""
+
+        for index, column in enumerate(
+                self.tableView.model().dataFrame().columns):
+
+            dtype = self.tableView.model().dataFrame().dtypes[index]
+            self.updateDelegate(index, dtype)
+        
+        self.tableView.resizeColumnsToContents()
+            
+    def selectionModel(self):
+        """return the table views selectionModel"""
+        return self.view().selectionModel()
+    
+    def eventFilter(self, source, event):
+        
+        if (event.type() == QtCore.QEvent.KeyPress and
+            event.matches(QtGui.QKeySequence.Copy)):
+            
+            self.copySelection()
+            
+            return True
+        
+        return super(DataTableWidget, self).eventFilter(source, event)
+        
+    def copySelection(self):
+        
+        selection = self.tableView.selectedIndexes()
+        
+        if selection:
+            
+            rows = sorted(index.row() for index in selection)
+            columns = sorted(index.column() for index in selection)
+            rowcount = rows[-1] - rows[0] + 1
+            colcount = columns[-1] - columns[0] + 1
+            table = [[''] * colcount for _ in range(rowcount)]
+            
+            for index in selection:
+                
+                row = index.row() - rows[0]
+                column = index.column() - columns[0]
+                table[row][column] = index.data().toPyObject()
+                
+            stream = io.BytesIO()
+            csv.writer(stream).writerows(table)
+            QtGui.qApp.clipboard().setText(stream.getvalue())
+            
+        return
+        
         
     @Slot(bool)
     def enableEditing(self, enabled):
@@ -368,79 +482,4 @@ class DataTableWidget(QtGui.QWidget):
                 dialog.accepted.connect(self.removeColumns)
                 dialog.rejected.connect(self.uncheckButton)
                 dialog.show()
-
-    def setViewModel(self, model):
-        """Sets the model for the enclosed TableView in this widget.
-
-        Args:
-            model (DataFrameModel): The model to be displayed by
-                the Table View.
-
-        """
-        if isinstance(model, DataFrameModel):
-            self.enableEditing(False)
-            self.uncheckButton()
-            
-            selectionModel = self.tableView.selectionModel()
-            self.tableView.setModel(model)
-            model.dtypeChanged.connect(self.updateDelegate)
-            model.dataChanged.connect(self.updateDelegates)
-            del selectionModel
-            
-    def setModel(self, model):
-        """Sets the model for the enclosed TableView in this widget.
-
-        Args:
-            model (DataFrameModel): The model to be displayed by
-                the Table View.
-
-        """
-        self.setViewModel(model)
-
-    def model(self):
-        """Gets the viewModel"""
-        return self.view().model()
-
-    def viewModel(self):
-        """Gets the viewModel"""
-        return self.view().model()
-
-    def view(self):
-        """Gets the enclosed TableView
-
-        Returns:
-            QtGui.QTableView: A Qt TableView object.
-
-        """
-        return self.tableView
-
-    def updateDelegate(self, column, dtype):
-        """update the delegates for a specific column
-        
-        Args:
-            column (int): column index.
-            dtype (str): data type of column.
-        
-        """
-        # as documented in the setDelegatesFromDtype function
-        # we need to store all delegates, so going from
-        # type A -> type B -> type A
-        # would cause a segfault if not stored.
-        createDelegate(dtype, column, self.tableView)
-
-    def updateDelegates(self):
-        """reset all delegates"""
-
-        for index, column in enumerate(
-                self.tableView.model().dataFrame().columns):
-
-            dtype = self.tableView.model().dataFrame().dtypes[index]
-            self.updateDelegate(index, dtype)
-        
-        self.tableView.resizeColumnsToContents()
-            
-    def selectionModel(self):
-        """return the table views selectionModel"""
-        return self.view().selectionModel()
-
 
