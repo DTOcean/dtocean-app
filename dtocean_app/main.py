@@ -1972,6 +1972,7 @@ class DTOceanWindow(MainWindow):
                             
         if self._plot_manager._plot_connected:
             self._plot_manager.plot.disconnect()
+            self._plot_manager.save.disconnect()
             self._plot_manager._plot_connected = False
         
         if not plot_list: plot_list = None
@@ -1980,10 +1981,11 @@ class DTOceanWindow(MainWindow):
                                       plot_list,
                                       plot_auto)
         
-        if not plot_list is None and not plot_auto: return
+        if plot_list is None and not plot_auto: return
             
         if isinstance(var_item, (InputVarItem, OutputVarItem)):
             self._plot_manager.plot.connect(self._set_plot_widget)
+            self._plot_manager.save.connect(self._save_plot)
             self._plot_manager._plot_connected = True
                             
         return
@@ -2083,6 +2085,18 @@ class DTOceanWindow(MainWindow):
         assert len(plt.get_fignums()) <= 2
             
         if "unavailable" in var_item._status: widget.setDisabled(True)
+        
+        return
+    
+    @QtCore.pyqtSlot(object, str, object, object)
+    def _save_plot(self, var_item, file_path, size, plot_name="auto"):
+        
+        if var_item is None: return
+        if plot_name == "auto": plot_name = None
+
+        var_item._save_plot(self._shell, file_path, size, plot_name)
+        
+        assert len(plt.get_fignums()) <= 2
         
         return
     

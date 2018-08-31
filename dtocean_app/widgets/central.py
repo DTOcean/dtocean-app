@@ -23,12 +23,11 @@ Created on Thu Apr 23 12:51:14 2015
 
 from PyQt4 import QtCore, QtGui
 
-import matplotlib.pyplot as plt
-
 from aneris.utilities.misc import OrderedSet
 from dtocean_core.pipeline import Tree
 
-from .display import get_current_filetypes, save_current_figure
+from .display import (get_current_filetypes,
+                      get_current_figure_size)
 from ..utils.display import is_high_dpi
 
 if is_high_dpi():
@@ -326,6 +325,7 @@ class FileManagerWidget(QtGui.QWidget, Ui_FileManagerWidget):
 class PlotManagerWidget(QtGui.QWidget, Ui_PlotManagerWidget):
     
     plot = QtCore.pyqtSignal(object, object)
+    save = QtCore.pyqtSignal(object, str, object, object)
 
     def __init__(self, parent):
 
@@ -334,6 +334,7 @@ class PlotManagerWidget(QtGui.QWidget, Ui_PlotManagerWidget):
         self._var_item = None
         self._ext_types = None
         self._plot_connected = False
+        self._current_plot = None
         
         self._init_ui()
 
@@ -345,12 +346,13 @@ class PlotManagerWidget(QtGui.QWidget, Ui_PlotManagerWidget):
         
         self.getPathButton.clicked.connect(self._set_path)
         self.pathEdit.textChanged.connect(self._set_save)
+        self.checkBox.stateChanged.connect(self._set_custom_size)
         self.buttonBox.button(QtGui.QDialogButtonBox.Ok).clicked.connect(
                                                     self._emit_named_plot)
         self.buttonBox.button(QtGui.QDialogButtonBox.Reset).clicked.connect(
                                                     self._emit_default_plot)
         self.buttonBox.button(QtGui.QDialogButtonBox.Save).clicked.connect(
-                                                    self._save)
+                                                    self._emit_save)
         
         return
         
@@ -358,6 +360,7 @@ class PlotManagerWidget(QtGui.QWidget, Ui_PlotManagerWidget):
         
         self._var_item = None
         self._ext_types = None
+        self._current_plot = None
         
         if var_item is None or (plot_list is None and not plot_auto):
             
@@ -445,12 +448,33 @@ class PlotManagerWidget(QtGui.QWidget, Ui_PlotManagerWidget):
                                                           ).setDisabled(True)
             
         return
+    
+    @QtCore.pyqtSlot()    
+    def _set_custom_size(self):
+        
+        size = get_current_figure_size()
+        
+        if self.checkBox.isChecked():
+            
+            self.widthSpinBox.setValue(size[0])
+            self.heightSpinBox.setValue(size[1])
+            
+            self.widthSpinBox.setEnabled(True)
+            self.heightSpinBox.setEnabled(True)
+            
+        else:
+            
+            self.widthSpinBox.setDisabled(True)
+            self.heightSpinBox.setDisabled(True)
+            
+        return
 
     @QtCore.pyqtSlot()    
     def _emit_named_plot(self):
         
         plot_name = str(self.plotBox.currentText())
         self.plot.emit(self._var_item, plot_name)
+        self._current_plot = plot_name
                 
         return
         
@@ -458,13 +482,23 @@ class PlotManagerWidget(QtGui.QWidget, Ui_PlotManagerWidget):
     def _emit_default_plot(self):
     
         self.plot.emit(self._var_item, None)
+        self._current_plot = None
 
     @QtCore.pyqtSlot()    
-    def _save(self):
+    def _emit_save(self):
         
         figure_path = str(self.pathEdit.text())
-        save_current_figure(figure_path)
         
+        if self.checkBox.isChecked():
+            size = (float(self.widthSpinBox.value()),
+                    float(self.heightSpinBox.value()))
+        else:
+            size = get_current_figure_size()
+        
+        self.save.emit(self._var_item,
+                       figure_path,
+                       size,
+                       self._current_plot)
         self.pathEdit.clear()
         
         return

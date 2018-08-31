@@ -28,7 +28,9 @@ import runpy
 from collections import OrderedDict
 
 import pandas as pd
+import matplotlib.pyplot as plt
 from PyQt4 import QtGui, QtCore
+from  PIL import Image
 
 from dtocean_core.pipeline import Tree
 
@@ -801,6 +803,44 @@ class VarItem(BaseItem):
         widget = MPLWidget(interface.fig_handle, shell.core._input_parent)
         
         return widget
+    
+    def _save_plot(self, shell, file_path, size, plot_name=None, dpi=220):
+                        
+        interface = self._variable._get_receiving_interface(shell.core, 
+                                                            shell.project,
+                                                            "PlotInterface",
+                                                            "AutoPlot",
+                                                            plot_name)
+
+        if (interface is None or
+            not shell.core.can_load_interface(shell.project,
+                                              interface)): return None
+        
+        self._variable._write_interface(shell.core, 
+                                        shell.project,
+                                        interface)
+        
+        if interface.fig_handle is None: return None
+        
+        interface.fig_handle.set_size_inches(*size)
+                        
+        with plt.rc_context(rc={'font.size': 8,
+                                'font.sans-serif': 'Verdana'}):
+        
+            interface.fig_handle.savefig(str(file_path),
+                                         dpi=dpi,
+                                         bbox_inches='tight')
+            
+        plt.close(interface.fig_handle)
+        
+        # Ensure DPI is saved
+        try:
+            im = Image.open(str(file_path))
+            im.save(str(file_path), dpi=[dpi, dpi])
+        except IOError:
+            pass
+        
+        return
 
 
 class InputVarItem(VarItem):
