@@ -149,7 +149,7 @@
        <item>
         <widget class="QLabel" name="insitutionIntroLabel">
          <property name="text">
-          <string>DTOcean was developed within the following institutions:</string>
+          <string>Development of DTOcean is supported by the following institutions:</string>
          </property>
          <property name="alignment">
           <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
@@ -235,7 +235,7 @@
        <item>
         <widget class="QLabel" name="peopleIntroLabel">
          <property name="text">
-          <string>And coded by the following people:</string>
+          <string>Development of this version was led by Mathew Topper with the help of:</string>
          </property>
          <property name="alignment">
           <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
@@ -258,6 +258,19 @@
          </property>
          <property name="margin">
           <number>0</number>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QLabel" name="supportLabel">
+         <property name="text">
+          <string>For free community support please go to &lt;a href='https://github.com/DTOcean/dtocean'&gt;github.com/DTOcean&lt;/a&gt;. For training and consultation services see &lt;a href='http://www.dataonlygreater.com/'&gt;dataonlygreater.com&lt;/a&gt;.</string>
+         </property>
+         <property name="wordWrap">
+          <bool>true</bool>
+         </property>
+         <property name="openExternalLinks">
+          <bool>true</bool>
          </property>
         </widget>
        </item>
@@ -297,7 +310,7 @@
        <item>
         <widget class="QLabel" name="grantLabel">
          <property name="text">
-          <string>This project has received funding from the European Union’s Seventh Programme for research, technological development and demonstration under grant agreement No 608597</string>
+          <string>The original DTOcean project (now completed) received funding from the European Union’s Seventh Programme for research, technological development and demonstration under grant agreement No 608597</string>
          </property>
          <property name="alignment">
           <set>Qt::AlignJustify|Qt::AlignVCenter</set>
@@ -395,7 +408,7 @@
        <item>
         <widget class="QLabel" name="softwareLabel">
          <property name="text">
-          <string>Python 2.7.12, Qt 4.8.7, PyQt 4.11.4</string>
+          <string>Python 2.7.14, Qt 4.8.7, PyQt 4.11.4</string>
          </property>
          <property name="alignment">
           <set>Qt::AlignCenter</set>
@@ -439,6 +452,7 @@
       <zorder>iconsLabel</zorder>
       <zorder>verticalSpacer_4</zorder>
       <zorder>verticalSpacer_5</zorder>
+      <zorder>supportLabel</zorder>
      </widget>
     </widget>
    </item>
