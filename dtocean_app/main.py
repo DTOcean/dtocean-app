@@ -45,6 +45,7 @@ from PyQt4 import QtGui, QtCore
 from dtocean_core.menu import ProjectMenu, ModuleMenu, ThemeMenu, DataMenu
 from dtocean_core.pipeline import set_output_scope
 
+from . import get_log_dir
 from .core import GUICore
 from .help import HelpWidget
 from .menu import DBSelector
@@ -1284,7 +1285,14 @@ class DTOceanWindow(MainWindow):
     
         self.actionHelp_Index.triggered.connect(self._help.show)
         self.actionAbout.triggered.connect(self._about.show)
-    
+        
+        # Open the logs folder
+        log_dir = get_log_dir()
+        log_dir_path = log_dir.get_path()
+        open_log_dir = lambda: os.startfile(log_dir_path)
+        
+        self.actionView_Logs.triggered.connect(open_log_dir)
+
         return
         
     @QtCore.pyqtSlot(str)        
