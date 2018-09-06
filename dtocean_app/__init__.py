@@ -54,25 +54,11 @@ def warn_with_traceback(message,
 
 def start_logging(debug=False):
     
-    # Pick up the configuration from the user directory if it exists
-    userdir = UserDataDirectory("dtocean_app", "DTOcean", "config")
-            
-    # Look for files.ini
-    if userdir.isfile("files.ini"):
-        configdir = userdir
-    else:
-        configdir = ObjDirectory("dtocean_app", "config")
-    
-    files_ini = ReadINI(configdir, "files.ini")
-    files_config = files_ini.get_config()
-    
-    appdir_path = userdir.get_path("..")
-    log_folder = files_config["logs"]["path"]
-    log_path = os.path.join(appdir_path, log_folder)
-    logdir = Directory(log_path)
-    
     # Disable the logging QtHandler if the debug flag is set
     QtHandler.debug = debug
+    
+    # Pick up the configuration from the user directory if it exists
+    userdir = UserDataDirectory("dtocean_app", "DTOcean", "config")
     
     # Look for logging.yaml
     if userdir.isfile("logging.yaml"):
@@ -80,15 +66,19 @@ def start_logging(debug=False):
     else:
         configdir = ObjDirectory("dtocean_app", "config")
     
+    # Get the logger configuration
     log = Logger(configdir)
     log_config_dict = log.read()
+
+    # Get Directory to place logs
+    log_dir = get_log_dir()
     
     # Update the file logger if present
     if "file" in log_config_dict["handlers"]:
         log_filename = log_config_dict["handlers"]["file"]["filename"]
-        log_path = logdir.get_path(log_filename)
+        log_path = log_dir.get_path(log_filename)
         log_config_dict["handlers"]["file"]["filename"] = log_path
-        logdir.makedir()
+        log_dir.makedir()
     
     log.configure_logger(log_config_dict)
     logger = log.add_named_logger("dtocean_app")
@@ -104,6 +94,27 @@ def start_logging(debug=False):
     logger.info("Welcome to DTOcean")
     
     return
+
+
+def get_log_dir():
+    
+    userdir = UserDataDirectory("dtocean_app", "DTOcean", "config")
+    
+    # Look for files.ini
+    if userdir.isfile("files.ini"):
+        configdir = userdir
+    else:
+        configdir = ObjDirectory("dtocean_app", "config")
+    
+    files_ini = ReadINI(configdir, "files.ini")
+    files_config = files_ini.get_config()
+    
+    appdir_path = userdir.get_path("..")
+    log_folder = files_config["logs"]["path"]
+    log_path = os.path.join(appdir_path, log_folder)
+    logdir = Directory(log_path)
+    
+    return logdir
 
 
 def init_config(logging=False, files=False, install=False, overwrite=False):
