@@ -21,9 +21,11 @@ Created on Thu Apr 23 12:51:14 2015
 @author: Mathew Topper
 """
 
-import pandas as pd
+import re
 
+import pandas as pd
 from PyQt4 import QtCore, QtGui
+
 from dtocean_qt.models.DataFrameModel import DataFrameModel
 
 try:
@@ -149,11 +151,38 @@ class OutputDataTable(QtGui.QWidget):
         # set table view widget model
         self.datatable.setViewModel(model)
                 
+        # No data is stored
         if value is None:
+            
             data = pd.DataFrame(columns=new_cols)
+            model.setDataFrame(data)
+            
+            return
+
+        # Check the columns of the stored data against the expected, for
+        # legacy support
+        if len(value.columns) != len(new_cols):
+        
+            # Strip any units
+            clean_cols = [re.sub(r'\s\[[^)]*\]', '', x) for x in new_cols]
+            
+            safe_cols = []
+            
+            for col in value.columns:
+                
+                match = [new_cols[clean_cols.index(x)]
+                                            for x in clean_cols if col == x]
+                
+                if len(match) == 0: continue
+                    
+                safe_cols.append(match[0])
+                
         else:
-            data = value
-            data.columns = new_cols
+            
+            safe_cols = new_cols
+
+        data = value
+        data.columns = safe_cols
         
         # fill the model with data
         model.setDataFrame(data)
