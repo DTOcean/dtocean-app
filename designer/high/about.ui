@@ -373,6 +373,16 @@ QMenu::item:selected{
        </item>
        <item>
         <widget class="QLabel" name="GPLLabel">
+         <property name="styleSheet">
+          <string notr="true">QMenu::item{
+  background-color: rgb(255, 255, 255);
+  color:  rgb(0, 0, 0);
+ }
+QMenu::item:selected{
+  background-color: rgb(0, 85, 127);
+  color: rgb(255, 255, 255);
+}</string>
+         </property>
          <property name="text">
           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;a href=&quot;https://www.gnu.org/licenses/gpl.html&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#0000ff;&quot;&gt;GNU General Public License&lt;/span&gt;&lt;/a&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
          </property>
