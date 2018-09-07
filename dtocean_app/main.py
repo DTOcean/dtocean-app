@@ -786,6 +786,26 @@ class Shell(QtCore.QObject):
         self._active_thread.start()
         
         return
+    
+    @QtCore.pyqtSlot(str, bool)
+    def export_data(self, file_path, mask_outputs=False):
+        
+        self.data_menu.export_data(self.core,
+                                   self.project,
+                                   str(file_path),
+                                   bool(mask_outputs))
+        
+        return
+    
+    @QtCore.pyqtSlot(str, bool)
+    def import_data(self, file_path, skip_satisfied=False):
+        
+        self.data_menu.import_data(self.core,
+                                   self.project,
+                                   str(file_path),
+                                   bool(skip_satisfied))
+        
+        return
         
     @QtCore.pyqtSlot(object, str, str)
     def read_file(self, variable, interface_name, file_path):
@@ -2534,8 +2554,7 @@ class DTOceanWindow(MainWindow):
                                                       valid_exts)
                 
         if file_path:
-            self._shell.core.dump_datastate(self._shell.project,
-                                            str(file_path))
+            self._shell.export_data(file_path)
         
         return
         
@@ -2551,10 +2570,7 @@ class DTOceanWindow(MainWindow):
                                                       valid_exts)
                 
         if file_path:
-            self._shell.core.dump_datastate(
-                                        self._shell.project,
-                                        str(file_path),
-                                        self._shell.core._markers["output"])
+            self._shell.export_data(file_path, True)
         
         return
     
@@ -2570,9 +2586,7 @@ class DTOceanWindow(MainWindow):
                                                       valid_exts)
         
         if file_path:
-            self._shell.core.load_datastate(self._shell.project,
-                                            str(file_path),
-                                            exclude="hidden")
+            self._shell.import_data(file_path)
         
         return
         
@@ -2588,10 +2602,7 @@ class DTOceanWindow(MainWindow):
                                                       valid_exts)
         
         if file_path:
-            self._shell.core.load_datastate(self._shell.project,
-                                            str(file_path),
-                                            exclude="hidden",
-                                            overwrite=False)
+            self._shell.import_data(file_path, True)
         
         return
     
