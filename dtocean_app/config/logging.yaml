@@ -9,7 +9,7 @@ handlers:
     class: logging.NullHandler
   console:
     class: logging.StreamHandler
-    level: INFO
+    level: DEBUG
     formatter: simple
     stream: ext://sys.stdout
   file:
@@ -21,14 +21,26 @@ handlers:
     delay: True
   widget:
     class: dtocean_app.utils.qtlog.QtHandler
-    level: INFO
+    level: DEBUG
+    formatter: simple
+  widgeterror:
+    class: dtocean_app.utils.qtlog.QtHandler
+    level: ERROR
     formatter: simple
 loggers:
   'dtocean_app':
-    level: DEBUG
+    level: INFO
     handlers: [widget, file]
     propagate: no
+  'dtocean_logistics':
+    level: INFO
+    handlers: [widget, file]
+    propagate: no
+  'aneris':
+    level: INFO
+    handlers: [widgeterror, file]
+    propagate: no
 root:
-  level: DEBUG
+  level: INFO
   handlers: [widget, file]
 
