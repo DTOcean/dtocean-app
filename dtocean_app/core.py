@@ -202,7 +202,8 @@ class GUICore(QtCore.QObject, Core):
         
         data_store = DataStorage(gui_data, super_cls="GUIStructure")
         sequencer = Sequencer(self._hub_sockets,
-                              core_interfaces)
+                              core_interfaces,
+                              warn_import=True)
         
         loader = Loader(data_store)
         control = Controller(data_store,
