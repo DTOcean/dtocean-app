@@ -212,7 +212,7 @@ setup(name='dtocean-app',
       packages=find_packages(),
       install_requires=[
            'dtocean-core==1.1.dev6',
-           'matplotlib',
+           'matplotlib<2',
            'numpy',
            'pandas>=0.18',
            'dtocean-qt>=0.10.dev0',
