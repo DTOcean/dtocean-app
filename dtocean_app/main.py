@@ -21,20 +21,14 @@ Created on Thu Apr 23 12:51:14 2015
 @author: Mathew Topper
 """
 
-# Set up logging
-import logging
-
-module_logger = logging.getLogger(__name__)
-
 import os
 import sys
 import json
 import shutil
+import logging
 import tarfile
 import tempfile
 import traceback
-import subprocess
-from copy import deepcopy
 from collections import namedtuple
 
 import sip
@@ -44,6 +38,11 @@ from PyQt4 import QtGui, QtCore
 
 from dtocean_core.menu import ProjectMenu, ModuleMenu, ThemeMenu, DataMenu
 from dtocean_core.pipeline import set_output_scope
+from dtocean_core.utils.database import (database_from_files,
+                                         database_to_files,
+                                         filter_map,
+                                         get_database,
+                                         get_table_map)
 
 from . import get_log_dir
 from .core import GUICore
@@ -53,13 +52,11 @@ from .simulation import SimulationDock
 from .extensions import GUIStrategyManager, GUIToolManager
 from .pipeline import (PipeLine,
                        SectionItem,
-                       HiddenHub,
                        HubItem,
                        InputBranchItem,
                        OutputBranchItem,
                        InputVarItem,
                        OutputVarItem)
-from .utils.process import which
 
 from .widgets.central import (ContextArea,
                               DetailsWidget,
@@ -76,8 +73,10 @@ from .widgets.dialogs import (DataCheck,
 from .widgets.display import (MPLWidget,
                               get_current_filetypes,
                               save_current_figure)
-from .widgets.docks import (ListDock,
-                            LogDock)
+from .widgets.docks import LogDock
+
+# Set up logging
+module_logger = logging.getLogger(__name__)
 
 
 class ThreadReadRaw(QtCore.QThread):
@@ -295,6 +294,56 @@ class ThreadTool(QtCore.QThread):
             self.error_detected.emit(etype, evalue, etraceback)
 
         return
+    
+    
+class ThreadDump(QtCore.QThread):
+    
+    """QThread for executing database dump"""
+    
+    taskFinished = QtCore.pyqtSignal()
+    error_detected =  QtCore.pyqtSignal(object, object, object)
+
+    def __init__(self, credentials, root_path, selected):
+        
+        super(ThreadDump, self).__init__()
+        self._credentials = credentials
+        self._root_path = root_path
+        self._selected = selected
+        
+        return
+    
+    def run(self):
+        
+        try:
+                    
+            db = get_database(self._credentials, timeout=60)
+            table_list = get_table_map()
+        
+            # Filter the table if required
+            selected = str(self._selected).lower()
+    
+            if selected != "all":
+                filtered_dict = filter_map(table_list, selected)
+                table_list = [filtered_dict]
+            
+            # make a directory if required
+            root_path = str(self._root_path)
+
+            if not os.path.exists(root_path): os.makedirs(root_path)
+                    
+            database_to_files(root_path,
+                              table_list,
+                              db,
+                              print_function=module_logger.info)
+            
+            self.taskFinished.emit()
+                
+        except: 
+            
+            etype, evalue, etraceback = sys.exc_info()
+            self.error_detected.emit(etype, evalue, etraceback)
+
+        return
 
 
 class Shell(QtCore.QObject):
@@ -319,6 +368,8 @@ class Shell(QtCore.QObject):
     module_executed = QtCore.pyqtSignal()
     themes_executed = QtCore.pyqtSignal()
     strategy_executed = QtCore.pyqtSignal()
+    database_convert_active = QtCore.pyqtSignal()
+    database_convert_complete = QtCore.pyqtSignal()
 
     def __init__(self):
         
@@ -681,6 +732,20 @@ class Shell(QtCore.QObject):
         
         self.data_menu.deselect_database(self.project)
         self.database_updated.emit("None")
+        
+        return
+    
+    @QtCore.pyqtSlot(str, str)
+    def dump_database(self, root_path, selected):
+        
+        cred = self.project.get_database_credentials()
+        
+        self._active_thread = ThreadDump(cred, root_path, selected)
+        self._active_thread.start()
+        
+        self.database_convert_active.emit()
+        self._active_thread.taskFinished.connect(
+                            lambda: self.database_convert_complete.emit())
         
         return
         
@@ -1086,8 +1151,14 @@ class DTOceanWindow(MainWindow):
                                     self._shell.select_database)
         self._db_selector.database_deselected.connect(
                                     self._shell.deselect_database)
+        self._db_selector.database_dump.connect(
+                                    self._shell.dump_database)
         self._shell.database_updated.connect(
                                     self._db_selector._update_current)
+        self._shell.database_convert_active.connect(
+                                    self._db_selector._convert_disabled)
+        self._shell.database_convert_complete.connect(
+                                    self._db_selector._convert_enabled)
         
         # Set up the strategy manager
         self._strategy_manager = GUIStrategyManager(self)

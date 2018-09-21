@@ -36,8 +36,10 @@ except AttributeError:
 
 class DBSelector(ListTableEditor):
     
-    database_selected = QtCore.pyqtSignal(str, dict)
     database_deselected = QtCore.pyqtSignal()
+    database_dump = QtCore.pyqtSignal(str, str)
+    database_load = QtCore.pyqtSignal(str, str)
+    database_selected = QtCore.pyqtSignal(str, dict)
     
     def __init__(self, parent, data_menu):
         
@@ -130,6 +132,7 @@ class DBSelector(ListTableEditor):
         self.addButton.clicked.connect(self._add_database)
         self.saveButton.clicked.connect(self._update_database)
         self.deleteButton.clicked.connect(self._delete_database)
+        self.dumpButton.clicked.connect(self._dump_database)
         
         self.addButton.setEnabled(True)
         self.deleteButton.setEnabled(False)
@@ -189,6 +192,26 @@ class DBSelector(ListTableEditor):
             
         if self.listWidget.count() > 0:
             self.deleteButton.setEnabled(True)
+        
+        return
+    
+    @QtCore.pyqtSlot()
+    def _convert_enabled(self):
+        
+        # Switch on dump/load functions
+        self.loadButton.setEnabled(True)
+        self.dumpButton.setEnabled(True)
+        self.sectionCombo.setEnabled(True)
+        
+        return
+    
+    @QtCore.pyqtSlot()
+    def _convert_disabled(self):
+        
+        # Switch on dump/load functions
+        self.loadButton.setDisabled(True)
+        self.dumpButton.setDisabled(True)
+        self.sectionCombo.setDisabled(True)
         
         return
         
@@ -271,9 +294,7 @@ class DBSelector(ListTableEditor):
         self.database_selected.emit(name, db_dict)
         
         # Switch on dump/load functions
-        self.loadButton.setEnabled(True)
-        self.dumpButton.setEnabled(True)
-        self.sectionCombo.setEnabled(True)
+        self._convert_enabled()
         
         return
         
@@ -286,9 +307,7 @@ class DBSelector(ListTableEditor):
         self.buttonBox.button(QtGui.QDialogButtonBox.Apply).setDefault(True)
         
         # Switch off dump/load functions
-        self.loadButton.setDisabled(True)
-        self.dumpButton.setDisabled(True)
-        self.sectionCombo.setDisabled(True)
+        self._convert_disabled()
         
         return
     
@@ -398,4 +417,16 @@ class DBSelector(ListTableEditor):
             self._update_table(item)
         
         return
+    
+    @QtCore.pyqtSlot()
+    def _dump_database(self):
+    
+        title_str = 'Select Dump Location'
+        root_path = QtGui.QFileDialog.getExistingDirectory(self,
+                                                           title_str)
+        section = self.sectionCombo.currentText()
+        
+        if root_path:
+            self.database_dump.emit(root_path, section)
 
+        return
