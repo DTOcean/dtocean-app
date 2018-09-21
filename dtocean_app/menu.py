@@ -65,6 +65,16 @@ class DBSelector(ListTableEditor):
                      "pressing apply.")
         self.extraLabel.setText(label_str)
         
+        # Tool tips for standard buttons
+        tip_msg = 'Add stored credentials'
+        self.addButton.setToolTip(tip_msg)
+        
+        tip_msg = 'Delete stored credentials'
+        self.deleteButton.setToolTip(tip_msg)
+        
+        tip_msg = 'Store updated credentials'
+        self.saveButton.setToolTip(tip_msg)
+        
         # Add new buttons
         self.loadButton = self._make_button()
         self.loadButton.setObjectName(_fromUtf8("loadButton"))
@@ -72,11 +82,17 @@ class DBSelector(ListTableEditor):
         self.loadButton.setDisabled(True)
         self.verticalLayout.addWidget(self.loadButton)
         
+        tip_msg = 'Load database from structured files'
+        self.loadButton.setToolTip(tip_msg)
+        
         self.dumpButton = self._make_button()
         self.dumpButton.setObjectName(_fromUtf8("dumpButton"))
         self.dumpButton.setText("Dump...")
         self.dumpButton.setDisabled(True)
         self.verticalLayout.addWidget(self.dumpButton)
+        
+        tip_msg = 'Dump database to structured files'
+        self.dumpButton.setToolTip(tip_msg)
         
         self.listWidget.itemClicked.connect(self._update_table)
         self.listWidget.itemDelegate().closeEditor.connect(
