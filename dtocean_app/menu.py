@@ -94,6 +94,27 @@ class DBSelector(ListTableEditor):
         tip_msg = 'Dump database to structured files'
         self.dumpButton.setToolTip(tip_msg)
         
+        # Add label and combo box
+        self.sectionLabel = self._make_label()
+        self.sectionLabel.setObjectName(_fromUtf8("sectionLabel"))
+        self.sectionLabel.setText("Select section:")
+        self.sectionLabel.setEnabled(True)
+        self.verticalLayout.addWidget(self.sectionLabel)
+        
+        tip_msg = 'Dump or load a partial section of the database'
+        self.sectionLabel.setToolTip(tip_msg)
+        
+        self.sectionCombo = self._make_combo()
+        self.sectionCombo.setMinimumSize(QtCore.QSize(75, 0))
+        self.sectionCombo.setObjectName(_fromUtf8("sectionCombo"))
+        self.sectionCombo.setDisabled(True)
+        self.verticalLayout.addWidget(self.sectionCombo)
+        
+        combo_list = ["All", "Device", "Site", "Other"]
+        
+        for item in combo_list:
+            self.sectionCombo.addItem(item)
+        
         self.listWidget.itemClicked.connect(self._update_table)
         self.listWidget.itemDelegate().closeEditor.connect(
                                                         self._rename_database)
@@ -131,6 +152,30 @@ class DBSelector(ListTableEditor):
         button.setSizePolicy(sizePolicy)
         
         return button
+    
+    def _make_label(self):
+        
+        label = QtGui.QLabel(self)
+        sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Fixed,
+                                       QtGui.QSizePolicy.Fixed)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(label.sizePolicy().hasHeightForWidth())
+        label.setSizePolicy(sizePolicy)
+        
+        return label
+    
+    def _make_combo(self):
+        
+        combo = QtGui.QComboBox(self)
+        sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Fixed,
+                                       QtGui.QSizePolicy.Fixed)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(combo.sizePolicy().hasHeightForWidth())
+        combo.setSizePolicy(sizePolicy)
+        
+        return combo
         
     def _update_list(self):
         
