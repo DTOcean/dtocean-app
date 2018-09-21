@@ -270,7 +270,10 @@ class DBSelector(ListTableEditor):
         
         self.database_selected.emit(name, db_dict)
         
-        
+        # Switch on dump/load functions
+        self.loadButton.setEnabled(True)
+        self.dumpButton.setEnabled(True)
+        self.sectionCombo.setEnabled(True)
         
         return
         
@@ -280,7 +283,12 @@ class DBSelector(ListTableEditor):
         self.database_deselected.emit()
         
         # Set apply button as default
+        self.buttonBox.button(QtGui.QDialogButtonBox.Apply).setDefault(True)
         
+        # Switch off dump/load functions
+        self.loadButton.setDisabled(True)
+        self.dumpButton.setDisabled(True)
+        self.sectionCombo.setDisabled(True)
         
         return
     
