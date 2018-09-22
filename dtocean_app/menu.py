@@ -133,6 +133,7 @@ class DBSelector(ListTableEditor):
         self.saveButton.clicked.connect(self._update_database)
         self.deleteButton.clicked.connect(self._delete_database)
         self.dumpButton.clicked.connect(self._dump_database)
+        self.loadButton.clicked.connect(self._load_database)
         
         self.addButton.setEnabled(True)
         self.deleteButton.setEnabled(False)
@@ -428,5 +429,18 @@ class DBSelector(ListTableEditor):
         
         if root_path:
             self.database_dump.emit(root_path, section)
+
+        return
+    
+    @QtCore.pyqtSlot()
+    def _load_database(self):
+    
+        title_str = 'Select Location to Load'
+        root_path = QtGui.QFileDialog.getExistingDirectory(self,
+                                                           title_str)
+        section = self.sectionCombo.currentText()
+        
+        if root_path:
+            self.database_load.emit(root_path, section)
 
         return

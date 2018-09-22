@@ -344,6 +344,51 @@ class ThreadDump(QtCore.QThread):
             self.error_detected.emit(etype, evalue, etraceback)
 
         return
+    
+    
+class ThreadLoad(QtCore.QThread):
+    
+    """QThread for executing database dump"""
+    
+    taskFinished = QtCore.pyqtSignal()
+    error_detected =  QtCore.pyqtSignal(object, object, object)
+
+    def __init__(self, credentials, root_path, selected):
+        
+        super(ThreadLoad, self).__init__()
+        self._credentials = credentials
+        self._root_path = root_path
+        self._selected = selected
+        
+        return
+    
+    def run(self):
+        
+        try:
+                    
+            db = get_database(self._credentials, timeout=60)
+            table_list = get_table_map()
+            
+            # Filter the table if required
+            selected = str(self._selected).lower()
+            
+            if selected != "all":
+                filtered_dict = filter_map(table_list, selected)
+                table_list = [filtered_dict]
+            
+            database_from_files(str(self._root_path),
+                                table_list,
+                                db,
+                                print_function=module_logger.info)
+            
+            self.taskFinished.emit()
+            
+        except: 
+            
+            etype, evalue, etraceback = sys.exc_info()
+            self.error_detected.emit(etype, evalue, etraceback)
+            
+        return
 
 
 class Shell(QtCore.QObject):
@@ -741,6 +786,20 @@ class Shell(QtCore.QObject):
         cred = self.project.get_database_credentials()
         
         self._active_thread = ThreadDump(cred, root_path, selected)
+        self._active_thread.start()
+        
+        self.database_convert_active.emit()
+        self._active_thread.taskFinished.connect(
+                            lambda: self.database_convert_complete.emit())
+        
+        return
+    
+    @QtCore.pyqtSlot(str, str)
+    def load_database(self, root_path, selected):
+    
+        cred = self.project.get_database_credentials()
+        
+        self._active_thread = ThreadLoad(cred, root_path, selected)
         self._active_thread.start()
         
         self.database_convert_active.emit()
@@ -1153,12 +1212,18 @@ class DTOceanWindow(MainWindow):
                                     self._shell.deselect_database)
         self._db_selector.database_dump.connect(
                                     self._shell.dump_database)
+        self._db_selector.database_load.connect(
+                                    self._shell.load_database)
         self._shell.database_updated.connect(
                                     self._db_selector._update_current)
         self._shell.database_convert_active.connect(
                                     self._db_selector._convert_disabled)
         self._shell.database_convert_complete.connect(
                                     self._db_selector._convert_enabled)
+        self._shell.database_convert_active.connect(
+                        lambda: self.actionInitiate_Pipeline.setDisabled(True))
+        self._shell.database_convert_complete.connect(
+                        lambda: self.actionInitiate_Pipeline.setEnabled(True))
         
         # Set up the strategy manager
         self._strategy_manager = GUIStrategyManager(self)
