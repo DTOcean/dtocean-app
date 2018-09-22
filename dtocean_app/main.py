@@ -659,9 +659,10 @@ class Shell(QtCore.QObject):
             raise ValueError(errStr)
             
         # Check the extension
-        if os.path.splitext(save_path)[1] != ".dto":
+        if os.path.splitext(save_path)[1] not in [".dto", ".prj"]:
         
-            errStr = "The file path must be a file with .dto extension"
+            errStr = ("The file path must be a file with either .dto or "
+                      ".prj extension")
             raise ValueError(errStr)
             
         dto_dir_path = tempfile.mkdtemp()
@@ -669,6 +670,14 @@ class Shell(QtCore.QObject):
         # Dump the project
         prj_file_path = os.path.join(dto_dir_path, "project.prj")
         self.core.dump_project(self.project, prj_file_path)
+        
+        # If saving a project file only
+        if os.path.splitext(save_path)[1] == ".prj":
+            
+            shutil.move(prj_file_path, save_path)
+            shutil.rmtree(dto_dir_path)
+            
+            return
         
         # Dump the output scope
         sco_file_path = os.path.join(dto_dir_path, "scope.json")
@@ -2661,7 +2670,8 @@ class DTOceanWindow(MainWindow):
     def _saveas_project(self):
         
         msg = "Save Project"
-        valid_exts = "DTOcean Files (*.dto)"
+        valid_exts = ("DTOcean Application File (*.dto);;"
+                      "DTOcean Project File (*.prj)")
         
         file_path = QtGui.QFileDialog.getSaveFileName(None,
                                                       msg,
