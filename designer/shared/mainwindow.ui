@@ -102,8 +102,8 @@
     </property>
     <addaction name="actionAdd_Modules"/>
     <addaction name="actionAdd_Assessment"/>
-    <addaction name="actionAdd_Strategy"/>
     <addaction name="separator"/>
+    <addaction name="actionAdd_Strategy"/>
     <addaction name="actionRun_Current"/>
     <addaction name="actionRun_Themes"/>
     <addaction name="actionRun_Strategy"/>
@@ -142,8 +142,8 @@
     <addaction name="separator"/>
    </widget>
    <addaction name="menuFile"/>
-   <addaction name="menuSimulation"/>
    <addaction name="menuData"/>
+   <addaction name="menuSimulation"/>
    <addaction name="menuView"/>
    <addaction name="menuTools"/>
    <addaction name="menuHelp"/>
@@ -197,8 +197,8 @@
    </attribute>
    <addaction name="actionAdd_Modules"/>
    <addaction name="actionAdd_Assessment"/>
-   <addaction name="actionAdd_Strategy"/>
    <addaction name="separator"/>
+   <addaction name="actionAdd_Strategy"/>
    <addaction name="actionRun_Current"/>
    <addaction name="actionRun_Themes"/>
    <addaction name="actionRun_Strategy"/>

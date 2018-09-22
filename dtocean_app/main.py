@@ -886,15 +886,20 @@ class Shell(QtCore.QObject):
         module_logger.debug(logMsg)
             
         self.strategy = strategy
-        
-        if strategy is None: return
-        
-        self.strategy.strategy_run = True
-        
-        force_unavailable = self.strategy.get_variables()
         simulation = self.project.get_simulation()
         
-        simulation.set_unavailable_variables(force_unavailable)
+        if strategy is None:
+            
+            simulation.set_unavailable_variables(None)
+        
+        else:
+        
+            self.strategy.strategy_run = True
+            force_unavailable = self.strategy.get_variables()
+            simulation.set_unavailable_variables(force_unavailable)
+        
+        self.core.set_interface_status(self.project)
+        self.update_run_action.emit()
         
         return
     
@@ -1746,7 +1751,6 @@ class DTOceanWindow(MainWindow):
         # Enabale Actions
         self.actionAdd_Modules.setEnabled(True)
         self.actionAdd_Assessment.setEnabled(True)
-        self.actionAdd_Strategy.setEnabled(True)
         self.actionInitiate_Dataflow.setEnabled(True)
         
         # Update the pipeline
@@ -1817,12 +1821,12 @@ class DTOceanWindow(MainWindow):
         # Enable Actions
         self.actionSave.setEnabled(True)
         self.actionSave_As.setEnabled(True)
+        self.actionAdd_Strategy.setEnabled(True)
         self._run_action_ui_switch()
         
         # Disable Actions
         self.actionAdd_Modules.setDisabled(True)
         self.actionAdd_Assessment.setDisabled(True)
-        self.actionAdd_Strategy.setDisabled(True)
         self.actionInitiate_Dataflow.setDisabled(True)
         self.actionInitiate_Bathymetry.setDisabled(True)
         
