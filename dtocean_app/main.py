@@ -427,6 +427,7 @@ class Shell(QtCore.QObject):
         self.data_menu = None
         self.project = None
         self.project_path = None
+        self.project_unsaved = True
         self.strategy = None
         self._active_thread = None
         self._current_scope = None
@@ -1505,6 +1506,7 @@ class DTOceanWindow(MainWindow):
                                             self._shell.project_path)
         
         self._set_window_title(window_title)
+        self._shell.project_unsaved = False
 
         return
         
@@ -1520,6 +1522,7 @@ class DTOceanWindow(MainWindow):
                                              self._shell.project_path)
         
         self._set_window_title(window_title)
+        self._shell.project_unsaved = True
 
         return
         
@@ -1535,6 +1538,7 @@ class DTOceanWindow(MainWindow):
         
         # Disable Actions
         self.actionNew.setDisabled(True)
+        self.actionOpen.setDisabled(True)
         self.actionSave.setDisabled(True)
         self.actionSave_As.setDisabled(True)
         self.actionComparison.setDisabled(True)
@@ -1664,6 +1668,7 @@ class DTOceanWindow(MainWindow):
 
         # Enable actions
         self.actionNew.setEnabled(True)
+        self.actionOpen.setEnabled(True)
 
         # Clear the pipeline
         self._pipeline_dock._clear()
@@ -2546,7 +2551,7 @@ class DTOceanWindow(MainWindow):
         
         return
         
-    @QtCore.pyqtSlot()    
+    @QtCore.pyqtSlot()
     def _save_comparison_data(self):
         
         extlist = ["comma-separated values (*.csv)"]
@@ -2576,11 +2581,9 @@ class DTOceanWindow(MainWindow):
         return
         
     @QtCore.pyqtSlot()
-    def _new_project(self):      
-        
-        reply = self._project_close_warning()
-        
-        if reply == QtGui.QMessageBox.Yes: self._shell.new_project()
+    def _new_project(self):
+                
+        self._shell.new_project()
         
         return
 
@@ -2596,10 +2599,6 @@ class DTOceanWindow(MainWindow):
                                                       valid_exts)
         
         if not file_path: return
-            
-        reply = self._project_close_warning()
-        
-        if reply != QtGui.QMessageBox.Yes: return
                 
         if self._shell.project is not None:
             self._shell.close_project()
@@ -2659,12 +2658,14 @@ class DTOceanWindow(MainWindow):
     @QtCore.pyqtSlot()
     def _save_project(self):
         
+        result = True
+
         if self._shell.project_path is None:
-            self._saveas_project()
+            result = self._saveas_project()
         else:
             self._shell.save_project()
         
-        return
+        return result
         
     @QtCore.pyqtSlot()
     def _saveas_project(self):
@@ -2678,17 +2679,21 @@ class DTOceanWindow(MainWindow):
                                                       '.',
                                                       valid_exts)
         
+        result = False
+        
         if file_path:
             self._shell.save_project(file_path)
+            result = True
         
-        return
+        return result
         
     @QtCore.pyqtSlot()
     def _close_project(self):
         
         reply = self._project_close_warning()
         
-        if reply == QtGui.QMessageBox.Yes: self._shell.close_project()
+        if (reply == QtGui.QMessageBox.Save or
+            reply == QtGui.QMessageBox.Discard): self._shell.close_project()
         
         return
     
@@ -3140,29 +3145,55 @@ class DTOceanWindow(MainWindow):
         
     def _project_close_warning(self):
         
-        if self._shell.project is None: return QtGui.QMessageBox.Yes
+        if (self._shell.project is None or
+            not self.actionSave.isEnabled() or 
+            not self._shell.project_unsaved): return QtGui.QMessageBox.Discard
         
-        qstr = "Unsaved progress will be lost. Continue?"
+        qstr = "Do you want to save your changes?"
         
         reply = QtGui.QMessageBox.warning(self,
-                                          'Project close',
+                                          'Project modified',
                                           qstr,
-                                          QtGui.QMessageBox.Yes,
-                                          QtGui.QMessageBox.No)
+                                          QtGui.QMessageBox.Save,
+                                          QtGui.QMessageBox.Discard,
+                                          QtGui.QMessageBox.Cancel)
+        
+        if reply == QtGui.QMessageBox.Save:
+            if not self._save_project(): reply = QtGui.QMessageBox.Cancel
         
         return reply
 
     def closeEvent(self, event):
         
-        reply = QtGui.QMessageBox.question(self,
-                                           'Exit',
-                                           "Quit DTOcean?",
-                                           QtGui.QMessageBox.Yes,
-                                           QtGui.QMessageBox.No)
+        # Check for active thread
+        if (self._shell._active_thread is not None or
+            self._thread_tool is not None):
 
-        if reply == QtGui.QMessageBox.Yes:
-            event.accept()
-        else:
-            event.ignore()
+            qstr = ("Quitting now may cause DATA CORRUPTION or\n"
+                    "LOSS OF RESULTS! Are you sure?")
+        
+            reply = QtGui.QMessageBox.critical(
+                            self,
+                            'Active thread detected',
+                            qstr,
+                            QtGui.QMessageBox.Yes,
+                            QtGui.QMessageBox.No | QtGui.QMessageBox.Default)
             
+            if reply == QtGui.QMessageBox.Yes:
+                event.accept()
+            elif reply == QtGui.QMessageBox.No:
+                event.ignore()
+                return
+            else:
+                err_msg = "Sooner or later, everyone comes to Babylon 5"
+                raise ValueError(err_msg)
+        
+        # Check for open project
+        reply = self._project_close_warning()
+
+        if reply == QtGui.QMessageBox.Cancel:
+            event.ignore()
+        else:
+            event.accept()
+        
         return
