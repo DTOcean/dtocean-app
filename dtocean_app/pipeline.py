@@ -32,7 +32,7 @@ import matplotlib.pyplot as plt
 from PyQt4 import QtGui, QtCore
 from  PIL import Image
 
-from dtocean_core.pipeline import Tree
+from dtocean_core.pipeline import Tree, _get_connector
 
 from .widgets.docks import PipeLineDock
 from .widgets.display import MPLWidget
@@ -201,12 +201,37 @@ class PipeLine(PipeLineDock):
                 
                 menu = QtGui.QMenu()
                 
+                # Enable tooltips
+                tips = lambda action: QtGui.QToolTip.showText(
+                                                QtGui.QCursor.pos(),
+                                                action.toolTip(),
+                                                menu,
+                                                menu.actionGeometry(action))
+                menu.hovered.connect(tips)
+                
                 if item._hub_title == "Modules":
-                    menu.addAction('Inspect', lambda: item._inspect(shell))
-                    menu.addAction('Reset', lambda: item._reset(shell))
+                    
+                    # Can't reset or insepct unless the interface has executed
+                    connector = _get_connector(shell.project, "modules")
+                    
+                    active =  connector.is_interface_completed(shell.core,
+                                                               shell.project,
+                                                               item._title)
+                    
+                    action = menu.addAction('Inspect',
+                                            lambda: item._inspect(shell))
+                    action.setToolTip('Inspect results following '
+                                      'execution of this module')
+                    action.setEnabled(active)
+                    
+                    action = menu.addAction('Reset',
+                                            lambda: item._reset(shell))
+                    action.setToolTip('Reset simulation prior to '
+                                      'execution of this module')
+                    action.setEnabled(active)
                     
                 menu.addAction('Load test data...', 
-                               self._test_data_picker.show)            
+                               self._test_data_picker.show)
                 menu.exec_(self.treeWidget.mapToGlobal(position))
             
         elif isinstance(item, OutputBranchItem):
