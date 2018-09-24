@@ -495,23 +495,43 @@ class InputBranchItem(BaseItem):
                        branch,
                        hub_title,
                        title,
-                       ignore_str="hidden"):
+                       ignore_str="hidden",
+                       sort=True):
                            
         super(InputBranchItem, self).__init__(parent, title)
         self._branch = branch
         self._hub_title = hub_title
         self._ignore_str = ignore_str
+        self._sort = sort
         
         return
         
-    def _activate(self, shell, sort=True):
+    def _activate(self, shell):
         
         # Update status on variable updated events
         shell.update_pipeline.connect(self._update_status)
         
+        # Initiate items
+        self._make_input_items(shell)
+        
+        return
+    
+    def _expand(self, shell):
+            
         input_status = self._branch.get_input_status(shell.core,
                                                      shell.project)
-        if sort: 
+                                                     
+        if not set(input_status.values()) == set(["unavailable"]):
+            self.setExpanded(True)
+        
+        return
+    
+    def _make_input_items(self, shell):
+        
+        input_status = self._branch.get_input_status(shell.core,
+                                                     shell.project)
+        
+        if self._sort: 
             
             input_declaration = self._branch.get_inputs(shell.core,
                                                         shell.project)
@@ -538,29 +558,6 @@ class InputBranchItem(BaseItem):
                                     metadata.title)
 
             self._items.append(new_item)
-            
-        return
-                
-    def _expand(self, shell):
-            
-        input_status = self._branch.get_input_status(shell.core,
-                                                     shell.project)
-                                                     
-        if not set(input_status.values()) == set(["unavailable"]):
-            self.setExpanded(True)
-        
-        return
-
-    @QtCore.pyqtSlot(object)
-    def _update_status(self, shell):
-        
-        input_status = self._branch.get_input_status(shell.core,
-                                                     shell.project)
-        
-        for item in self._items:
-            
-            status = input_status[item._variable._id]
-            item._update_status(status)
             
         return
         
@@ -592,8 +589,17 @@ class InputBranchItem(BaseItem):
         address_df = pd.DataFrame(address_dict)
 
         return address_df
+    
+    @QtCore.pyqtSlot(object)
+    def _update_status(self, shell):
+        
+        # Remake the items
+        self._clear()
+        self._make_input_items(shell)
+            
+        return
 
-    @QtCore.pyqtSlot(object, str, bool)        
+    @QtCore.pyqtSlot(object, str, bool)
     def _read_test_data(self, shell, test_data_path, overwrite=True):
         
         test_data_meta = runpy.run_path(test_data_path, run_name="__main__")
@@ -608,7 +614,7 @@ class InputBranchItem(BaseItem):
         
         return
 
-    @QtCore.pyqtSlot(object)        
+    @QtCore.pyqtSlot(object)
     def _inspect(self, shell):
 
         self._branch.inspect(shell.core,
@@ -616,7 +622,7 @@ class InputBranchItem(BaseItem):
         
         return
 
-    @QtCore.pyqtSlot(object)        
+    @QtCore.pyqtSlot(object)
     def _reset(self, shell):
 
         self._branch.reset(shell.core,
@@ -688,6 +694,7 @@ class OutputBranchItem(BaseItem):
         
         return
             
+    @QtCore.pyqtSlot(object)
     def _update_status(self, shell):
 
         output_status = self._branch.get_output_status(shell.core,
@@ -699,7 +706,7 @@ class OutputBranchItem(BaseItem):
             
         return
         
-    @QtCore.pyqtSlot(object)        
+    @QtCore.pyqtSlot(object)
     def _inspect(self, shell):
 
         self._branch.inspect(shell.core,
