@@ -21,6 +21,8 @@ Created on Thu Apr 23 12:51:14 2015
 @author: Mathew Topper
 """
 
+import os
+
 from PyQt4 import QtCore, QtGui
 
 from aneris.utilities.misc import OrderedSet
@@ -190,7 +192,6 @@ class FileManagerWidget(QtGui.QWidget, Ui_FileManagerWidget):
         
         self._variable = variable
         
-        self.extBox.clear()
         self.pathEdit.clear()
         self.saveButton.setDisabled(True)
         self.loadButton.setDisabled(True)
@@ -232,34 +233,24 @@ class FileManagerWidget(QtGui.QWidget, Ui_FileManagerWidget):
     @QtCore.pyqtSlot(str)
     def _set_file_mode(self, file_mode):
         
-        self.extBox.clear()
         self.pathEdit.clear()
         
         if file_mode == "load":
-            
             self._file_mode = "load"
-            valid_exts = self._load_ext_dict.keys()
-            
         elif file_mode == "save":
-            
             self._file_mode = "save"
-            valid_exts = self._save_ext_dict.keys()
-            
         else:
-            
             errStr = "Argument file_mode may only have values 'load' or 'save'"
             raise ValueError(errStr)
-            
-        for item in valid_exts:
-            self.extBox.addItem(item)
  
         return
         
     @QtCore.pyqtSlot()    
     def _set_path(self):
         
-        file_ext = str(self.extBox.currentText())
-        file_ext_str = "(*{})".format(file_ext)
+        valid_exts = self._load_ext_dict.keys()
+        valid_ext_strs = ["(*{})".format(file_ext) for file_ext in valid_exts]
+        file_ext_str = ";;".join(valid_ext_strs)
         
         if self._file_mode == "load":
             
@@ -301,15 +292,24 @@ class FileManagerWidget(QtGui.QWidget, Ui_FileManagerWidget):
     def _emit_file_signal(self):
         
         file_mode = self._file_mode
-        file_ext = str(self.extBox.currentText())
         file_path = str(self.pathEdit.text())
+        file_ext = os.path.splitext(file_path)[1]
+        
         
         if file_mode == "load":
-        
+            
+            if file_ext not in self._load_ext_dict.keys():
+                err_msg = "{} is not a valid extension".format(file_ext)
+                raise ValueError(err_msg)
+
             interface_name = self._load_ext_dict[file_ext]
             self.load_file.emit(self._variable, interface_name, file_path)
 
         elif file_mode == "save":
+            
+            if file_ext not in self._save_ext_dict.keys():
+                err_msg = "{} is not a valid extension".format(file_ext)
+                raise ValueError(err_msg)
             
             interface_name = self._save_ext_dict[file_ext]
             self.save_file.emit(self._variable, interface_name, file_path)
