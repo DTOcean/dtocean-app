@@ -446,6 +446,7 @@ class Shell(QtCore.QObject):
         self.module_executed.connect(self._clear_active_thread)
         self.themes_executed.connect(self._clear_active_thread)
         self.strategy_executed.connect(self._clear_active_thread)
+        self.database_convert_complete.connect(self._clear_active_thread)
         
         return
     
