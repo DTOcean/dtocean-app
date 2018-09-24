@@ -422,12 +422,23 @@ class DBSelector(ListTableEditor):
     @QtCore.pyqtSlot()
     def _dump_database(self):
     
-        title_str = 'Select Dump Location'
+        title_str = 'Select Directory for File Dump'
         root_path = QtGui.QFileDialog.getExistingDirectory(self,
                                                            title_str)
         section = self.sectionCombo.currentText()
         
-        if root_path:
+        if not root_path: return
+        
+        qstr = "Existing files will be overwritten. Continue?"
+        
+        reply = QtGui.QMessageBox.warning(
+                            self,
+                            'Database dump',
+                            qstr,
+                            QtGui.QMessageBox.Yes,
+                            QtGui.QMessageBox.No | QtGui.QMessageBox.Default)
+        
+        if reply == QtGui.QMessageBox.Yes:
             self.database_dump.emit(root_path, section)
 
         return
@@ -435,12 +446,23 @@ class DBSelector(ListTableEditor):
     @QtCore.pyqtSlot()
     def _load_database(self):
     
-        title_str = 'Select Location to Load'
+        title_str = 'Select Directory to Load'
         root_path = QtGui.QFileDialog.getExistingDirectory(self,
                                                            title_str)
         section = self.sectionCombo.currentText()
         
-        if root_path:
+        if not root_path: return
+        
+        qstr = "Existing data will be overwritten. Continue?"
+        
+        reply = QtGui.QMessageBox.warning(
+                            self,
+                            'Database load',
+                            qstr,
+                            QtGui.QMessageBox.Yes,
+                            QtGui.QMessageBox.No | QtGui.QMessageBox.Default)
+        
+        if reply == QtGui.QMessageBox.Yes:
             self.database_load.emit(root_path, section)
 
         return
