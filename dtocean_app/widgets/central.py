@@ -357,15 +357,24 @@ class PlotManagerWidget(QtGui.QWidget, Ui_PlotManagerWidget):
         
         self.setupUi(self)
         
+        # Add buttons
+        self.plotButton = QtGui.QPushButton("Plot")
+        self.saveButton = QtGui.QPushButton("Save")
+        self.defaultButton = QtGui.QPushButton("Default")
+        
+        self.buttonBox.addButton(self.plotButton,
+                                 QtGui.QDialogButtonBox.ActionRole)
+        self.buttonBox.addButton(self.saveButton,
+                                 QtGui.QDialogButtonBox.ActionRole)
+        self.buttonBox.addButton(self.defaultButton,
+                                 QtGui.QDialogButtonBox.ResetRole)
+        
         self.getPathButton.clicked.connect(self._set_path)
         self.pathEdit.textChanged.connect(self._set_save)
         self.checkBox.stateChanged.connect(self._set_custom_size)
-        self.buttonBox.button(QtGui.QDialogButtonBox.Ok).clicked.connect(
-                                                    self._emit_named_plot)
-        self.buttonBox.button(QtGui.QDialogButtonBox.Reset).clicked.connect(
-                                                    self._emit_default_plot)
-        self.buttonBox.button(QtGui.QDialogButtonBox.Save).clicked.connect(
-                                                    self._emit_save)
+        self.plotButton.clicked.connect(self._emit_named_plot)
+        self.saveButton.clicked.connect(self._emit_save)
+        self.defaultButton.clicked.connect(self._emit_default_plot)
         
         return
         
@@ -387,14 +396,12 @@ class PlotManagerWidget(QtGui.QWidget, Ui_PlotManagerWidget):
                 
         if not self._ext_types:
             
-            self.buttonBox.button(QtGui.QDialogButtonBox.Save
-                                                          ).setDisabled(True)
+            self.saveButton.setDisabled(True)
             self.pathEdit.setDisabled(True)
             
         else:
             
-            self.buttonBox.button(QtGui.QDialogButtonBox.Save
-                                                          ).setEnabled(True)
+            self.saveButton.setEnabled(True)
             self.pathEdit.setEnabled(True)
 
         self._set_plot_list(plot_list, plot_auto)
@@ -409,24 +416,20 @@ class PlotManagerWidget(QtGui.QWidget, Ui_PlotManagerWidget):
         if plot_list is None:
             
             self.plotBox.setDisabled(True)
-            self.buttonBox.button(QtGui.QDialogButtonBox.Ok
-                                                          ).setDisabled(True)
+            self.plotButton.setDisabled(True)
             
         else:
             
             self.plotBox.setEnabled(True)
-            self.buttonBox.button(QtGui.QDialogButtonBox.Ok
-                                                          ).setEnabled(True)
+            self.plotButton.setEnabled(True)
             
             for item in plot_list:
                 self.plotBox.addItem(item)
                 
         if plot_auto:
-            self.buttonBox.button(QtGui.QDialogButtonBox.Reset
-                                                          ).setEnabled(True)
+            self.defaultButton.setEnabled(True)
         else:
-            self.buttonBox.button(QtGui.QDialogButtonBox.Reset
-                                                          ).setDisabled(True)
+            self.defaultButton.setDisabled(True)
         
         return
         
@@ -461,11 +464,9 @@ class PlotManagerWidget(QtGui.QWidget, Ui_PlotManagerWidget):
         file_path = str(self.pathEdit.text())
         
         if file_path:
-            self.buttonBox.button(QtGui.QDialogButtonBox.Save
-                                                          ).setEnabled(True)
+            self.saveButton.setEnabled(True)
         else:
-            self.buttonBox.button(QtGui.QDialogButtonBox.Save
-                                                          ).setDisabled(True)
+            self.saveButton.setDisabled(True)
             
         return
     
