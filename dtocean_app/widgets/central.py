@@ -331,6 +331,8 @@ class FileManagerWidget(QtGui.QWidget, Ui_FileManagerWidget):
             
             errStr = "Don't cross the streams!"
             raise SystemError(errStr)
+            
+        self.pathEdit.clear()
         
         return
 
