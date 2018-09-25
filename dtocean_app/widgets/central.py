@@ -249,23 +249,36 @@ class FileManagerWidget(QtGui.QWidget, Ui_FileManagerWidget):
     def _set_path(self):
         
         valid_exts = self._load_ext_dict.keys()
-        valid_ext_strs = ["(*{})".format(file_ext) for file_ext in valid_exts]
-        file_ext_str = ";;".join(valid_ext_strs)
-        
+        valid_ext_strs = ["*{}".format(file_ext) for file_ext in valid_exts]
+        file_ext_str = " ".join(valid_ext_strs)
+        name_filter =  "Supported formats ({})".format(file_ext_str)
+        file_path = ""
+
         if self._file_mode == "load":
             
-            msg = "Load file"
-            file_path = QtGui.QFileDialog.getOpenFileName(None,
-                                                          msg,
-                                                          '.',
-                                                          file_ext_str)
+            msg = "Select path to load"
+            dialog = QtGui.QFileDialog(self, msg)
+            dialog.setFileMode(QtGui.QFileDialog.ExistingFile)
+            dialog.setOption(QtGui.QFileDialog.DontConfirmOverwrite, True)
+            dialog.setNameFilter(name_filter)
+            dialog.setLabelText(QtGui.QFileDialog.Accept,
+                                "Select")
+            
+            if dialog.exec_():
+                file_path = str(dialog.selectedFiles()[0])
+            
         elif self._file_mode == "save":
             
-            msg = "Save file"
-            file_path = QtGui.QFileDialog.getSaveFileName(None,
-                                                          msg,
-                                                          '.',
-                                                          file_ext_str)
+            msg = "Select path for save"
+            dialog = QtGui.QFileDialog(self, msg)
+            dialog.setFileMode(QtGui.QFileDialog.AnyFile)
+            dialog.setAcceptMode(QtGui.QFileDialog.AcceptSave)
+            dialog.setNameFilter(name_filter)
+            dialog.setLabelText(QtGui.QFileDialog.Accept,
+                                "Select")
+            
+            if dialog.exec_():
+                file_path = str(dialog.selectedFiles()[0])
             
         else:
             
@@ -424,12 +437,19 @@ class PlotManagerWidget(QtGui.QWidget, Ui_PlotManagerWidget):
         
         extlist = ["{} (*.{})".format(v, k) for k, v in
                                                self._ext_types.iteritems()]
-        extStr = ";;".join(extlist)
+        name_filter = ";;".join(extlist)
+        file_path = ""
         
-        file_path = QtGui.QFileDialog.getSaveFileName(None,
-                                                      "Save plot",
-                                                      '.',
-                                                      extStr)
+        msg = "Select path for save"
+        dialog = QtGui.QFileDialog(self, msg)
+        dialog.setFileMode(QtGui.QFileDialog.AnyFile)
+        dialog.setAcceptMode(QtGui.QFileDialog.AcceptSave)
+        dialog.setNameFilter(name_filter)
+        dialog.setLabelText(QtGui.QFileDialog.Accept,
+                            "Select")
+        
+        if dialog.exec_():
+            file_path = str(dialog.selectedFiles()[0])
         
         self.pathEdit.setText(file_path)
         
@@ -499,6 +519,7 @@ class PlotManagerWidget(QtGui.QWidget, Ui_PlotManagerWidget):
                        figure_path,
                        size,
                        self._current_plot)
+        
         self.pathEdit.clear()
         
         return
