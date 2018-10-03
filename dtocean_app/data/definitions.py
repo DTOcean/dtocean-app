@@ -328,23 +328,26 @@ class LineTableExpand(GUIStructure, LineTableExpand):
             df = self.data.result.reset_index()
             labels = df.columns
             
-            if self.meta.result.units is not None:
-                
-                units = self.meta.result.units[:1]
-                n_extra = len(labels) - 1
-                
-                if len(self.meta.result.units) > 1:
-                    add_units = [self.meta.result.units[1]] * n_extra
-                else:
-                    add_units = [None] *  n_extra
-                    
-                units += add_units
-            
         else:
             
             df = None
             labels = self.meta.result.labels
-            units = self.meta.result.units
+            
+        if self.meta.result.units is not None:
+            
+            units = list(self.meta.result.units[:1])
+            n_extra = len(labels) - 1
+            
+            if len(self.meta.result.units) > 1:
+                add_units = [self.meta.result.units[1]] * n_extra
+            else:
+                add_units = [None] *  n_extra
+                
+            units += add_units
+            
+        else:
+            
+            units = None
         
         widget = InputDataTable(self.parent,
                                 labels,
@@ -367,22 +370,25 @@ class LineTableExpand(GUIStructure, LineTableExpand):
             df = self.data.result.reset_index()
             labels = df.columns
             
-            if self.meta.result.units is not None:
-                
-                units = self.meta.result.units[:1]
-                n_extra = len(labels) - 1
-                
-                if len(self.meta.result.units) > 1:
-                    add_units = [self.meta.result.units[1]] * n_extra
-                else:
-                    add_units = [None] *  n_extra
-                    
-                units += add_units
-            
         else:
             
             df = None
-            labels = None
+            labels = self.meta.result.labels
+            
+        if self.meta.result.units is not None:
+            
+            units = list(self.meta.result.units[:1])
+            n_extra = len(labels) - 1
+            
+            if len(self.meta.result.units) > 1:
+                add_units = [self.meta.result.units[1]] * n_extra
+            else:
+                add_units = [None] *  n_extra
+                
+            units += add_units
+            
+        else:
+
             units = None
             
         widget = OutputDataTable(self.parent,

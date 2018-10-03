@@ -292,7 +292,7 @@ class StringSelect(QtGui.QWidget, Ui_StringSelect):
     
     read_value = QtCore.pyqtSignal()
 
-    def __init__(self, parent, units=None):
+    def __init__(self, parent=None, units=None):
 
         QtGui.QWidget.__init__(self, parent)
         Ui_StringSelect.__init__(self)

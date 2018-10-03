@@ -9,6 +9,7 @@ import numpy as np
 import pandas as pd
 
 from dtocean_app.widgets.input import (FloatSelect,
+                                       StringSelect,
                                        InputLineTable,
                                        InputTriStateTable,
                                        InputDictTable,
@@ -25,6 +26,27 @@ def test_FloatSelect(qtbot):
     qtbot.addWidget(window)
     
     assert str(window.unitsLabel.text()) == "(Test)"
+
+
+def test_StringSelect(qtbot):
+
+    window = StringSelect(units="Test")
+    window.show()
+    qtbot.addWidget(window)
+    
+    assert str(window.unitsLabel.text()) == "(Test)"
+
+
+def test_StringSelect_get_result(qtbot):
+    
+    window = StringSelect(units="Test")
+    window._set_value("Bob")
+    window.show()
+    qtbot.addWidget(window)
+    
+    test = window._get_result()
+    
+    assert test == "Bob"
 
 
 def test_InputLineTable(qtbot):
