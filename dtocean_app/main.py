@@ -539,8 +539,6 @@ class Shell(QtCore.QObject):
         
     def get_scheduled_themes(self):
         
-        if self.theme_menu.get_force_completed(self.project): return []
-        
         module_names = self.theme_menu.get_scheduled(self.core,
                                                      self.project)
                                                    
