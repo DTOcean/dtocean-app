@@ -367,7 +367,7 @@
      <normaloff>:/icons/kwin4.png</normaloff>:/icons/kwin4.png</iconset>
    </property>
    <property name="text">
-    <string>Add Strategy...</string>
+    <string>Select Strategy...</string>
    </property>
   </action>
   <action name="actionInitiate_Dataflow">
