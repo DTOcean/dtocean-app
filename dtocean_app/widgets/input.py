@@ -353,7 +353,7 @@ class DirectorySelect(QtGui.QWidget, Ui_PathSelect):
     
     read_value = QtCore.pyqtSignal()
 
-    def __init__(self, parent):
+    def __init__(self, parent=None):
 
         QtGui.QWidget.__init__(self, parent)
         Ui_StringSelect.__init__(self)
@@ -532,7 +532,7 @@ class CoordSelect(QtGui.QWidget, Ui_PointSelect):
     
     read_value = QtCore.pyqtSignal()
 
-    def __init__(self, parent, units=None):
+    def __init__(self, parent=None, units=None):
 
         QtGui.QWidget.__init__(self, parent)
         Ui_PointSelect.__init__(self)
@@ -563,8 +563,6 @@ class CoordSelect(QtGui.QWidget, Ui_PointSelect):
         
     def _set_value(self, value):
         
-        self.checkBox.setChecked
-
         if value is not None:
             
             self.doubleSpinBox_1.setValue(value[0])

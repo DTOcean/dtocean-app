@@ -2,7 +2,7 @@
 """
 Created on Thu Apr 13 15:16:37 2017
 
-@author: mtopper
+@author: Mathew Topper
 """
 
 import numpy as np
@@ -10,6 +10,9 @@ import pandas as pd
 
 from dtocean_app.widgets.input import (FloatSelect,
                                        StringSelect,
+                                       DirectorySelect,
+                                       CoordSelect,
+                                       InputDataTable,
                                        InputLineTable,
                                        InputTriStateTable,
                                        InputDictTable,
@@ -28,6 +31,18 @@ def test_FloatSelect(qtbot):
     assert str(window.unitsLabel.text()) == "(Test)"
 
 
+def test_FloatSelect_get_result(qtbot):
+    
+    window = FloatSelect()
+    window._set_value(1.)
+    window.show()
+    qtbot.addWidget(window)
+    
+    test = window._get_result()
+    
+    assert test == 1.
+
+
 def test_StringSelect(qtbot):
 
     window = StringSelect(units="Test")
@@ -39,7 +54,7 @@ def test_StringSelect(qtbot):
 
 def test_StringSelect_get_result(qtbot):
     
-    window = StringSelect(units="Test")
+    window = StringSelect()
     window._set_value("Bob")
     window.show()
     qtbot.addWidget(window)
@@ -49,8 +64,115 @@ def test_StringSelect_get_result(qtbot):
     assert test == "Bob"
 
 
-def test_InputLineTable(qtbot):
+def test_DirectorySelect(qtbot):
+
+    window = DirectorySelect()
+    window.show()
+    qtbot.addWidget(window)
+    
+    assert True
+
+
+def test_DirectorySelect_get_result(qtbot):
+    
+    window = DirectorySelect()
+    window._set_value("Bob")
+    window.show()
+    qtbot.addWidget(window)
+    
+    test = window._get_result()
+    
+    assert test == "Bob"
+
+
+def test_CoordSelect(qtbot):
         
+    window = CoordSelect(units="Test")
+    window.show()
+    qtbot.addWidget(window)
+    
+    assert str(window.unitsLabel.text()) == "(Test)"
+
+
+def test_CoordSelect_get_result_2D(qtbot):
+    
+    window = CoordSelect()
+    window._set_value([1., 2.])
+    
+    assert not window.doubleSpinBox_3.isEnabled()
+    assert not window.checkBox.isChecked()
+    
+    window.show()
+    qtbot.addWidget(window)
+    test = window._get_result()
+    
+    assert test == [1., 2.]
+
+
+def test_CoordSelect_get_result_3D(qtbot):
+    
+    window = CoordSelect()
+    window._set_value([1., 2., 3.])
+    
+    assert window.doubleSpinBox_3.isEnabled()
+    assert window.checkBox.isChecked()
+    
+    window.show()
+    qtbot.addWidget(window)
+    test = window._get_result()
+    
+    assert test == [1., 2., 3.]
+
+
+def test_CoordSelect_get_result_None(qtbot):
+    
+    window = CoordSelect()
+    window._set_value(None)
+    
+    assert not window.doubleSpinBox_3.isEnabled()
+    assert not window.checkBox.isChecked()
+    
+    window.show()
+    qtbot.addWidget(window)
+    test = window._get_result()
+    
+    assert test == [0.0, 0.0]
+
+
+def test_InputDataTable_edit_cols(qtbot):
+        
+    window = InputDataTable(None,
+                            ["Test", "Test [Brackets]"],
+                            units=["test", "test"],
+                            edit_cols=True)
+    window.show()
+    qtbot.addWidget(window)
+    
+    assert True
+
+
+def test_InputDataTable_edit_cols_get_result(qtbot):
+    
+    raw_dict = {"val1": [0, 1, 2, 3],
+                "val2": [0, 1, 4, 9]}
+                
+    vals_df = pd.DataFrame(raw_dict)
+    
+    window = InputDataTable(None,
+                            ["Test", "Test [Brackets]"],
+                            units=["test", "test"],
+                            edit_cols=True)
+    window._set_value(vals_df)
+    window.show()
+    qtbot.addWidget(window)
+    
+    test = window._get_result()
+    
+    assert (test.columns.values == ["Test", "Test"]).all()
+
+
+def test_InputLineTable(qtbot):
+    
     window = InputLineTable(units=["test", "test"])
     window.show()
     qtbot.addWidget(window)
@@ -73,8 +195,19 @@ def test_InputLineTable_get_result(qtbot):
     test = window._get_result()
     
     assert np.isclose(test, vals_df.values).all()
+
+
+def test_InputLineTable_disable(qtbot):
     
+    window = InputLineTable(units=["test", "test"])
+    window.show()
+    qtbot.addWidget(window)
+    window._disable()
     
+    assert not window.buttonBox.isEnabled()
+    assert not window.datatable.buttonFrame.isEnabled()
+
+
 def test_InputTriStateTable(qtbot):
         
     window = InputTriStateTable(None, ["test1", "test2"])
