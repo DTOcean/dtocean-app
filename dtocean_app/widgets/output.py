@@ -161,7 +161,11 @@ class OutputDataTable(QtGui.QWidget):
 
         # Check the columns of the stored data against the expected, for
         # legacy support
-        if len(value.columns) != len(new_cols):
+        if len(value.columns) == len(new_cols):
+        
+            safe_cols = new_cols
+        
+        elif len(value.columns) < len(new_cols):
         
             # Strip any units
             clean_cols = [re.sub(r'\s\[[^)]*\]', '', x) for x in new_cols]
@@ -179,7 +183,10 @@ class OutputDataTable(QtGui.QWidget):
                 
         else:
             
-            safe_cols = new_cols
+            extra_cols = len(value.columns) - len(new_cols)
+            err_str = ("Input data has {} more column(s) than defined in "
+                       "columns argument").format(extra_cols)
+            raise ValueError(err_str)
 
         data = value
         data.columns = safe_cols
