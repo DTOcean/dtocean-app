@@ -28,7 +28,7 @@ from PyQt4 import QtGui, QtCore
 from PyQt4.QtCore import QUrl
 from PyQt4.QtWebKit import QWebView
 
-from .configure import get_install_paths
+from .utils.config import get_install_paths
 from .widgets.dialogs import Message
 
 

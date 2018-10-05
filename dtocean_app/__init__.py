@@ -25,8 +25,7 @@ from PyQt4 import QtGui, QtCore
 from polite.configuration import ReadINI
 from polite.paths import (Directory,
                           ObjDirectory,
-                          UserDataDirectory,
-                          DirectoryMap)
+                          UserDataDirectory)
 from polite.configuration import Logger
 
 from .utils.qtlog import QtHandler
@@ -115,85 +114,6 @@ def get_log_dir():
     logdir = Directory(log_path)
     
     return logdir
-
-
-def init_config(logging=False, files=False, install=False, overwrite=False):
-    
-    """Copy config files to user data directory"""
-    
-    if not any([logging, files, install]): return
-    
-    objdir = ObjDirectory(__name__, "config")
-    datadir = UserDataDirectory("dtocean_app", "DTOcean", "config")
-    dirmap = DirectoryMap(datadir, objdir)
-    
-    if logging: dirmap.copy_file("logging.yaml", overwrite=overwrite)
-    if files: dirmap.copy_file("files.ini", overwrite=overwrite)
-    if install: dirmap.copy_file("install.ini", overwrite=overwrite)
-    
-    return datadir.get_path()
-
-
-def init_config_parser(args):
-    
-    '''Command line parser for init_config.
-    
-    Example:
-    
-        To get help::
-        
-            $ dtocean-app-config -h
-            
-    '''
-    
-    epiStr = ('Mathew Topper (c) 2017.')
-              
-    desStr = ("Copy user modifiable configuration files to "
-              "<UserName>\AppData\Roaming\DTOcean\dtocean-app\config")
-
-    parser = argparse.ArgumentParser(description=desStr,
-                                     epilog=epiStr)
-    
-    parser.add_argument("--logging",
-                        help=("copy logging configuration"),
-                        action="store_true")
-    
-    parser.add_argument("--files",
-                        help=("copy log file location configuration"),
-                        action="store_true")
-    
-    parser.add_argument("--install",
-                        help=("copy manuals installation path configuration"),
-                        action="store_true")
-    
-    parser.add_argument("--overwrite",
-                        help=("overwrite existing configuration files"),
-                        action="store_true")
-                        
-    args = parser.parse_args(args)
-
-    logging = args.logging
-    files = args.files
-    install = args.install
-    overwrite = args.overwrite
-    
-    return logging, files, install, overwrite
-
-
-def init_config_interface():
-    
-    '''Command line interface for init_config.'''
-    
-    logging, files, install, overwrite = init_config_parser(sys.argv[1:])
-    dir_path = init_config(logging=logging,
-                           files=files,
-                           install=install,
-                           overwrite=overwrite)
-    
-    if dir_path is not None:
-        print "Copying configuration files to {}".format(dir_path)
-
-    return
 
 
 def main(debug=False, trace_warnings=False):
