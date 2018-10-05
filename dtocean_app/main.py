@@ -776,7 +776,7 @@ class Shell(QtCore.QObject):
         if identifier is None: identifier = "Unnamed"
         
         self.data_menu.select_database(self.project,
-                                           credentials=credentials)
+                                       credentials=credentials)
         self.database_updated.emit(identifier)
         
         return
