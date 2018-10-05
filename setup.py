@@ -223,10 +223,10 @@ setup(name='dtocean-app',
       ],
       entry_points={
           'console_scripts':
-              [
-               'dtocean-app = dtocean_app:gui_interface',
-               'dtocean-app-config = dtocean_app:init_config_interface'
-               ]},
+          [
+           'dtocean-app = dtocean_app:gui_interface',
+           'dtocean-app-config = dtocean_app.utils.config:init_config_interface'
+           ]},
       package_data={'': ['*.png', 'test_images/*.png'],
                     'dtocean_app': ['config/*.ini',
                                     'config/*.yaml',
