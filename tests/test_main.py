@@ -674,146 +674,6 @@ def test_set_simulation_title(qtbot, mocker):
     assert shell.project.get_simulation_title() == "bob"
 
 
-def test_select_database(qtbot, mocker, tmpdir):
-
-    # Make a source directory with some files
-    config_tmpdir = tmpdir.mkdir("config")
-    mock_dir = Directory(str(config_tmpdir))
-        
-    mocker.patch('dtocean_core.utils.database.UserDataDirectory',
-                 return_value=mock_dir,
-                 autospec=True)
-    
-    mocker.patch.object(QtGui.QMessageBox,
-                        'question',
-                        return_value=QtGui.QMessageBox.Yes)
-    
-    
-    shell = Shell()
-    window = DTOceanWindow(shell)
-    window.show()
-    qtbot.addWidget(window)
-
-    # Get the new project button and click it
-    new_project_button = window.fileToolBar.widgetForAction(window.actionNew)
-    qtbot.mouseClick(new_project_button, QtCore.Qt.LeftButton)
-    
-    assert window.windowTitle() == "DTOcean: Untitled project*"
-    
-    # Pick up the available pipeline item
-    test_var = window._pipeline_dock._find_item("Device Technology Type",
-                                                InputVarItem)
-    
-    assert test_var._id == "device.system_type"
-    
-    # Get the select database button and click it
-    new_project_button = \
-        window.scenarioToolBar.widgetForAction(window.actionSelect_Database)
-    qtbot.mouseClick(new_project_button, QtCore.Qt.LeftButton)
-    
-    db_selector = window._db_selector
-    
-    def db_selector_visible(): assert db_selector.isVisible()
-    
-    qtbot.waitUntil(db_selector_visible)
-    
-    # Select the first in the list and apply
-    db_selector.listWidget.setCurrentRow(0)
-    
-    item = db_selector.listWidget.item(0)
-    rect = db_selector.listWidget.visualItemRect(item)
-    qtbot.mouseClick(db_selector.listWidget.viewport(),
-                     QtCore.Qt.LeftButton,
-                     pos=rect.center())
-    
-    qtbot.mouseClick(
-            db_selector.buttonBox.button(QtGui.QDialogButtonBox.Apply),
-            QtCore.Qt.LeftButton)
-    
-    # Check for credentials
-    def has_credentials():
-        assert shell.project.get_database_credentials() is not None
-        
-    qtbot.waitUntil(has_credentials)
-    
-    db_selector.close()
-
-
-def test_deselect_database(qtbot, mocker, tmpdir):
-    
-    # Make a source directory with some files
-    config_tmpdir = tmpdir.mkdir("config")
-    mock_dir = Directory(str(config_tmpdir))
-        
-    mocker.patch('dtocean_core.utils.database.UserDataDirectory',
-                 return_value=mock_dir,
-                 autospec=True)
-    
-    mocker.patch.object(QtGui.QMessageBox,
-                        'question',
-                        return_value=QtGui.QMessageBox.Yes)
-    
-    shell = Shell()
-    window = DTOceanWindow(shell)
-    window.show()
-    qtbot.addWidget(window)
-    
-    # Get the new project button and click it
-    new_project_button = window.fileToolBar.widgetForAction(window.actionNew)
-    qtbot.mouseClick(new_project_button, QtCore.Qt.LeftButton)
-    
-    assert window.windowTitle() == "DTOcean: Untitled project*"
-    
-    # Pick up the available pipeline item
-    test_var = window._pipeline_dock._find_item("Device Technology Type",
-                                                InputVarItem)
-    
-    assert test_var._id == "device.system_type"
-    
-    # Get the select database button and click it
-    new_project_button = \
-        window.scenarioToolBar.widgetForAction(window.actionSelect_Database)
-    qtbot.mouseClick(new_project_button, QtCore.Qt.LeftButton)
-    
-    db_selector = window._db_selector
-    
-    def db_selector_visible(): assert db_selector.isVisible()
-    
-    qtbot.waitUntil(db_selector_visible)
-    
-    # Select the first in the list and apply
-    db_selector.listWidget.setCurrentRow(0)
-    
-    item = db_selector.listWidget.item(0)
-    rect = db_selector.listWidget.visualItemRect(item)
-    qtbot.mouseClick(db_selector.listWidget.viewport(),
-                     QtCore.Qt.LeftButton,
-                     pos=rect.center())
-    
-    qtbot.mouseClick(
-            db_selector.buttonBox.button(QtGui.QDialogButtonBox.Apply),
-            QtCore.Qt.LeftButton)
-    
-    # Check for credentials
-    def has_credentials():
-        assert shell.project.get_database_credentials() is not None
-        
-    qtbot.waitUntil(has_credentials)
-    
-    # Press reset button
-    qtbot.mouseClick(
-            db_selector.buttonBox.button(QtGui.QDialogButtonBox.Reset),
-            QtCore.Qt.LeftButton)
-    
-    # Check for credentials
-    def has_not_credentials():
-        assert shell.project.get_database_credentials() is None
-        
-    qtbot.waitUntil(has_not_credentials)
-    
-    db_selector.close()
-
-
 def test_credentials_add_delete(qtbot, mocker, tmpdir):
     
     # Make a source directory with some files
@@ -857,30 +717,213 @@ def test_credentials_add_delete(qtbot, mocker, tmpdir):
     
     qtbot.waitUntil(db_selector_visible)
     
-    old_count = db_selector.listWidget.count()
+    n_creds = db_selector.listWidget.count()
     
     # Press the add button
     qtbot.mouseClick(db_selector.addButton,
                      QtCore.Qt.LeftButton)
     
-    def added_cred(): assert db_selector.listWidget.count() == old_count + 1
+    def added_cred(): assert db_selector.listWidget.count() == n_creds + 1
     
     qtbot.waitUntil(added_cred)
     
-    # Select the last in the list and select    
-    item = db_selector.listWidget.item(db_selector.listWidget.count() - 1)
+    # Add another
+    n_creds += 1
+    
+    qtbot.mouseClick(db_selector.addButton,
+                     QtCore.Qt.LeftButton)
+    
+    def added_cred(): assert db_selector.listWidget.count() == n_creds + 1
+    
+    qtbot.waitUntil(added_cred)
+    
+    assert "unnamed-1" in db_selector._data_menu.get_available_databases()
+    
+    # Delete all credentials
+    while db_selector.listWidget.count() > 0:
+        
+        # Select the last in the list and select
+        item = db_selector.listWidget.item(db_selector.listWidget.count() - 1)
+        rect = db_selector.listWidget.visualItemRect(item)
+        qtbot.mouseClick(db_selector.listWidget.viewport(),
+                         QtCore.Qt.LeftButton,
+                         pos=rect.center())
+                    
+        qtbot.mouseClick(db_selector.deleteButton,
+                         QtCore.Qt.LeftButton)
+        
+        def deleted_cred():
+            assert db_selector.listWidget.count() == n_creds
+        
+        qtbot.waitUntil(deleted_cred)
+        
+        n_creds -= 1
+        
+    db_selector.close()
+
+
+def test_select_database(qtbot, mocker, tmpdir):
+
+    # Make a source directory with some files
+    config_tmpdir = tmpdir.mkdir("config")
+    mock_dir = Directory(str(config_tmpdir))
+        
+    mocker.patch('dtocean_core.utils.database.UserDataDirectory',
+                 return_value=mock_dir,
+                 autospec=True)
+    
+    mocker.patch('dtocean_app.main.DataMenu.select_database',
+                 autospec=True)
+    
+    mocker.patch.object(QtGui.QMessageBox,
+                        'question',
+                        return_value=QtGui.QMessageBox.Yes)
+    
+    
+    shell = Shell()
+    window = DTOceanWindow(shell)
+    window.show()
+    qtbot.addWidget(window)
+
+    # Get the new project button and click it
+    new_project_button = window.fileToolBar.widgetForAction(window.actionNew)
+    qtbot.mouseClick(new_project_button, QtCore.Qt.LeftButton)
+    
+    assert window.windowTitle() == "DTOcean: Untitled project*"
+    
+    # Pick up the available pipeline item
+    test_var = window._pipeline_dock._find_item("Device Technology Type",
+                                                InputVarItem)
+    
+    assert test_var._id == "device.system_type"
+    
+    # Get the select database button and click it
+    new_project_button = \
+        window.scenarioToolBar.widgetForAction(window.actionSelect_Database)
+    qtbot.mouseClick(new_project_button, QtCore.Qt.LeftButton)
+    
+    db_selector = window._db_selector
+    
+    def db_selector_visible(): assert db_selector.isVisible()
+    
+    qtbot.waitUntil(db_selector_visible)
+    
+    n_creds = db_selector.listWidget.count()
+    
+    # Press the add button
+    qtbot.mouseClick(db_selector.addButton,
+                     QtCore.Qt.LeftButton)
+    
+    def added_cred(): assert db_selector.listWidget.count() == n_creds + 1
+    
+    qtbot.waitUntil(added_cred)
+    
+    # Select the first in the list and apply
+    db_selector.listWidget.setCurrentRow(0)
+    
+    item = db_selector.listWidget.item(0)
     rect = db_selector.listWidget.visualItemRect(item)
     qtbot.mouseClick(db_selector.listWidget.viewport(),
                      QtCore.Qt.LeftButton,
                      pos=rect.center())
     
-    # Delete the credentials
-    qtbot.mouseClick(db_selector.deleteButton,
+    qtbot.mouseClick(
+            db_selector.buttonBox.button(QtGui.QDialogButtonBox.Apply),
+            QtCore.Qt.LeftButton)
+    
+    # Check for credentials
+    def has_credentials():
+        assert db_selector.topDynamicLabel.text() == item.text()
+        
+    qtbot.waitUntil(has_credentials)
+    
+    db_selector.close()
+
+
+def test_deselect_database(qtbot, mocker, tmpdir):
+    
+    # Make a source directory with some files
+    config_tmpdir = tmpdir.mkdir("config")
+    mock_dir = Directory(str(config_tmpdir))
+        
+    mocker.patch('dtocean_core.utils.database.UserDataDirectory',
+                 return_value=mock_dir,
+                 autospec=True)
+    
+    mocker.patch('dtocean_app.main.DataMenu.select_database',
+                 autospec=True)
+    
+    mocker.patch.object(QtGui.QMessageBox,
+                        'question',
+                        return_value=QtGui.QMessageBox.Yes)
+    
+    shell = Shell()
+    window = DTOceanWindow(shell)
+    window.show()
+    qtbot.addWidget(window)
+    
+    # Get the new project button and click it
+    new_project_button = window.fileToolBar.widgetForAction(window.actionNew)
+    qtbot.mouseClick(new_project_button, QtCore.Qt.LeftButton)
+    
+    assert window.windowTitle() == "DTOcean: Untitled project*"
+    
+    # Pick up the available pipeline item
+    test_var = window._pipeline_dock._find_item("Device Technology Type",
+                                                InputVarItem)
+    
+    assert test_var._id == "device.system_type"
+    
+    # Get the select database button and click it
+    new_project_button = \
+        window.scenarioToolBar.widgetForAction(window.actionSelect_Database)
+    qtbot.mouseClick(new_project_button, QtCore.Qt.LeftButton)
+    
+    db_selector = window._db_selector
+    
+    def db_selector_visible(): assert db_selector.isVisible()
+    
+    qtbot.waitUntil(db_selector_visible)
+    
+    n_creds = db_selector.listWidget.count()
+    
+    # Press the add button
+    qtbot.mouseClick(db_selector.addButton,
                      QtCore.Qt.LeftButton)
     
-    def deleted_cred(): assert db_selector.listWidget.count() == old_count
+    def added_cred(): assert db_selector.listWidget.count() == n_creds + 1
     
-    qtbot.waitUntil(deleted_cred)
+    qtbot.waitUntil(added_cred)
+    
+    # Select the first in the list and apply
+    db_selector.listWidget.setCurrentRow(0)
+    
+    item = db_selector.listWidget.item(0)
+    rect = db_selector.listWidget.visualItemRect(item)
+    qtbot.mouseClick(db_selector.listWidget.viewport(),
+                     QtCore.Qt.LeftButton,
+                     pos=rect.center())
+    
+    qtbot.mouseClick(
+            db_selector.buttonBox.button(QtGui.QDialogButtonBox.Apply),
+            QtCore.Qt.LeftButton)
+    
+    # Check for credentials
+    def has_credentials():
+        assert db_selector.topDynamicLabel.text() == item.text()
+        
+    qtbot.waitUntil(has_credentials)
+    
+    # Press reset button
+    qtbot.mouseClick(
+            db_selector.buttonBox.button(QtGui.QDialogButtonBox.Reset),
+            QtCore.Qt.LeftButton)
+    
+    # Check for credentials
+    def has_not_credentials():
+        assert db_selector.topDynamicLabel.text() == "None"
+        
+    qtbot.waitUntil(has_not_credentials)
     
     db_selector.close()
 
@@ -928,13 +971,13 @@ def test_credentials_rename(qtbot, mocker, tmpdir):
     
     qtbot.waitUntil(db_selector_visible)
     
-    old_count = db_selector.listWidget.count()
+    n_creds = db_selector.listWidget.count()
     
     # Press the add button
     qtbot.mouseClick(db_selector.addButton,
                      QtCore.Qt.LeftButton)
     
-    def added_cred(): assert db_selector.listWidget.count() == old_count + 1
+    def added_cred(): assert db_selector.listWidget.count() == n_creds + 1
     
     qtbot.waitUntil(added_cred)
     
@@ -950,6 +993,30 @@ def test_credentials_rename(qtbot, mocker, tmpdir):
         assert "bob" in db_selector._data_menu.get_available_databases()
     
     qtbot.waitUntil(check_name)
+    
+    # Press the add button
+    n_creds += 1
+    
+    qtbot.mouseClick(db_selector.addButton,
+                     QtCore.Qt.LeftButton)
+    
+    def added_cred(): assert db_selector.listWidget.count() == n_creds + 1
+    
+    qtbot.waitUntil(added_cred)
+    
+    # Select the last in the list and chnage its name
+    db_selector.listWidget.setCurrentRow(db_selector.listWidget.count() - 1)
+    
+    editor = mocker.Mock()
+    editor.text.return_value = "bob"
+    
+    db_selector._rename_database(editor, None)
+    
+    def check_one_bob():
+        assert db_selector._data_menu.get_available_databases(
+                                                            ).count("bob") == 1
+    
+    qtbot.waitUntil(check_one_bob)
     
     db_selector.close()
 
