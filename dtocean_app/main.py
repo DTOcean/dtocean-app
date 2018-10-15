@@ -107,6 +107,7 @@ class ThreadReadRaw(QtCore.QThread):
             
             etype, evalue, etraceback = sys.exc_info()
             self.error_detected.emit(etype, evalue, etraceback)
+            self.taskFinished.emit()
 
         return
       
@@ -161,6 +162,7 @@ class ThreadDataFlow(QtCore.QThread):
             
             etype, evalue, etraceback = sys.exc_info()
             self.error_detected.emit(etype, evalue, etraceback)
+            self.taskFinished.emit()
 
         return
         
@@ -194,6 +196,7 @@ class ThreadCurrent(QtCore.QThread):
             
             etype, evalue, etraceback = sys.exc_info()
             self.error_detected.emit(etype, evalue, etraceback)
+            self.taskFinished.emit()
 
         return
         
@@ -227,6 +230,7 @@ class ThreadThemes(QtCore.QThread):
             
             etype, evalue, etraceback = sys.exc_info()
             self.error_detected.emit(etype, evalue, etraceback)
+            self.taskFinished.emit()
 
         return
 
@@ -259,6 +263,7 @@ class ThreadStrategy(QtCore.QThread):
             
             etype, evalue, etraceback = sys.exc_info()
             self.error_detected.emit(etype, evalue, etraceback)
+            self.taskFinished.emit()
 
         return
 
@@ -292,6 +297,7 @@ class ThreadTool(QtCore.QThread):
             
             etype, evalue, etraceback = sys.exc_info()
             self.error_detected.emit(etype, evalue, etraceback)
+            self.taskFinished.emit()
 
         return
     
@@ -342,6 +348,7 @@ class ThreadDump(QtCore.QThread):
             
             etype, evalue, etraceback = sys.exc_info()
             self.error_detected.emit(etype, evalue, etraceback)
+            self.taskFinished.emit()
 
         return
     
@@ -387,6 +394,7 @@ class ThreadLoad(QtCore.QThread):
             
             etype, evalue, etraceback = sys.exc_info()
             self.error_detected.emit(etype, evalue, etraceback)
+            self.taskFinished.emit()
             
         return
 
