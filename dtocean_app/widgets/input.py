@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-#    Copyright (C) 2016 Mathew Topper, Rui Duarte
+#    Copyright (C) 2016-2018 Mathew Topper
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -18,7 +18,7 @@
 """
 Created on Thu Apr 23 12:51:14 2015
 
-@author: Mathew Topper
+.. moduleauthor:: Mathew Topper <mathew.topper@dataonlygreater.com>
 """
 
 import pandas as pd

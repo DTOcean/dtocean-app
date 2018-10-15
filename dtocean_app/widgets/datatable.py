@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
-#    Copyright (C) 2016 Mathew Topper, Rui Duarte
+#    Copyright (C) 2016 Matthias Ludwig, Marcel Radischat, Mathew Topper
+#    Copyright (C) 2017-2018 Mathew Topper
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -21,11 +22,12 @@ Created on Wed Aug 31 12:18:05 2016
 This is a spin on the DataTableWidget defined in the dtocean-qt package in the
 file: dtocean_qt\views\DataTableView.py
 
-Modified under the terms of the MIT Licence:
+Converted to GPL under the terms of the original MIT Licence:
 https://opensource.org/licenses/MIT
 
-Copyright: Matthias Ludwig, Marcel Radischat 2016
-
+.. moduleauthor:: Matthias Ludwig
+.. moduleauthor:: Marcel Radischat
+.. moduleauthor:: Mathew Topper <mathew.topper@dataonlygreater.com>
 """
 
 import io

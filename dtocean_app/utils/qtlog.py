@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-#    Copyright (C) 2016 Mathew Topper, Rui Duarte
+#    Copyright (C) 2016-2018 Mathew Topper
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -23,7 +23,7 @@ From
 ("http://stackoverflow.com"
  "/questions/24469662/how-to-redirect-logger-output-into-pyqt-text-widget")
 
-@author: 108630
+.. moduleauthor:: Mathew Topper <mathew.topper@dataonlygreater.com>
 """
 
 # Built in modules
