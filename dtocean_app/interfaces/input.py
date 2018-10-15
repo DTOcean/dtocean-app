@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-#    Copyright (C) 2016 Mathew Topper, Rui Duarte
+#    Copyright (C) 2016 Mathew Topper
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -18,7 +18,7 @@
 """
 Created on Wed Apr 06 15:59:04 2016
 
-@author: 108630
+.. moduleauthor:: Mathew Topper <mathew.topper@dataonlygreater.com>
 """
 
 from ..core import InputWidgetInterface
