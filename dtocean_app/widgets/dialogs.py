@@ -456,6 +456,7 @@ class ListTableEditor(QtGui.QDialog, Ui_ListTableEditor):
             
             for i, value in enumerate(series):
                 
+                if value is None: value = ""
                 item = QtGui.QTableWidgetItem(value)
                 
                 if freeze_cols is not None and column in freeze_cols:
