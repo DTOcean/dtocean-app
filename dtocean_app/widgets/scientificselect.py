@@ -40,33 +40,10 @@ except AttributeError:
     def _translate(context, text, disambig):
         return QtGui.QApplication.translate(context, text, disambig)
     
-# Fork / Debug of jdreaver/scientificspin.py
-# Regular expression to find floats. Match groups are the whole string, the
-# whole coefficient, the decimal part of the coefficient, and the exponent
-# part.
-
-# https://www.snip2code.com/Snippet/170416/A-Scientific-Notation-Double-Spin-Box-fo
+# Fork of jdreaver/scientificspin.py
+# https://gist.github.com/jdreaver/0be2e44981159d0854f5
 
 _float_re = re.compile(r'(([+-]?\d+(\.\d*)?|\.\d+)([eE][+-]?\d+)?)')
-
-
-class FloatValidator(QValidator):
-
-    def validate(self, string, position):
-
-        string = str(string)
-
-        if valid_float_string(string):
-
-            return (QValidator.Acceptable, position)
-        if string == "" or string[position - 1] in 'e.-+':
-            return (QValidator.Intermediate, position)
-
-        return(QValidator.Invalid, position)
-
-    def fixup(self, text):
-        match = _float_re.search(text)
-        return match.groups()[0] if match else ""
 
 
 class ScientificDoubleSpinBox(QDoubleSpinBox):
@@ -75,14 +52,18 @@ class ScientificDoubleSpinBox(QDoubleSpinBox):
         super(QDoubleSpinBox, self).__init__(*args, **kwargs)
         self.setMinimum(-1.e+18)
         self.setMaximum(1.e+18)
-        self.validator = FloatValidator()
         self.setDecimals(1000)
 
     def validate(self, text, position):
-        return self.validator.validate(text, position)
+        
+        string = str(text)
 
-    def fixup(self, text):
-        return self.validator.fixup(text)
+        if valid_float_string(string):
+            return (QValidator.Acceptable, position)
+        if string == "" or string[position - 1] in 'e.-+':
+            return (QValidator.Intermediate, position)
+
+        return (QValidator.Invalid, position)
 
     def valueFromText(self, text):
         return float(text)
