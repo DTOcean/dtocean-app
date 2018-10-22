@@ -1228,10 +1228,8 @@ class DTOceanWindow(MainWindow):
                                     self._shell.select_database)
         self._db_selector.database_deselected.connect(
                                     self._shell.deselect_database)
-        self._db_selector.database_dump.connect(
-                                    self._shell.dump_database)
-        self._db_selector.database_load.connect(
-                                    self._shell.load_database)
+        self._db_selector.database_dump.connect(self._dump_database)
+        self._db_selector.database_load.connect( self._load_database)
         self._shell.database_updated.connect(
                                     self._db_selector._update_current)
         self._shell.database_convert_active.connect(
@@ -2699,6 +2697,22 @@ class DTOceanWindow(MainWindow):
             reply == QtGui.QMessageBox.Discard): self._shell.close_project()
         
         return
+
+    @QtCore.pyqtSlot(str, str, dict)
+    def _dump_database(self, root_path, selected, credentials):
+        
+        self._shell.dump_database(root_path, selected, credentials)
+        self._shell._active_thread.error_detected.connect(self._display_error)
+
+        return
+
+    @QtCore.pyqtSlot(str, str, dict)
+    def _load_database(self, root_path, selected, credentials):
+        
+        self._shell.load_database(root_path, selected, credentials)
+        self._shell._active_thread.error_detected.connect(self._display_error)
+        
+        return
     
     @QtCore.pyqtSlot()
     def _export_data(self):
@@ -2998,10 +3012,10 @@ class DTOceanWindow(MainWindow):
                                              self._data_check.accept)
         
         self._data_check.show(required_address)
-                                
-        return
         
-    @QtCore.pyqtSlot()        
+        return
+
+    @QtCore.pyqtSlot()
     def _progress_dataflow(self):
         
         # Recreate the existing branch map
@@ -3050,7 +3064,7 @@ class DTOceanWindow(MainWindow):
         
         return
 
-    @QtCore.pyqtSlot()        
+    @QtCore.pyqtSlot()
     def _progress_current(self):
         
         self._progress.allow_close = False
@@ -3062,7 +3076,7 @@ class DTOceanWindow(MainWindow):
         
         return
         
-    @QtCore.pyqtSlot()        
+    @QtCore.pyqtSlot()
     def _progress_themes(self):
         
         self._progress.allow_close = False
@@ -3074,9 +3088,8 @@ class DTOceanWindow(MainWindow):
         
         return
         
-    @QtCore.pyqtSlot()        
+    @QtCore.pyqtSlot()
     def _progress_strategy(self):
-        
         
         self._last_stack_index = self.stackedWidget.currentIndex()
         self.stackedWidget.setCurrentIndex(0)
@@ -3090,7 +3103,7 @@ class DTOceanWindow(MainWindow):
         
         return
         
-    @QtCore.pyqtSlot(str)        
+    @QtCore.pyqtSlot(str)
     def _open_tool(self, tool_name):
         
         if self._thread_tool is not None: return
@@ -3107,7 +3120,7 @@ class DTOceanWindow(MainWindow):
                 
         return
         
-    @QtCore.pyqtSlot(object)        
+    @QtCore.pyqtSlot(object)
     def _close_tool(self, tool):
         
         if tool.has_widget():
