@@ -107,7 +107,6 @@ class ThreadReadRaw(QtCore.QThread):
             
             etype, evalue, etraceback = sys.exc_info()
             self.error_detected.emit(etype, evalue, etraceback)
-            self.taskFinished.emit()
 
         return
       
@@ -297,7 +296,6 @@ class ThreadTool(QtCore.QThread):
             
             etype, evalue, etraceback = sys.exc_info()
             self.error_detected.emit(etype, evalue, etraceback)
-            self.taskFinished.emit()
 
         return
     
