@@ -37,8 +37,8 @@ except AttributeError:
 class DBSelector(ListTableEditor):
     
     database_deselected = QtCore.pyqtSignal()
-    database_dump = QtCore.pyqtSignal(str, str)
-    database_load = QtCore.pyqtSignal(str, str)
+    database_dump = QtCore.pyqtSignal(str, str, dict)
+    database_load = QtCore.pyqtSignal(str, str, dict)
     database_selected = QtCore.pyqtSignal(str, dict)
     
     def __init__(self, parent, data_menu):
@@ -434,7 +434,8 @@ class DBSelector(ListTableEditor):
                             QtGui.QMessageBox.No | QtGui.QMessageBox.Default)
         
         if reply == QtGui.QMessageBox.Yes:
-            self.database_dump.emit(root_path, section)
+            db_dict = self._get_db_dict()
+            self.database_dump.emit(root_path, section, db_dict)
 
         return
     
@@ -458,6 +459,7 @@ class DBSelector(ListTableEditor):
                             QtGui.QMessageBox.No | QtGui.QMessageBox.Default)
         
         if reply == QtGui.QMessageBox.Yes:
-            self.database_load.emit(root_path, section)
+            db_dict = self._get_db_dict()
+            self.database_load.emit(root_path, section, db_dict)
 
         return
