@@ -797,12 +797,10 @@ class Shell(QtCore.QObject):
         
         return
     
-    @QtCore.pyqtSlot(str, str)
-    def dump_database(self, root_path, selected):
+    @QtCore.pyqtSlot(str, str, dict)
+    def dump_database(self, root_path, selected, credentials):
         
-        cred = self.project.get_database_credentials()
-        
-        self._active_thread = ThreadDump(cred, root_path, selected)
+        self._active_thread = ThreadDump(credentials, root_path, selected)
         self._active_thread.start()
         
         self.database_convert_active.emit()
@@ -811,12 +809,10 @@ class Shell(QtCore.QObject):
         
         return
     
-    @QtCore.pyqtSlot(str, str)
-    def load_database(self, root_path, selected):
-    
-        cred = self.project.get_database_credentials()
+    @QtCore.pyqtSlot(str, str, dict)
+    def load_database(self, root_path, selected, credentials):
         
-        self._active_thread = ThreadLoad(cred, root_path, selected)
+        self._active_thread = ThreadLoad(credentials, root_path, selected)
         self._active_thread.start()
         
         self.database_convert_active.emit()
