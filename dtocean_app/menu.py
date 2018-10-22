@@ -47,6 +47,7 @@ class DBSelector(ListTableEditor):
         self._data_menu = data_menu
         self._selected = None
         self._unsaved = False
+        self._valid_cred_keys = ['host', 'dbname', 'user', 'pwd']
         
         self._init_ui()
                 
@@ -196,6 +197,17 @@ class DBSelector(ListTableEditor):
         
         return
     
+    def _get_db_dict(self):
+        
+        tabledf = self._read_table()
+        keys = tabledf["Key"]
+        values = tabledf["Value"]
+        
+        db_dict = {k: v for k, v in zip(keys, values)
+                                            if k in self._valid_cred_keys}
+        
+        return db_dict
+    
     @QtCore.pyqtSlot()
     def _convert_enabled(self):
         
@@ -235,23 +247,21 @@ class DBSelector(ListTableEditor):
     def _update_table(self, item, template=False):
         
         selected = str(item.text())
-        
-        key_order =  ['host', 'dbname', 'user', 'pwd']
-        value_order = []        
+        value_order = []
         
         if template:
             db_dict = {}
         else:
             db_dict = self._data_menu.get_database_dict(selected)
 
-        for key in key_order:
+        for key in self._valid_cred_keys:
             if key in db_dict:
                 value = db_dict[key]
             else:
                 value = ""
             value_order.append(value)
     
-        frame_dict = {"Key": key_order,
+        frame_dict = {"Key": self._valid_cred_keys,
                       "Value": value_order}
         df = pd.DataFrame(frame_dict)
                 
@@ -282,16 +292,10 @@ class DBSelector(ListTableEditor):
         
         if self._selected is None: return
         
-        tabledf = self._read_table()
-        valid_keys =  ['host', 'dbname', 'user', 'pwd']
-        
-        keys = tabledf["Key"]
-        values = tabledf["Value"]
-        db_dict = {k: v for k, v in zip(keys, values) if k in valid_keys}
-        
         name = self._selected
         if self._unsaved: name += " (modified)"
-        
+        db_dict = self._get_db_dict()
+
         self.database_selected.emit(name, db_dict)
         
         # Switch on dump/load functions
@@ -327,14 +331,9 @@ class DBSelector(ListTableEditor):
             
             return
         
+        db_dict = self._get_db_dict()
+
         self._data_menu.delete_database(self._selected)
-        
-        tabledf = self._read_table()
-        
-        keys = tabledf["Key"]
-        values = tabledf["Value"]
-        db_dict = {k: v for k, v in zip(keys, values)}
-        
         self._data_menu.update_database(new_name,
                                         db_dict,
                                         True)
@@ -374,11 +373,7 @@ class DBSelector(ListTableEditor):
         
         if not self._unsaved: return
         
-        tabledf = self._read_table()
-        
-        keys = tabledf["Key"]
-        values = tabledf["Value"]
-        db_dict = {k: v for k, v in zip(keys, values)}
+        db_dict = self._get_db_dict()
         
         self._data_menu.update_database(self._selected,
                                         db_dict,
