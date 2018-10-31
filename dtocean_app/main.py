@@ -83,6 +83,7 @@ class ThreadReadRaw(QtCore.QThread):
     
     """QThread for reading raw data"""
     
+    taskFinished = QtCore.pyqtSignal()
     error_detected =  QtCore.pyqtSignal(object, object, object)
 
     def __init__(self, shell, variable, value):
@@ -102,14 +103,51 @@ class ThreadReadRaw(QtCore.QThread):
                                              self._value)
             self._variable.read(self._shell.core,
                                 self._shell.project)
+            self.taskFinished.emit()
         
         except: 
             
             etype, evalue, etraceback = sys.exc_info()
             self.error_detected.emit(etype, evalue, etraceback)
+            self.taskFinished.emit()
 
         return
-      
+
+
+class ThreadReadTest(QtCore.QThread):
+    
+    """QThread for reading test data"""
+    
+    taskFinished = QtCore.pyqtSignal()
+    error_detected =  QtCore.pyqtSignal(object, object, object)
+    
+    def __init__(self, shell, item , path, overwrite):
+        
+        super(ThreadReadTest, self).__init__()
+        self.shell = shell
+        self.item = item
+        self.path = path
+        self.overwrite = overwrite
+        
+        return
+    
+    def run(self):
+        
+        try:
+        
+            self.item._read_test_data(self.shell,
+                                      self.path,
+                                      self.overwrite)
+            self.taskFinished.emit()
+        
+        except: 
+            
+            etype, evalue, etraceback = sys.exc_info()
+            self.error_detected.emit(etype, evalue, etraceback)
+            self.taskFinished.emit()
+
+        return
+
 
 class ThreadDataFlow(QtCore.QThread):
     
@@ -254,14 +292,26 @@ class ThreadStrategy(QtCore.QThread):
         
         try:
             
+            # Block signals
+            self._core.blockSignals(True)
+            self._project.blockSignals(True)
+            
             self._strategy.execute(self._core,
                                    self._project)
+            
+            # Reinstate signals and emit
+            self._core.blockSignals(False)
+            self._project.blockSignals(False)
             self.taskFinished.emit()
         
         except: 
             
             etype, evalue, etraceback = sys.exc_info()
             self.error_detected.emit(etype, evalue, etraceback)
+
+            # Reinstate signals and emit
+            self._core.blockSignals(False)
+            self._project.blockSignals(False)
             self.taskFinished.emit()
 
         return
@@ -444,15 +494,12 @@ class Shell(QtCore.QObject):
         self.theme_menu = self._init_theme_menu()
         self.data_menu = self._init_data_menu()
         
-        # Strategy execution flag change
-        self.strategy_executed.connect(self.set_strategy_run)
-        
-        # Clear active thread after execution
+        # Clean up after thread execution
+        self.database_convert_complete.connect(self._clear_active_thread)
         self.dataflow_active.connect(self._clear_active_thread)
         self.module_executed.connect(self._clear_active_thread)
         self.themes_executed.connect(self._clear_active_thread)
-        self.strategy_executed.connect(self._clear_active_thread)
-        self.database_convert_complete.connect(self._clear_active_thread)
+        self.strategy_executed.connect(self._finalize_strategy)
         
         return
     
@@ -654,6 +701,8 @@ class Shell(QtCore.QObject):
     @QtCore.pyqtSlot(str)
     def save_project(self, file_path=None):
         
+        if self._active_thread is not None: self._active_thread.wait()
+        
         if file_path is None:
             save_path = self.project_path
         else:
@@ -727,6 +776,8 @@ class Shell(QtCore.QObject):
     @QtCore.pyqtSlot()
     def close_project(self):
         
+        if self._active_thread is not None: self._active_thread.wait()
+        
         self.project = None
         self.project_path = None
         self.strategy = None
@@ -740,6 +791,8 @@ class Shell(QtCore.QObject):
         
     @QtCore.pyqtSlot(str, str)
     def set_simulation_title(self, old_title, new_title):
+        
+        if self._active_thread is not None: self._active_thread.wait()
         
         msg = "Changing title of simulation {} to {}".format(old_title,
                                                              new_title)
@@ -768,6 +821,8 @@ class Shell(QtCore.QObject):
         
     @QtCore.pyqtSlot(str)
     def set_active_simulation(self, title):
+        
+        if self._active_thread is not None: self._active_thread.wait()
         
         msg = "Setting simulation '{}' as active".format(title)
         module_logger.debug(msg)
@@ -798,6 +853,8 @@ class Shell(QtCore.QObject):
     @QtCore.pyqtSlot(str, str, dict)
     def dump_database(self, root_path, selected, credentials):
         
+        if self._active_thread is not None: self._active_thread.wait()
+        
         self._active_thread = ThreadDump(credentials, root_path, selected)
         self._active_thread.start()
         
@@ -809,6 +866,8 @@ class Shell(QtCore.QObject):
     
     @QtCore.pyqtSlot(str, str, dict)
     def load_database(self, root_path, selected, credentials):
+        
+        if self._active_thread is not None: self._active_thread.wait()
         
         self._active_thread = ThreadLoad(credentials, root_path, selected)
         self._active_thread.start()
@@ -889,6 +948,8 @@ class Shell(QtCore.QObject):
     @QtCore.pyqtSlot(object)
     def select_strategy(self, strategy):
         
+        if self._active_thread is not None: self._active_thread.wait()
+        
         if strategy is None:
             logMsg = "Null strategy detected"
         else:
@@ -917,6 +978,8 @@ class Shell(QtCore.QObject):
     @QtCore.pyqtSlot(object)
     def initiate_dataflow(self, pipeline):
         
+        if self._active_thread is not None: self._active_thread.wait()
+        
         self._active_thread = ThreadDataFlow(pipeline,
                                              self)
         
@@ -940,6 +1003,8 @@ class Shell(QtCore.QObject):
     @QtCore.pyqtSlot(str, bool)
     def import_data(self, file_path, skip_satisfied=False):
         
+        if self._active_thread is not None: self._active_thread.wait()
+        
         self.data_menu.import_data(self.core,
                                    self.project,
                                    str(file_path),
@@ -949,6 +1014,8 @@ class Shell(QtCore.QObject):
         
     @QtCore.pyqtSlot(object, str, str)
     def read_file(self, variable, interface_name, file_path):
+        
+        if self._active_thread is not None: self._active_thread.wait()
                 
         variable.read_file(self.core,
                            self.project,
@@ -968,8 +1035,35 @@ class Shell(QtCore.QObject):
         
         return
 
+    def read_raw(self, variable, value):
+        
+        if self._active_thread is not None: self._active_thread.wait()
+    
+        self._active_thread = ThreadReadRaw(self,
+                                            variable,
+                                            value)
+        self._active_thread.taskFinished.connect(self._clear_active_thread)
+        self._active_thread.start()
+        
+        return
+
+    def read_test_data(self, item, path, overwrite):
+        
+        if self._active_thread is not None: self._active_thread.wait()
+    
+        self._active_thread = ThreadReadTest(self,
+                                             item,
+                                             path,
+                                             overwrite)
+        self._active_thread.taskFinished.connect(self._clear_active_thread)
+        self._active_thread.start()
+        
+        return
+
     @QtCore.pyqtSlot()
     def execute_current(self):
+        
+        if self._active_thread is not None: self._active_thread.wait()
         
         self._active_thread = ThreadCurrent(self.core,
                                             self.project)
@@ -983,6 +1077,8 @@ class Shell(QtCore.QObject):
         
     @QtCore.pyqtSlot()
     def execute_themes(self):
+        
+        if self._active_thread is not None: self._active_thread.wait()
         
         self._active_thread = ThreadThemes(self.core,
                                            self.project)
@@ -999,6 +1095,8 @@ class Shell(QtCore.QObject):
         
         if self.strategy is None: return
         
+        if self._active_thread is not None: self._active_thread.wait()
+        
         self._active_thread = ThreadStrategy(self.strategy,
                                              self.core,
                                              self.project)
@@ -1009,20 +1107,7 @@ class Shell(QtCore.QObject):
         self._active_thread.start()
         
         return
-        
-    @QtCore.pyqtSlot()
-    def set_strategy_run(self):
-        
-        self.strategy.strategy_run = self.strategy.allow_rerun
-        
-        # If the strategy is no longer active release the hidden variables
-        if not self.strategy.strategy_run:
-            
-            [sim.set_unavailable_variables()
-                                        for sim in self.project._simulations]
-        
-        return
-        
+
     @QtCore.pyqtSlot(str)
     def set_output_scope(self, scope):
         
@@ -1036,8 +1121,37 @@ class Shell(QtCore.QObject):
                              
         self._current_scope = scope
         
-        return   
+        return
+
+    @QtCore.pyqtSlot()
+    def _finalize_strategy(self):
         
+        # Emit all signals on project
+        self.project.sims_updated.emit()
+        self.project.active_index_changed.emit()
+
+        active_sim_title = self.project.get_simulation_title()
+        
+        if active_sim_title is not None:
+            self.project.active_title_changed.emit(active_sim_title)
+        
+        # Assertain if the strategy can be released
+        self.strategy.strategy_run = self.strategy.allow_rerun
+        
+        # If the strategy is no longer active release the hidden variables
+        if not self.strategy.strategy_run:
+            
+            [sim.set_unavailable_variables()
+                                        for sim in self.project._simulations]
+        
+        # Update the interface status
+        self.core.set_interface_status(self.project)
+            
+        # Release the active thread
+        self._clear_active_thread()
+        
+        return
+
     @QtCore.pyqtSlot()
     def _clear_active_thread(self):
         
@@ -1049,10 +1163,10 @@ class Shell(QtCore.QObject):
         return
     
     @QtCore.pyqtSlot(object)
-    def _emit_update_pipeline(self, project):
+    def _emit_update_pipeline(self):
         
         Husk = namedtuple('Husk', ['core', 'project'])
-        husk = Husk(self.core, project)
+        husk = Husk(self.core, self.project)
         
         self.update_pipeline.emit(husk)
         
@@ -1100,7 +1214,6 @@ class DTOceanWindow(MainWindow):
         self._last_stack_index = None
         
         # Threads
-        self._thread_read_raw = None
         self._thread_tool = None
         
         # Tools
@@ -2198,11 +2311,6 @@ class DTOceanWindow(MainWindow):
                                  
         if self._data_context._bottom_contents is not None:
             
-            # Wait for any file reading.
-            if self._thread_read_raw is not None:
-                self._thread_read_raw.wait()
-                self._thread_read_raw = None
-                                    
             self._data_context._bottom_box.removeWidget(
                                         self._data_context._bottom_contents)
             self._data_context._bottom_contents.setParent(None)
@@ -2571,12 +2679,9 @@ class DTOceanWindow(MainWindow):
     @QtCore.pyqtSlot(object)
     def _read_raw(self, variable, value):
         
-        self._thread_read_raw = ThreadReadRaw(self._shell,
-                                              variable,
-                                              value)
-        self._thread_read_raw.error_detected.connect(self._display_error)        
-        self._thread_read_raw.start()
-                            
+        self._shell.read_raw(variable, value)
+        self._shell._active_thread.error_detected.connect(self._display_error)
+        
         return
         
     @QtCore.pyqtSlot()
@@ -2590,7 +2695,7 @@ class DTOceanWindow(MainWindow):
     def _open_project(self):
         
         msg = "Open Project"
-        valid_exts = "DTOcean Files (*.dto *.prj)"         
+        valid_exts = "DTOcean Files (*.dto *.prj)"
         
         file_path = QtGui.QFileDialog.getOpenFileName(None,
                                                       msg,
@@ -2649,7 +2754,7 @@ class DTOceanWindow(MainWindow):
         active_sim_title = self._shell.project.get_simulation_title()
         self._shell.project.active_title_changed.emit(active_sim_title)
         
-        self._shell.core.status_updated.emit(self._shell.project)
+        self._shell.core.status_updated.emit()
         self._set_project_saved()
         
         return
