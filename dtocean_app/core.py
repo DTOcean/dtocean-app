@@ -16,7 +16,6 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import logging
-from copy import deepcopy
 from PyQt4 import QtCore
 
 from aneris.boundary.interface import (AutoInterface,
@@ -97,7 +96,7 @@ class GUIProject(QtCore.QObject, Project):
     
     # PyQt signals
     sims_updated = QtCore.pyqtSignal()
-    active_index_changed = QtCore.pyqtSignal(object)
+    active_index_changed = QtCore.pyqtSignal()
     active_title_changed = QtCore.pyqtSignal(str)
     
     '''Project class with signals'''
@@ -124,14 +123,11 @@ class GUIProject(QtCore.QObject, Project):
         self.sims_updated.emit()
         
         return
-        
+
     def _set_active_index(self, index):
         
         super(GUIProject, self)._set_active_index(index)
-        
-        # Copy the project before status update
-        project_copy = deepcopy(self)
-        self.active_index_changed.emit(project_copy)
+        self.active_index_changed.emit()
         
         active_sim_title = self.get_simulation_title()
         
@@ -168,7 +164,7 @@ class GUICore(QtCore.QObject, Core):
     '''
 
     # PyQt signals
-    status_updated = QtCore.pyqtSignal(object)
+    status_updated = QtCore.pyqtSignal()
     pipeline_reset = QtCore.pyqtSignal()
     
     # Extend the sockets for widgets
@@ -265,10 +261,7 @@ class GUICore(QtCore.QObject, Core):
         """Emit a signal on status update"""
                 
         super(GUICore, self).set_interface_status(project, simulation)
-        
-        # Copy the project before status update
-        project_copy = deepcopy(project)
-        self.status_updated.emit(project_copy)
+        self.status_updated.emit()
 
         return
         

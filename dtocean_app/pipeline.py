@@ -43,37 +43,6 @@ from .utils.icons import (make_redicon_pixmap,
                           make_blueicon_pixmap,
                           make_buttoncancel_pixmap)
 
-class ThreadReadTest(QtCore.QThread):
-    
-    """QThread for reading test data"""
-    
-    error_detected =  QtCore.pyqtSignal(object, object, object)
-    
-    def __init__(self, item, shell, path, overwrite):
-        
-        super(ThreadReadTest, self).__init__()
-        self.item = item
-        self.shell = shell
-        self.path = path
-        self.overwrite = overwrite
-        
-        return
-    
-    def run(self):
-        
-        try:
-        
-            self.item._read_test_data(self.shell,
-                                      self.path,
-                                      self.overwrite)
-        
-        except: 
-            
-            etype, evalue, etraceback = sys.exc_info()
-            self.error_detected.emit(etype, evalue, etraceback)
-
-        return
-
 
 class PipeLine(PipeLineDock):
     
@@ -91,7 +60,6 @@ class PipeLine(PipeLineDock):
         # Test data picker
         self._test_data_picker = TestDataPicker(self)
         self._test_data_picker.setModal(True)
-        self._active_thread = None
                 
         self._init_title()
         
@@ -261,23 +229,16 @@ class PipeLine(PipeLineDock):
     @QtCore.pyqtSlot(object, object)
     def _read_test_data(self, shell, item):
         
-        self._active_thread = ThreadReadTest(
-                             item,
-                             shell,
+        if shell._active_thread is not None: shell._active_thread.wait()
+        
+        shell.read_test_data(item,
                              str(self._test_data_picker.pathLineEdit.text()),
                              self._test_data_picker.overwriteBox.isChecked())
-        self._active_thread.start()
-        self._active_thread.error_detected.connect(self._emit_error)
-        self._active_thread.finished.connect(self._clear_active_thread)
+
+        shell._active_thread.error_detected.connect(self._emit_error)
         
         return
-        
-    @QtCore.pyqtSlot()
-    def _clear_active_thread(self):
-        
-        self._active_thread = None 
-        
-        return
+
         
     @QtCore.pyqtSlot(object, object, object)
     def _emit_error(self, etype, evalue, etraceback):
@@ -616,6 +577,8 @@ class InputBranchItem(BaseItem):
 
     @QtCore.pyqtSlot(object)
     def _inspect(self, shell):
+        
+        if shell._active_thread is not None: shell._active_thread.wait()
 
         self._branch.inspect(shell.core,
                              shell.project)
@@ -624,6 +587,8 @@ class InputBranchItem(BaseItem):
 
     @QtCore.pyqtSlot(object)
     def _reset(self, shell):
+        
+        if shell._active_thread is not None: shell._active_thread.wait()
 
         self._branch.reset(shell.core,
                            shell.project)
@@ -708,6 +673,8 @@ class OutputBranchItem(BaseItem):
         
     @QtCore.pyqtSlot(object)
     def _inspect(self, shell):
+        
+        if shell._active_thread is not None: shell._active_thread.wait()
 
         self._branch.inspect(shell.core,
                              shell.project)
