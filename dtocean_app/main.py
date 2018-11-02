@@ -224,15 +224,27 @@ class ThreadCurrent(QtCore.QThread):
     def run(self):
         
         try:
+            
+            # Block signals
+            self._core.blockSignals(True)
+            self._project.blockSignals(True)
         
             self._module_menu.execute_current(self._core,
                                               self._project)
+            
+            # Reinstate signals and emit
+            self._core.blockSignals(False)
+            self._project.blockSignals(False)
             self.taskFinished.emit()
         
         except: 
             
             etype, evalue, etraceback = sys.exc_info()
             self.error_detected.emit(etype, evalue, etraceback)
+            
+            # Reinstate signals and emit
+            self._core.blockSignals(False)
+            self._project.blockSignals(False)
             self.taskFinished.emit()
 
         return
@@ -258,15 +270,27 @@ class ThreadThemes(QtCore.QThread):
     def run(self):
         
         try:
+            
+            # Block signals
+            self._core.blockSignals(True)
+            self._project.blockSignals(True)
         
             self._theme_menu.execute_all(self._core,
                                          self._project)
+            
+            # Reinstate signals and emit
+            self._core.blockSignals(False)
+            self._project.blockSignals(False)
             self.taskFinished.emit()
                                      
         except: 
             
             etype, evalue, etraceback = sys.exc_info()
             self.error_detected.emit(etype, evalue, etraceback)
+            
+            # Reinstate signals and emit
+            self._core.blockSignals(False)
+            self._project.blockSignals(False)
             self.taskFinished.emit()
 
         return
@@ -498,9 +522,9 @@ class Shell(QtCore.QObject):
         # Clean up after thread execution
         self.database_convert_complete.connect(self._clear_active_thread)
         self.dataflow_active.connect(self._clear_active_thread)
-        self.module_executed.connect(self._clear_active_thread)
-        self.themes_executed.connect(self._clear_active_thread)
-        self.strategy_executed.connect(self._finalize_strategy)
+        self.module_executed.connect(self._finalize_core)
+        self.themes_executed.connect(self._finalize_core)
+        self.strategy_executed.connect(self._finalize_project)
         
         return
     
@@ -1126,9 +1150,9 @@ class Shell(QtCore.QObject):
         return
 
     @QtCore.pyqtSlot()
-    def _finalize_strategy(self):
+    def _finalize_project(self):
         
-        # Emit all signals on project
+        # Emit signals on project
         self.project.sims_updated.emit()
         self.project.active_index_changed.emit()
 
@@ -1145,6 +1169,14 @@ class Shell(QtCore.QObject):
             
             [sim.set_unavailable_variables()
                                         for sim in self.project._simulations]
+        
+        # Emit signals on core
+        self._finalize_core()
+        
+        return
+
+    @QtCore.pyqtSlot()
+    def _finalize_core(self):
         
         # Update the interface status
         self.core.set_interface_status(self.project)
