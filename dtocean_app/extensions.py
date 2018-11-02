@@ -227,6 +227,16 @@ class GUIStrategyManager(ListFrameEditor, StrategyManager):
         return widget
         
     @QtCore.pyqtSlot(object)
+    def _load_strategy(self, strategy):
+        
+        strategy_name = strategy.get_name()
+
+        self._strategy = strategy
+        self._last_selected = strategy_name
+        self._set_dynamic_label(strategy_name)
+        
+        return
+        
     def _update_configuration(self, item=None):
         
         if item is None:

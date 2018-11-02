@@ -454,6 +454,7 @@ class Shell(QtCore.QObject):
     project_title_change = QtCore.pyqtSignal(str)
     project_saved = QtCore.pyqtSignal()
     project_closed = QtCore.pyqtSignal()
+    strategy_loaded = QtCore.pyqtSignal(object)
     modules_activated = QtCore.pyqtSignal()
     themes_activated = QtCore.pyqtSignal()
     update_pipeline = QtCore.pyqtSignal(object)
@@ -673,6 +674,7 @@ class Shell(QtCore.QObject):
             
             strategy_manager = GUIStrategyManager() 
             self.strategy = strategy_manager.load_strategy(stg_file_path)
+            self.strategy_loaded.emit(self.strategy)
             
         else:
             
@@ -1357,6 +1359,8 @@ class DTOceanWindow(MainWindow):
         self._strategy_manager.setModal(True)
         self._strategy_manager.strategy_selected.connect(
                                     self._shell.select_strategy)
+        self._shell.strategy_loaded.connect(
+                                    self._strategy_manager._load_strategy)
 
         # Set up the data check diaglog
         self._data_check = DataCheck(self)
