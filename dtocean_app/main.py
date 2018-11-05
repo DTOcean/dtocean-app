@@ -819,6 +819,7 @@ class Shell(QtCore.QObject):
     def set_simulation_title(self, old_title, new_title):
         
         if self._active_thread is not None: self._active_thread.wait()
+        if old_title == new_title: return
         
         msg = "Changing title of simulation {} to {}".format(old_title,
                                                              new_title)
