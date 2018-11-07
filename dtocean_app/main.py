@@ -2163,6 +2163,10 @@ class DTOceanWindow(MainWindow):
             if var_item is not None:
                 var_item = self._pipeline_dock._find_item(var_item._title)
         
+        # If given a hidden variable then reset to the pipeline root
+        if var_item is not None and var_item.isHidden():
+            var_item = self._pipeline_dock._items[0]
+
         current_context_action = self.contextGroup.checkedAction()
           
         if current_context_action is None:
