@@ -259,5 +259,3 @@ class UnitSensitivityWidget(QtGui.QWidget,
         self.lineEdit.setText(var_values_str)
         
         return
-        
-                

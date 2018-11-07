@@ -337,10 +337,10 @@ class MultiSensitivityWidget(QtGui.QWidget,
         
         df = config_dict["inputs_df"]
         subsp_ratio = config_dict["subsp_ratio"]
-        nsims = MultiSensitivity.count_selections(df, subsp_ratio)        
+        nsims = MultiSensitivity.count_selections(df, subsp_ratio)
         
         df['Variable'] = df['Variable'].apply(lambda x: self._get_var_title(x))
-        df['Values'] = df['Values'].apply(lambda x: self._list2string(x))      
+        df['Values'] = df['Values'].apply(lambda x: self._list2string(x))
         
         self.tableView.model().array_df = df
         self.subsetSpinBox.setValue(subsp_ratio * 100.)
@@ -416,7 +416,7 @@ class SimTableModel(QtCore.QAbstractTableModel):
         self.endRemoveRows()
         
         return True
-                                                    
+        
     def rowCount(self, parent=QtCore.QModelIndex()):
         
         return len(self.array_df)
@@ -443,5 +443,3 @@ class SimTableModel(QtCore.QAbstractTableModel):
             df = df.append(s2, ignore_index=True)
             
         return df
-
-        

@@ -684,7 +684,7 @@ class Shell(QtCore.QObject):
         self.project = load_project
         
         # Load up the scope if one was found
-        if sco_file_path is not None:        
+        if sco_file_path is not None:
         
             with open(sco_file_path, 'rb') as json_file:
                 self._current_scope = json.load(json_file)
@@ -696,7 +696,7 @@ class Shell(QtCore.QObject):
         # Load up the strategy if one was found
         if stg_file_path is not None:
             
-            strategy_manager = GUIStrategyManager() 
+            strategy_manager = GUIStrategyManager()
             self.strategy = strategy_manager.load_strategy(stg_file_path)
             self.strategy_loaded.emit(self.strategy)
             
@@ -764,7 +764,7 @@ class Shell(QtCore.QObject):
         sco_file_path = os.path.join(dto_dir_path, "scope.json")
         
         with open(sco_file_path, 'wb') as json_file:
-            json.dump(self._current_scope, json_file)        
+            json.dump(self._current_scope, json_file)
         
         # Set the standard archive contents
         arch_files = [prj_file_path, sco_file_path]
@@ -1995,7 +1995,7 @@ class DTOceanWindow(MainWindow):
         return
         
     @QtCore.pyqtSlot(str)
-    def _current_scope_ui_switch(self, scope):     
+    def _current_scope_ui_switch(self, scope):
         
         sane_scope = str(scope)
         
@@ -2170,7 +2170,6 @@ class DTOceanWindow(MainWindow):
         current_context_action = self.contextGroup.checkedAction()
           
         if current_context_action is None:
-            
             pass
           
         elif str(current_context_action.text()) == "Data":
@@ -2479,7 +2478,7 @@ class DTOceanWindow(MainWindow):
             self._level_comparison.buttonBox.button(
                                 QtGui.QDialogButtonBox.Save).setDisabled(True)
         
-        # Collect the sim titles from the sim dock             
+        # Collect the sim titles from the sim dock
         sim_titles = self._simulation_dock._get_list_values()
                     
         # Get the plot figure

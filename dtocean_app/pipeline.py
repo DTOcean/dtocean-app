@@ -23,7 +23,6 @@ Created on Thu Apr 23 12:51:14 2015
 
 
 import os
-import sys
 import runpy
 from collections import OrderedDict
 
@@ -115,7 +114,7 @@ class PipeLine(PipeLineDock):
         self._draw(shell)
         if expand: self._expand(shell)
         
-        return        
+        return
         
     def _clear(self):
         
