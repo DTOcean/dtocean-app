@@ -105,7 +105,9 @@ class StrategyWidget(object):
                  
         for word in words:
             
-            if word in ["True", "False"]:
+            if word == "None":
+                param = None
+            elif word in ["True", "False"]:
                 param = eval(word)
             elif word.isdigit():
                 param = int(word)
