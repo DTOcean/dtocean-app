@@ -2151,12 +2151,17 @@ class DTOceanWindow(MainWindow):
     @QtCore.pyqtSlot(object, int)
     def _set_context_widget(self, var_item, column=None):
         
-        # Use fake -1 column value to reset all the stored items 
+        # Use fake -1 column value to reset all the stored items and refresh
+        # the var_item
         if column == -1:
+            
             self._last_tree_item = None
             self._last_data_item = None
             self._last_data_item_status = None
             self._last_plot_id = None
+            
+            if var_item is not None:
+                var_item = self._pipeline_dock._find_item(var_item._title)
         
         current_context_action = self.contextGroup.checkedAction()
           
