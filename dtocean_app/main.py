@@ -1389,7 +1389,6 @@ class DTOceanWindow(MainWindow):
         
         # Set up the strategy manager
         self._strategy_manager = GUIStrategyManager(self)
-        self._strategy_manager.setModal(True)
         self._strategy_manager.strategy_selected.connect(
                                     self._shell.select_strategy)
         self._shell.strategy_loaded.connect(
