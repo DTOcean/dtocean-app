@@ -1419,7 +1419,9 @@ class DTOceanWindow(MainWindow):
         
         # Pipeline dock
         self._pipeline_dock = PipeLine(self)
-        self._pipeline_dock._close_filter._close_dock.connect(
+        self._pipeline_dock._showclose_filter._show.connect(
+                        lambda: self.actionShow_Pipeline.setEnabled(False))
+        self._pipeline_dock._showclose_filter._close.connect(
                         lambda: self.actionShow_Pipeline.setEnabled(True))
         self.addDockWidget(QtCore.Qt.DockWidgetArea(1), self._pipeline_dock)
         
@@ -1461,8 +1463,10 @@ class DTOceanWindow(MainWindow):
 
         # Simulation dock
         self._simulation_dock = SimulationDock(self)
-        self._simulation_dock._close_filter._close_dock.connect(
-                        lambda: self.actionShow_Simulations.setEnabled(True))  
+        self._simulation_dock._showclose_filter._show.connect(
+                        lambda: self.actionShow_Simulations.setEnabled(False))
+        self._simulation_dock._showclose_filter._close.connect(
+                        lambda: self.actionShow_Simulations.setEnabled(True))
         self.addDockWidget(QtCore.Qt.DockWidgetArea(1), self._simulation_dock)
         self._simulation_dock.name_changed.connect(
                                           self._shell.set_simulation_title)
@@ -1493,7 +1497,9 @@ class DTOceanWindow(MainWindow):
               
         # System dock
         self._system_dock = LogDock(self)
-        self._system_dock._close_filter._close_dock.connect(
+        self._system_dock._showclose_filter._show.connect(
+                        lambda: self.actionSystem_Log.setEnabled(False))
+        self._system_dock._showclose_filter._close.connect(
                         lambda: self.actionSystem_Log.setEnabled(True))
         self.addDockWidget(QtCore.Qt.DockWidgetArea(8), self._system_dock)
 
