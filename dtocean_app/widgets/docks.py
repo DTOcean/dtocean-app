@@ -41,17 +41,22 @@ else:
     from ..designer.low.systemdock import Ui_SystemDock
 
 
-class DockCloseFilter(QtCore.QObject):
+class DockShowCloseFilter(QtCore.QObject):
     
-    _close_dock = QtCore.pyqtSignal()
+    _show = QtCore.pyqtSignal()
+    _close = QtCore.pyqtSignal()
 
     def eventFilter(self, source, event):
 
-        if (event.type() == QtCore.QEvent.Close and
-                isinstance(source, QtGui.QDockWidget)):
+        if (event.type() == QtCore.QEvent.Show and
+            isinstance(source, QtGui.QDockWidget)):
 
-#            print "Caught it"
-            self._close_dock.emit()
+            self._show.emit()
+        
+        if (event.type() == QtCore.QEvent.Close and
+            isinstance(source, QtGui.QDockWidget)):
+
+            self._close.emit()
 
         return False
 
@@ -65,8 +70,8 @@ class PipeLineDock(QtGui.QDockWidget, Ui_PipeLineDock):
         self.setupUi(self)
         self.treeWidget.setIconSize(QtCore.QSize(12,12))
         
-        self._close_filter = DockCloseFilter(self)
-        self.installEventFilter(self._close_filter)
+        self._showclose_filter = DockShowCloseFilter(self)
+        self.installEventFilter(self._showclose_filter)
         
         return
 
@@ -80,8 +85,8 @@ class TreeDock(QtGui.QDockWidget, Ui_TreeDock):
         self.setupUi(self)
         self.treeWidget.setIconSize(QtCore.QSize(12,12))
         
-        self._close_filter = DockCloseFilter(self)
-        self.installEventFilter(self._close_filter)
+        self._showclose_filter = DockShowCloseFilter(self)
+        self.installEventFilter(self._showclose_filter)
         
         return
 
@@ -94,8 +99,8 @@ class ListDock(QtGui.QDockWidget, Ui_ListDock):
         Ui_ListDock.__init__(self)
         self.setupUi(self)
         
-        self._close_filter = DockCloseFilter(self)
-        self.installEventFilter(self._close_filter)
+        self._showclose_filter = DockShowCloseFilter(self)
+        self.installEventFilter(self._showclose_filter)
         
         return
         
@@ -121,8 +126,8 @@ class LogDock(QtGui.QDockWidget, Ui_SystemDock):
         self._init_ui()
         self._set_max_lines(max_lines)
         
-        self._close_filter = DockCloseFilter(self)
-        self.installEventFilter(self._close_filter)
+        self._showclose_filter = DockShowCloseFilter(self)
+        self.installEventFilter(self._showclose_filter)
         
         return
         
@@ -158,10 +163,8 @@ class LogDock(QtGui.QDockWidget, Ui_SystemDock):
     
     @QtCore.pyqtSlot(str)
     def _add_text(self, arg1):
-        """ C++: void _add_text(QString) """
-                
+        
         self._console.appendPlainText(arg1)
         self._console.moveCursor(QtGui.QTextCursor.End)
         
         return
-
