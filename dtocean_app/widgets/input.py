@@ -708,8 +708,9 @@ class InputDataTable(QtGui.QWidget):
 
     def _set_value(self, value, dtypes=None):
                 
-        # setup a new empty model
-        model = DataFrameModel()
+        # setup a new model
+        data = self._get_dataframe(value, dtypes)
+        model = DataFrameModel(data)
         
         # Modify the appearance and function of the table if fixed rows are
         # required.
@@ -721,10 +722,6 @@ class InputDataTable(QtGui.QWidget):
 
         # set table view widget model
         self.datatable.setViewModel(model)
-        
-        # fill the model with data
-        data = self._get_dataframe(value, dtypes)
-        model.setDataFrame(data)
         
         return
         
