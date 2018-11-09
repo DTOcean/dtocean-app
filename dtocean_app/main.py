@@ -1823,6 +1823,9 @@ class DTOceanWindow(MainWindow):
         # Enable actions
         self.actionNew.setEnabled(True)
         self.actionOpen.setEnabled(True)
+        
+        # Close the strategy manager
+        self._strategy_manager.close()
 
         # Clear the pipeline
         self._pipeline_dock._clear()
@@ -3020,6 +3023,9 @@ class DTOceanWindow(MainWindow):
     @QtCore.pyqtSlot()
     def _execute_current(self):
         
+        # Close the strategy manager
+        self._strategy_manager.close()
+        
         # Get the current module name
         current_mod = self._shell.get_current_module()
         
@@ -3067,7 +3073,10 @@ class DTOceanWindow(MainWindow):
         
     @QtCore.pyqtSlot()
     def _execute_themes(self):
-                                                         
+        
+        # Close the strategy manager
+        self._strategy_manager.close()
+        
         # Check for required values
         required_address = None
         
@@ -3108,6 +3117,9 @@ class DTOceanWindow(MainWindow):
         
     @QtCore.pyqtSlot()
     def _execute_strategy(self):
+        
+        # Close the strategy manager
+        self._strategy_manager.close()
         
         # Get the current module name
         scheduled_mods = self._shell.get_scheduled_modules()
