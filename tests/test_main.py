@@ -97,6 +97,37 @@ def test_open_dtocean_window(qtbot, mocker):
     assert window.windowTitle() == "DTOcean"
 
 
+def test_close_open_dock(qtbot, mocker):
+        
+    shell = Shell()
+    window = DTOceanWindow(shell)
+    window.show()
+    qtbot.addWidget(window)
+    
+    mocker.patch.object(QtGui.QMessageBox,
+                        'question',
+                        return_value=QtGui.QMessageBox.Yes)
+    
+    assert window.windowTitle() == "DTOcean"
+    
+    # Close the system dock
+    window._system_dock.close()
+    
+    def dock_is_closed(): assert window._system_dock.isHidden()
+
+    qtbot.waitUntil(dock_is_closed)
+    
+    # Reopen the system dock
+    menu_click(qtbot,
+               window,
+               window.menuView,
+               "actionSystem_Log")
+    
+    def dock_is_open(): assert window._system_dock.isVisible()
+
+    qtbot.waitUntil(dock_is_open)
+
+
 def test_new_project(qtbot, mocker):
     
     shell = Shell()
@@ -144,7 +175,7 @@ def test_set_device_type(qtbot, mocker):
     tree_widget = window._pipeline_dock.treeWidget
     rect = tree_widget.visualItemRect(test_var)
     
-    # simulate the mouse click within the button coordinates    
+    # simulate the mouse click within the button coordinates
     qtbot.mouseClick(tree_widget.viewport(),
                      QtCore.Qt.LeftButton,
                      pos=rect.topLeft())
@@ -379,8 +410,10 @@ def test_import_data(qtbot, mocker, tmpdir):
                window,
                window.menuData,
                "actionExport")
-        
-    assert os.path.isfile(datastate_file_path)
+    
+    def file_saved(): assert os.path.isfile(datastate_file_path)
+    
+    qtbot.waitUntil(file_saved)
     
     # Open a new project
     qtbot.mouseClick(new_project_button, QtCore.Qt.LeftButton)
@@ -682,6 +715,168 @@ def test_set_simulation_title(qtbot, mocker):
     qtbot.waitUntil(check_name)
     
     assert shell.project.get_simulation_title() == "bob"
+
+
+def test_simulation_clone_select(qtbot, mocker):
+    
+    shell = Shell()
+    
+    # Add mock module
+    socket = shell.core.control._sequencer.get_socket("ModuleInterface")
+    socket.add_interface(MockModule)
+    
+    window = DTOceanWindow(shell)
+    window.show()
+    qtbot.addWidget(window)
+    
+    mocker.patch.object(QtGui.QMessageBox,
+                        'question',
+                        return_value=QtGui.QMessageBox.Yes)
+    
+    mocker.patch.object(QtGui.QMessageBox,
+                        'warning',
+                        return_value=QtGui.QMessageBox.Discard)
+                      
+    # Get the new project button and click it
+    new_project_button = window.fileToolBar.widgetForAction(window.actionNew)
+    qtbot.mouseClick(new_project_button, QtCore.Qt.LeftButton)
+        
+    # Pick up the available pipeline item
+    test_var = window._pipeline_dock._find_item("Device Technology Type",
+                                                InputVarItem)
+    
+    # obtain the rectangular coordinates of the child item
+    tree_widget = window._pipeline_dock.treeWidget
+    rect = tree_widget.visualItemRect(test_var)
+    
+    # simulate the mouse click within the button coordinates    
+    qtbot.mouseClick(tree_widget.viewport(),
+                     QtCore.Qt.LeftButton,
+                     pos=rect.topLeft())
+                                  
+    list_select = window._data_context._bottom_contents
+    
+    # Set the combo box to "Wave Floating" anc click OK
+    idx = list_select.comboBox.findText("Tidal Fixed",
+                                        QtCore.Qt.MatchFixedString)
+    list_select.comboBox.setCurrentIndex(idx)
+
+    qtbot.mouseClick(
+                list_select.buttonBox.button(QtGui.QDialogButtonBox.Ok),
+                QtCore.Qt.LeftButton)
+    
+    def check_status():
+        
+        # Pick up pipeline item again as it's been rebuilt
+        test_var = window._pipeline_dock._find_item("Device Technology Type",
+                                                    InputVarItem)
+        
+        assert test_var._status == "satisfied"
+    
+    qtbot.waitUntil(check_status)
+    
+    # Initiate the pipeline
+    init_pipeline_button = \
+        window.scenarioToolBar.widgetForAction(window.actionInitiate_Pipeline)
+    qtbot.mouseClick(init_pipeline_button, QtCore.Qt.LeftButton)
+    
+    data_check = window._data_check
+    
+    def data_check_visible(): assert data_check.isVisible()
+    
+    qtbot.waitUntil(data_check_visible)
+    
+    qtbot.mouseClick(data_check.buttonBox.button(QtGui.QDialogButtonBox.Ok),
+                     QtCore.Qt.LeftButton)
+    
+    def check_dataflow(): assert window.actionInitiate_Dataflow.isEnabled()
+    
+    qtbot.waitUntil(check_dataflow)
+    
+    # Add a module
+    add_modules_button = \
+        window.simulationToolBar.widgetForAction(window.actionAdd_Modules)
+    qtbot.mouseClick(add_modules_button, QtCore.Qt.LeftButton)
+    
+    module_shuttle = window._module_shuttle
+    
+    def add_modules_visible(): assert module_shuttle.isVisible()
+    
+    qtbot.waitUntil(add_modules_visible)
+    
+    # Fake click on last left item
+    module_shuttle._left_index = module_shuttle._left_model.rowCount() - 1
+    
+    # Click "Add" then "OK"
+    qtbot.mouseClick(module_shuttle.addButton,
+                     QtCore.Qt.LeftButton)
+    
+    def module_on_right(): assert module_shuttle._get_right_data()
+    
+    qtbot.waitUntil(module_on_right)
+    
+    button = module_shuttle.buttonBox.button(QtGui.QDialogButtonBox.Ok)
+    qtbot.mouseClick(button,
+                     QtCore.Qt.LeftButton)
+    
+    def add_modules_not_visible(): assert not module_shuttle.isVisible()
+    
+    qtbot.waitUntil(add_modules_not_visible)
+    
+    # Initiate the dataflow
+    init_pipeline_button = \
+        window.scenarioToolBar.widgetForAction(window.actionInitiate_Dataflow)
+    qtbot.mouseClick(init_pipeline_button, QtCore.Qt.LeftButton)
+    
+    qtbot.waitUntil(data_check_visible)
+    
+    qtbot.mouseClick(data_check.buttonBox.button(QtGui.QDialogButtonBox.Ok),
+                     QtCore.Qt.LeftButton)
+    
+    def check_run_current(): assert window.actionRun_Current.isEnabled()
+    
+    qtbot.waitUntil(check_run_current)
+    
+    def check_module_active():
+        
+        # Pick up pipeline item again as it's been rebuilt
+        test_item = window._pipeline_dock._find_item("Mock Module")
+        
+        assert test_item is not None
+    
+    qtbot.waitUntil(check_module_active)
+    
+    # Close the pipeline
+    window._pipeline_dock.close()
+    
+    def pipeline_not_visible(): assert not window._pipeline_dock.isVisible()
+    
+    qtbot.waitUntil(pipeline_not_visible)
+    
+    # Fake clone the simulation
+    window._simulation_dock._clone_current(window._shell)
+    
+    def has_two_simulations():
+        assert window._simulation_dock.listWidget.count() == 2
+    
+    qtbot.waitUntil(has_two_simulations)
+    
+    # Check the new simulation name
+    test_sim = window._simulation_dock.listWidget.item(1)
+    
+    assert test_sim._title == "Default Clone 1"
+    
+    # Select the default simulation
+    item = window._simulation_dock.listWidget.item(0)
+    rect = window._simulation_dock.listWidget.visualItemRect(item)
+    qtbot.mouseClick(window._simulation_dock.listWidget.viewport(),
+                     QtCore.Qt.LeftButton,
+                     pos=rect.center())
+    
+    def is_active_simulation():
+        assert window._shell.project.get_simulation_title() == "Default"
+    
+    qtbot.waitUntil(is_active_simulation)
 
 
 def test_credentials_add_delete(qtbot, mocker, tmpdir):
@@ -1252,7 +1447,7 @@ def test_save_modify_close(qtbot, mocker, tmpdir):
     tree_widget = window._pipeline_dock.treeWidget
     rect = tree_widget.visualItemRect(test_var)
     
-    # simulate the mouse click within the button coordinates    
+    # simulate the mouse click within the button coordinates
     qtbot.mouseClick(tree_widget.viewport(),
                      QtCore.Qt.LeftButton,
                      pos=rect.topLeft())
@@ -1404,6 +1599,524 @@ def test_save_modify_close(qtbot, mocker, tmpdir):
     def close_button_not_enabled(): assert not close_button.isEnabled()
     
     qtbot.waitUntil(close_button_not_enabled)
+
+
+def test_save_project(qtbot, mocker, tmpdir):
+    
+    shell = Shell()
+    
+    # Add mock module
+    socket = shell.core.control._sequencer.get_socket("ModuleInterface")
+    socket.add_interface(MockModule)
+    
+    window = DTOceanWindow(shell)
+    window.show()
+    qtbot.addWidget(window)
+    
+    mocker.patch.object(QtGui.QMessageBox,
+                        'question',
+                        return_value=QtGui.QMessageBox.Yes)
+    
+    mocker.patch.object(QtGui.QMessageBox,
+                        'warning',
+                        return_value=QtGui.QMessageBox.Discard)
+    
+    dto_file_path = os.path.join(str(tmpdir), "test.prj")
+    
+    mocker.patch.object(QtGui.QFileDialog,
+                        'getSaveFileName',
+                        return_value=dto_file_path)
+                      
+    # Get the new project button and click it
+    new_project_button = window.fileToolBar.widgetForAction(window.actionNew)
+    qtbot.mouseClick(new_project_button, QtCore.Qt.LeftButton)
+        
+    # Pick up the available pipeline item
+    test_var = window._pipeline_dock._find_item("Device Technology Type",
+                                                InputVarItem)
+    
+    # obtain the rectangular coordinates of the child item
+    tree_widget = window._pipeline_dock.treeWidget
+    rect = tree_widget.visualItemRect(test_var)
+    
+    # simulate the mouse click within the button coordinates
+    qtbot.mouseClick(tree_widget.viewport(),
+                     QtCore.Qt.LeftButton,
+                     pos=rect.topLeft())
+                                  
+    list_select = window._data_context._bottom_contents
+    
+    # Set the combo box to "Wave Floating" anc click OK
+    idx = list_select.comboBox.findText("Tidal Fixed",
+                                        QtCore.Qt.MatchFixedString)
+    list_select.comboBox.setCurrentIndex(idx)
+
+    qtbot.mouseClick(
+                list_select.buttonBox.button(QtGui.QDialogButtonBox.Ok),
+                QtCore.Qt.LeftButton)
+    
+    def check_status():
+        
+        # Pick up pipeline item again as it's been rebuilt
+        test_var = window._pipeline_dock._find_item("Device Technology Type",
+                                                    InputVarItem)
+        
+        assert test_var._status == "satisfied"
+    
+    qtbot.waitUntil(check_status)
+    
+    # Initiate the pipeline
+    init_pipeline_button = \
+        window.scenarioToolBar.widgetForAction(window.actionInitiate_Pipeline)
+    qtbot.mouseClick(init_pipeline_button, QtCore.Qt.LeftButton)
+    
+    data_check = window._data_check
+    
+    def data_check_visible(): assert data_check.isVisible()
+    
+    qtbot.waitUntil(data_check_visible)
+    
+    qtbot.mouseClick(data_check.buttonBox.button(QtGui.QDialogButtonBox.Ok),
+                     QtCore.Qt.LeftButton)
+    
+    def check_dataflow(): assert window.actionInitiate_Dataflow.isEnabled()
+    
+    qtbot.waitUntil(check_dataflow)
+    
+    # Add a module
+    add_modules_button = \
+        window.simulationToolBar.widgetForAction(window.actionAdd_Modules)
+    qtbot.mouseClick(add_modules_button, QtCore.Qt.LeftButton)
+    
+    module_shuttle = window._module_shuttle
+    
+    def add_modules_visible(): assert module_shuttle.isVisible()
+    
+    qtbot.waitUntil(add_modules_visible)
+    
+    # Fake click on last left item
+    module_shuttle._left_index = module_shuttle._left_model.rowCount() - 1
+    
+    # Click "Add" then "OK"
+    qtbot.mouseClick(module_shuttle.addButton,
+                     QtCore.Qt.LeftButton)
+    
+    def module_on_right(): assert module_shuttle._get_right_data()
+    
+    qtbot.waitUntil(module_on_right)
+    
+    button = module_shuttle.buttonBox.button(QtGui.QDialogButtonBox.Ok)
+    qtbot.mouseClick(button,
+                     QtCore.Qt.LeftButton)
+    
+    def add_modules_not_visible(): assert not module_shuttle.isVisible()
+    
+    qtbot.waitUntil(add_modules_not_visible)
+    
+    # Initiate the dataflow
+    init_pipeline_button = \
+        window.scenarioToolBar.widgetForAction(window.actionInitiate_Dataflow)
+    qtbot.mouseClick(init_pipeline_button, QtCore.Qt.LeftButton)
+    
+    qtbot.waitUntil(data_check_visible)
+    
+    qtbot.mouseClick(data_check.buttonBox.button(QtGui.QDialogButtonBox.Ok),
+                     QtCore.Qt.LeftButton)
+    
+    def check_run_current(): assert window.actionRun_Current.isEnabled()
+    
+    qtbot.waitUntil(check_run_current)
+    
+    def check_module_active():
+        
+        # Pick up pipeline item again as it's been rebuilt
+        test_item = window._pipeline_dock._find_item("Mock Module")
+        
+        assert test_item is not None
+    
+    qtbot.waitUntil(check_module_active)
+    
+    # Save the simulation
+    save_button = window.fileToolBar.widgetForAction(window.actionSave)
+    qtbot.mouseClick(save_button, QtCore.Qt.LeftButton)
+    
+    def dto_file_saved(): assert os.listdir(str(tmpdir))[0] == "test.prj"
+    
+    qtbot.waitUntil(dto_file_saved)
+
+
+def test_select_strategy(qtbot, mocker, tmpdir):
+    
+    shell = Shell()
+    
+    # Add mock module
+    socket = shell.core.control._sequencer.get_socket("ModuleInterface")
+    socket.add_interface(MockModule)
+    
+    window = DTOceanWindow(shell)
+    window.show()
+    qtbot.addWidget(window)
+    
+    mocker.patch.object(QtGui.QMessageBox,
+                        'question',
+                        return_value=QtGui.QMessageBox.Yes)
+    
+    mocker.patch.object(QtGui.QMessageBox,
+                        'warning',
+                        return_value=QtGui.QMessageBox.Discard)
+    
+    dto_file_path = os.path.join(str(tmpdir), "test.dto")
+    
+    mocker.patch.object(QtGui.QFileDialog,
+                        'getSaveFileName',
+                        return_value=dto_file_path)
+                      
+    # Get the new project button and click it
+    new_project_button = window.fileToolBar.widgetForAction(window.actionNew)
+    qtbot.mouseClick(new_project_button, QtCore.Qt.LeftButton)
+        
+    # Pick up the available pipeline item
+    test_var = window._pipeline_dock._find_item("Device Technology Type",
+                                                InputVarItem)
+    
+    # obtain the rectangular coordinates of the child item
+    tree_widget = window._pipeline_dock.treeWidget
+    rect = tree_widget.visualItemRect(test_var)
+    
+    # simulate the mouse click within the button coordinates
+    qtbot.mouseClick(tree_widget.viewport(),
+                     QtCore.Qt.LeftButton,
+                     pos=rect.topLeft())
+                                  
+    list_select = window._data_context._bottom_contents
+    
+    # Set the combo box to "Wave Floating" anc click OK
+    idx = list_select.comboBox.findText("Tidal Fixed",
+                                        QtCore.Qt.MatchFixedString)
+    list_select.comboBox.setCurrentIndex(idx)
+
+    qtbot.mouseClick(
+                list_select.buttonBox.button(QtGui.QDialogButtonBox.Ok),
+                QtCore.Qt.LeftButton)
+    
+    def check_status():
+        
+        # Pick up pipeline item again as it's been rebuilt
+        test_var = window._pipeline_dock._find_item("Device Technology Type",
+                                                    InputVarItem)
+        
+        assert test_var._status == "satisfied"
+    
+    qtbot.waitUntil(check_status)
+    
+    # Initiate the pipeline
+    init_pipeline_button = \
+        window.scenarioToolBar.widgetForAction(window.actionInitiate_Pipeline)
+    qtbot.mouseClick(init_pipeline_button, QtCore.Qt.LeftButton)
+    
+    data_check = window._data_check
+    
+    def data_check_visible(): assert data_check.isVisible()
+    
+    qtbot.waitUntil(data_check_visible)
+    
+    qtbot.mouseClick(data_check.buttonBox.button(QtGui.QDialogButtonBox.Ok),
+                     QtCore.Qt.LeftButton)
+    
+    def check_dataflow(): assert window.actionInitiate_Dataflow.isEnabled()
+    
+    qtbot.waitUntil(check_dataflow)
+    
+    # Add a module
+    add_modules_button = \
+        window.simulationToolBar.widgetForAction(window.actionAdd_Modules)
+    qtbot.mouseClick(add_modules_button, QtCore.Qt.LeftButton)
+    
+    module_shuttle = window._module_shuttle
+    
+    def add_modules_visible(): assert module_shuttle.isVisible()
+    
+    qtbot.waitUntil(add_modules_visible)
+    
+    # Fake click on last left item
+    module_shuttle._left_index = module_shuttle._left_model.rowCount() - 1
+    
+    # Click "Add" then "OK"
+    qtbot.mouseClick(module_shuttle.addButton,
+                     QtCore.Qt.LeftButton)
+    
+    def module_on_right(): assert module_shuttle._get_right_data()
+    
+    qtbot.waitUntil(module_on_right)
+    
+    button = module_shuttle.buttonBox.button(QtGui.QDialogButtonBox.Ok)
+    qtbot.mouseClick(button,
+                     QtCore.Qt.LeftButton)
+    
+    def add_modules_not_visible(): assert not module_shuttle.isVisible()
+    
+    qtbot.waitUntil(add_modules_not_visible)
+    
+    # Initiate the dataflow
+    init_pipeline_button = \
+        window.scenarioToolBar.widgetForAction(window.actionInitiate_Dataflow)
+    qtbot.mouseClick(init_pipeline_button, QtCore.Qt.LeftButton)
+    
+    qtbot.waitUntil(data_check_visible)
+    
+    qtbot.mouseClick(data_check.buttonBox.button(QtGui.QDialogButtonBox.Ok),
+                     QtCore.Qt.LeftButton)
+    
+    def check_run_current(): assert window.actionRun_Current.isEnabled()
+    
+    qtbot.waitUntil(check_run_current)
+    
+    def check_module_active():
+        
+        # Pick up pipeline item again as it's been rebuilt
+        test_item = window._pipeline_dock._find_item("Mock Module")
+        
+        assert test_item is not None
+    
+    qtbot.waitUntil(check_module_active)
+    
+    # Add a strategy
+    add_strategy_button = \
+        window.simulationToolBar.widgetForAction(window.actionAdd_Strategy)
+    qtbot.mouseClick(add_strategy_button, QtCore.Qt.LeftButton)
+    
+    strategy_manager = window._strategy_manager
+    qtbot.addWidget(strategy_manager)
+    
+    def strategy_manager_visible(): assert strategy_manager.isVisible()
+    
+    qtbot.waitUntil(strategy_manager_visible)
+    
+    # Click on first strategy and apply
+    item = strategy_manager.listWidget.item(0)
+    rect = strategy_manager.listWidget.visualItemRect(item)
+    qtbot.mouseClick(strategy_manager.listWidget.viewport(),
+                     QtCore.Qt.LeftButton,
+                     pos=rect.center())
+    
+    # Wait to register click
+    qtbot.wait(200)
+    
+    qtbot.mouseClick(
+            strategy_manager.buttonBox.button(QtGui.QDialogButtonBox.Apply),
+            QtCore.Qt.LeftButton)
+    
+    assert str(strategy_manager.topDynamicLabel.text()) == str(item.text())
+
+
+def test_strategy_save_close_open(qtbot, mocker, tmpdir):
+    
+    shell = Shell()
+    
+    # Add mock module
+    socket = shell.core.control._sequencer.get_socket("ModuleInterface")
+    socket.add_interface(MockModule)
+    
+    window = DTOceanWindow(shell)
+    window.show()
+    qtbot.addWidget(window)
+    
+    mocker.patch.object(QtGui.QMessageBox,
+                        'question',
+                        return_value=QtGui.QMessageBox.Yes)
+    
+    mocker.patch.object(QtGui.QMessageBox,
+                        'warning',
+                        return_value=QtGui.QMessageBox.Discard)
+    
+    dto_file_path = os.path.join(str(tmpdir), "test.dto")
+    
+    mocker.patch.object(QtGui.QFileDialog,
+                        'getSaveFileName',
+                        return_value=dto_file_path)
+    
+    mocker.patch.object(QtGui.QFileDialog,
+                        'getOpenFileName',
+                        return_value=dto_file_path)
+    
+    # Get the new project button and click it
+    new_project_button = window.fileToolBar.widgetForAction(window.actionNew)
+    qtbot.mouseClick(new_project_button, QtCore.Qt.LeftButton)
+        
+    # Pick up the available pipeline item
+    test_var = window._pipeline_dock._find_item("Device Technology Type",
+                                                InputVarItem)
+    
+    # obtain the rectangular coordinates of the child item
+    tree_widget = window._pipeline_dock.treeWidget
+    rect = tree_widget.visualItemRect(test_var)
+    
+    # simulate the mouse click within the button coordinates
+    qtbot.mouseClick(tree_widget.viewport(),
+                     QtCore.Qt.LeftButton,
+                     pos=rect.topLeft())
+                                  
+    list_select = window._data_context._bottom_contents
+    
+    # Set the combo box to "Wave Floating" anc click OK
+    idx = list_select.comboBox.findText("Tidal Fixed",
+                                        QtCore.Qt.MatchFixedString)
+    list_select.comboBox.setCurrentIndex(idx)
+
+    qtbot.mouseClick(
+                list_select.buttonBox.button(QtGui.QDialogButtonBox.Ok),
+                QtCore.Qt.LeftButton)
+    
+    def check_status():
+        
+        # Pick up pipeline item again as it's been rebuilt
+        test_var = window._pipeline_dock._find_item("Device Technology Type",
+                                                    InputVarItem)
+        
+        assert test_var._status == "satisfied"
+    
+    qtbot.waitUntil(check_status)
+    
+    # Initiate the pipeline
+    init_pipeline_button = \
+        window.scenarioToolBar.widgetForAction(window.actionInitiate_Pipeline)
+    qtbot.mouseClick(init_pipeline_button, QtCore.Qt.LeftButton)
+    
+    data_check = window._data_check
+    
+    def data_check_visible(): assert data_check.isVisible()
+    
+    qtbot.waitUntil(data_check_visible)
+    
+    qtbot.mouseClick(data_check.buttonBox.button(QtGui.QDialogButtonBox.Ok),
+                     QtCore.Qt.LeftButton)
+    
+    def check_dataflow(): assert window.actionInitiate_Dataflow.isEnabled()
+    
+    qtbot.waitUntil(check_dataflow)
+    
+    # Add a module
+    add_modules_button = \
+        window.simulationToolBar.widgetForAction(window.actionAdd_Modules)
+    qtbot.mouseClick(add_modules_button, QtCore.Qt.LeftButton)
+    
+    module_shuttle = window._module_shuttle
+    
+    def add_modules_visible(): assert module_shuttle.isVisible()
+    
+    qtbot.waitUntil(add_modules_visible)
+    
+    # Fake click on last left item
+    module_shuttle._left_index = module_shuttle._left_model.rowCount() - 1
+    
+    # Click "Add" then "OK"
+    qtbot.mouseClick(module_shuttle.addButton,
+                     QtCore.Qt.LeftButton)
+    
+    def module_on_right(): assert module_shuttle._get_right_data()
+    
+    qtbot.waitUntil(module_on_right)
+    
+    button = module_shuttle.buttonBox.button(QtGui.QDialogButtonBox.Ok)
+    qtbot.mouseClick(button,
+                     QtCore.Qt.LeftButton)
+    
+    def add_modules_not_visible(): assert not module_shuttle.isVisible()
+    
+    qtbot.waitUntil(add_modules_not_visible)
+    
+    # Initiate the dataflow
+    init_pipeline_button = \
+        window.scenarioToolBar.widgetForAction(window.actionInitiate_Dataflow)
+    qtbot.mouseClick(init_pipeline_button, QtCore.Qt.LeftButton)
+    
+    qtbot.waitUntil(data_check_visible)
+    
+    qtbot.mouseClick(data_check.buttonBox.button(QtGui.QDialogButtonBox.Ok),
+                     QtCore.Qt.LeftButton)
+    
+    def check_run_current(): assert window.actionRun_Current.isEnabled()
+    
+    qtbot.waitUntil(check_run_current)
+    
+    def check_module_active():
+        
+        # Pick up pipeline item again as it's been rebuilt
+        test_item = window._pipeline_dock._find_item("Mock Module")
+        
+        assert test_item is not None
+    
+    qtbot.waitUntil(check_module_active)
+    
+    # Add a strategy
+    add_strategy_button = \
+        window.simulationToolBar.widgetForAction(window.actionAdd_Strategy)
+    qtbot.mouseClick(add_strategy_button, QtCore.Qt.LeftButton)
+    
+    strategy_manager = window._strategy_manager
+    
+    def strategy_manager_visible(): assert strategy_manager.isVisible()
+    
+    qtbot.waitUntil(strategy_manager_visible)
+    
+    # Click on first strategy and apply
+    item = strategy_manager.listWidget.item(0)
+    rect = strategy_manager.listWidget.visualItemRect(item)
+    qtbot.mouseClick(strategy_manager.listWidget.viewport(),
+                     QtCore.Qt.LeftButton,
+                     pos=rect.center())
+    
+    # Wait to register click
+    qtbot.wait(200)
+    
+    qtbot.mouseClick(
+            strategy_manager.buttonBox.button(QtGui.QDialogButtonBox.Apply),
+            QtCore.Qt.LeftButton)
+    
+    assert str(strategy_manager.topDynamicLabel.text()) == str(item.text())
+    
+    # Close the dialog
+    qtbot.mouseClick(
+            strategy_manager.buttonBox.button(QtGui.QDialogButtonBox.Close),
+            QtCore.Qt.LeftButton)
+    
+    # Save the simulation
+    save_button = window.fileToolBar.widgetForAction(window.actionSave)
+    qtbot.mouseClick(save_button, QtCore.Qt.LeftButton)
+    
+    def dto_file_saved(): assert os.listdir(str(tmpdir))[0] == "test.dto"
+    
+    qtbot.waitUntil(dto_file_saved)
+    
+    # Close the project
+    close_button = window.fileToolBar.widgetForAction(window.actionClose)
+    qtbot.mouseClick(close_button, QtCore.Qt.LeftButton)
+    
+    def close_button_not_enabled(): assert not close_button.isEnabled()
+    
+    qtbot.waitUntil(close_button_not_enabled)
+    
+    # Open the project
+    open_button = window.fileToolBar.widgetForAction(window.actionOpen)
+    qtbot.mouseClick(open_button, QtCore.Qt.LeftButton)
+    
+    def close_button_enabled(): assert close_button.isEnabled()
+    
+    qtbot.waitUntil(close_button_enabled)
+    
+    # Reopen strategy manager and check value
+    add_strategy_button = \
+        window.simulationToolBar.widgetForAction(window.actionAdd_Strategy)
+    qtbot.mouseClick(add_strategy_button, QtCore.Qt.LeftButton)
+    
+    strategy_manager = window._strategy_manager
+    qtbot.addWidget(strategy_manager)
+    
+    def strategy_manager_visible(): assert strategy_manager.isVisible()
+    
+    qtbot.waitUntil(strategy_manager_visible)
+    
+    assert str(strategy_manager.topDynamicLabel.text()) == str(item.text())
 
 
 def menu_click(qtbot, main_window, menu, action_name):

@@ -17,6 +17,7 @@
 
 import numpy as np
 import pandas as pd
+from PyQt4 import QtCore, QtGui
 
 from dtocean_app.widgets.input import (FloatSelect,
                                        StringSelect,
@@ -51,6 +52,40 @@ def test_FloatSelect_get_result(qtbot):
     test = window._get_result()
     
     assert test == 1.
+
+
+def test_FloatSelect_exponent(qtbot):
+    
+    window = FloatSelect()
+    window.show()
+    qtbot.addWidget(window)
+    
+    window.doubleSpinBox.lineEdit().setText("1e3")
+    
+    qtbot.mouseClick(
+                window.buttonBox.button(QtGui.QDialogButtonBox.Ok),
+                QtCore.Qt.LeftButton)
+    
+    test = window._get_result()
+    
+    assert test == 1000.0
+
+
+def test_FloatSelect_bad_input(qtbot):
+    
+    window = FloatSelect()
+    window.show()
+    qtbot.addWidget(window)
+    
+    window.doubleSpinBox.lineEdit().setText("eeeeee")
+    
+    qtbot.mouseClick(
+                window.buttonBox.button(QtGui.QDialogButtonBox.Ok),
+                QtCore.Qt.LeftButton)
+    
+    test = window._get_result()
+    
+    assert test == 0.
 
 
 def test_StringSelect(qtbot):
