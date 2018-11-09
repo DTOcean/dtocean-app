@@ -234,7 +234,7 @@ class DBSelector(ListTableEditor):
         self.topDynamicLabel.setText(current_db)
         
         # Set button default
-        if current_db is None:
+        if current_db == "None":
             self.buttonBox.button(
                     QtGui.QDialogButtonBox.Apply).setDefault(True)
         else:
