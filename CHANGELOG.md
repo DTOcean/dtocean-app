@@ -55,6 +55,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
   .dto files are preferable for GUI use).
 - The file path in FileManagerWidget is now cleared following load and save
   to indicate that the action was successful. 
+- None can now be given as a variable value to strategies to allow for optional
+  varibles to be run in their unset mode.
 
 ### Changed
 
@@ -94,6 +96,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
   say "Select" rather than "Save" or "Load" to help user understand another step
   must be taken (pressing "OK") for the action to complete.
 - The configure module was moved to utils.config.
+- Removed fixup method from ScientificDoubleSpinBox to aviod bad return value.
+- Thread safety improved to fix occasional UI bugs. The interface will no longer
+  update until execution has completed.
+- The Strategy Manager is no longer modal to allow easier setting of varibles
+  values.
 
 ### Removed
 
@@ -123,7 +130,17 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Fixed issue with unreadable context menus when mouseover is triggered.
 - Added taskfinished signals to all Thread classed after an error has been
   detected to ensure proper cleanup and GUI response.
-
+- Fixed bug with displaying table cells with None as their value.
+- Fixed reloading of strategy configuration in the Strategy Manager when
+  opening a dto file.
+- Fixed bug where an error was being logged when renaming a simulation to its
+  current value.
+- Added names to the toolbars, so they can be distinguished in the right-click
+  menu.
+- Fixed issue where the view action for docks would still be active if the dock
+  was opened from the right-click toolbar menu.
+- Fixed issue with DataFrameModel initialisation where bugs occur if the
+  dataframe is not passed in the constructor.
 
 ## [1.0.0] - 2017-02-23
 

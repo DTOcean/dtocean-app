@@ -194,7 +194,7 @@ class SimulationItem(QtGui.QListWidgetItem):
     
     @QtCore.pyqtSlot(str) 
     def _set_bold(self, value):
-                
+        
         if value == self._get_title():
             x = True
         else:
@@ -203,5 +203,5 @@ class SimulationItem(QtGui.QListWidgetItem):
         item_font = self.font()
         item_font.setBold(x)
         self.setFont(item_font)
-                    
+        
         return
