@@ -223,12 +223,15 @@ class DataTableWidget(QtGui.QWidget):
 
         """
         if isinstance(model, DataFrameModel):
+            
             self.enableEditing(False)
             self.uncheckButton()
             
             self.tableView.setModel(model)
             model.dtypeChanged.connect(self.updateDelegate)
             model.dataChanged.connect(self.updateDelegates)
+            
+            self.updateDelegates()
             
     def setModel(self, model):
         """Sets the model for the enclosed TableView in this widget.
@@ -358,7 +361,7 @@ class DataTableWidget(QtGui.QWidget):
 
         """
     
-        if self.buttons is None: return        
+        if self.buttons is None: return
         
         #for button in self.buttons[1:]:
         for button in self.buttons:
