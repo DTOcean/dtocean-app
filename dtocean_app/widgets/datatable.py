@@ -226,11 +226,9 @@ class DataTableWidget(QtGui.QWidget):
             self.enableEditing(False)
             self.uncheckButton()
             
-            selectionModel = self.tableView.selectionModel()
             self.tableView.setModel(model)
             model.dtypeChanged.connect(self.updateDelegate)
             model.dataChanged.connect(self.updateDelegates)
-            del selectionModel
             
     def setModel(self, model):
         """Sets the model for the enclosed TableView in this widget.
