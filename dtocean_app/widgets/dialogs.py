@@ -598,7 +598,12 @@ class ProgressBar(QtGui.QDialog, Ui_ProgressBar):
             else:
                 self.parent().showMaximized()
         
+    def keyPressEvent(self, event):
         
+        if not event.key() == QtCore.Qt.Key_Escape:
+            super(ProgressBar, self).keyPressEvent(event)
+
+
 class About(QtGui.QDialog, Ui_AboutDialog):
     
     def __init__(self, parent=None, image_delay=5000, fade_duration=2000):
