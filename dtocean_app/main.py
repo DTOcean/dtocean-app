@@ -494,6 +494,7 @@ class Shell(QtCore.QObject):
     module_executed = QtCore.pyqtSignal()
     themes_executed = QtCore.pyqtSignal()
     strategy_executed = QtCore.pyqtSignal()
+    strategy_completed = QtCore.pyqtSignal()
     database_convert_active = QtCore.pyqtSignal()
     database_convert_complete = QtCore.pyqtSignal()
 
@@ -1170,6 +1171,8 @@ class Shell(QtCore.QObject):
             
             [sim.set_unavailable_variables()
                                         for sim in self.project._simulations]
+            
+            self.strategy_completed.emit()
         
         # Emit signals on core
         self._finalize_core()
@@ -1393,6 +1396,8 @@ class DTOceanWindow(MainWindow):
                                     self._shell.select_strategy)
         self._shell.strategy_loaded.connect(
                                     self._strategy_manager._load_strategy)
+        self._shell.strategy_completed.connect(
+                                    self._strategy_manager._complete_strategy)
 
         # Set up the data check diaglog
         self._data_check = DataCheck(self)

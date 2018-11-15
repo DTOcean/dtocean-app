@@ -233,10 +233,22 @@ class GUIStrategyManager(ListFrameEditor, StrategyManager):
 
         self._strategy = strategy
         self._last_selected = strategy_name
+        
+        if not strategy.strategy_run:
+             strategy_name = "{} (completed)".format(strategy_name)
+        
         self._set_dynamic_label(strategy_name)
         
         return
+    
+    @QtCore.pyqtSlot()
+    def _complete_strategy(self):
         
+        strategy_name = "{} (completed)".format(self._last_selected)
+        self._set_dynamic_label(strategy_name)
+        
+        return
+    
     def _update_configuration(self, item=None):
         
         if item is None:
