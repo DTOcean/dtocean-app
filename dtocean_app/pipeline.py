@@ -43,6 +43,56 @@ from .utils.icons import (make_redicon_pixmap,
                           make_buttoncancel_pixmap)
 
 
+class LeafFilterProxyModel(QtGui.QSortFilterProxyModel):
+    ''' Class to override the following behaviour:
+            If a parent item doesn't match the filter,
+            none of its children will be shown.
+ 
+        This Model matches items which are descendants
+        or ascendants of matching items.
+    '''
+ 
+    def filterAcceptsRow(self, row_num, source_parent):
+        ''' Overriding the parent function '''
+ 
+        # Check if the current row matches
+        if self.filter_accepts_row_itself(row_num, source_parent):
+            return True
+ 
+        # Traverse up all the way to root and check if any of them match
+        if self.filter_accepts_any_parent(source_parent):
+            return True
+ 
+        # Finally, check if any of the children match
+        return self.has_accepted_children(row_num, source_parent)
+ 
+    def filter_accepts_row_itself(self, row_num, parent):
+        return super(LeafFilterProxyModel, self).filterAcceptsRow(row_num, parent)
+ 
+    def filter_accepts_any_parent(self, parent):
+        ''' Traverse to the root node and check if any of the
+            ancestors match the filter
+        '''
+        while parent.isValid():
+            if self.filter_accepts_row_itself(parent.row(), parent.parent()):
+                return True
+            parent = parent.parent()
+        return False
+ 
+    def has_accepted_children(self, row_num, parent):
+        ''' Starting from the current node as root, traverse all
+            the descendants and test if any of the children match
+        '''
+        model = self.sourceModel()
+        source_index = model.index(row_num, 0, parent)
+ 
+        children_count =  model.rowCount(source_index)
+        for i in xrange(children_count):
+            if self.filterAcceptsRow(i, source_index):
+                return True
+        return False
+
+
 class PipeLine(PipeLineDock):
     
     error_detected =  QtCore.pyqtSignal(object, object, object)
@@ -51,24 +101,38 @@ class PipeLine(PipeLineDock):
 
         super(PipeLine, self).__init__(parent)
         self._tree = Tree()
+        self._model = None
+        self._proxy = None
         
         # Root branches
         self._branch_map = None
-        self._items = []
+        self._controls = []
         
         # Test data picker
         self._test_data_picker = TestDataPicker(self)
         self._test_data_picker.setModal(True)
-                
+        
+        self._init_model()
         self._init_title()
         
         return
+    
+    def _init_model(self):
         
+        self._model = QtGui.QStandardItemModel()
+        self._proxy = LeafFilterProxyModel()
+        self._proxy.setSourceModel(self._model)
+#        self._model.setDynamicSortFilter(True)
+#        self._model.setFilterCaseSensitivity(QtCore.Qt.CaseInsensitive)
+        self.treeView.setModel(self._proxy)
+        
+        return
+    
     def _init_title(self):
         
         self.setWindowTitle("Pipeline")
-        self.treeWidget.setSortingEnabled(False)
-        self.treeWidget.headerItem().setText(0, "Waiting...")
+        self.treeView.setSortingEnabled(False)
+        self._model.setHeaderData(0, QtCore.Qt.Horizontal, "Waiting...")
 
         return
         
@@ -80,7 +144,7 @@ class PipeLine(PipeLineDock):
         
     def _set_title(self, title):
         
-        self.treeWidget.headerItem().setText(0, title)
+        self._model.setHeaderData(0, QtCore.Qt.Horizontal, title)
         
         return
         
@@ -88,24 +152,37 @@ class PipeLine(PipeLineDock):
         
         self._clear()
         
+        source_model = self._model
+        root_item = source_model.invisibleRootItem()
+        
         for branch_dict in self._branch_map:
             
             HubCls = branch_dict["hub"]
             args = []
             if "args" in branch_dict: args.extend(branch_dict["args"])
             
-            new_item = HubCls(self.treeWidget,
-                              branch_dict["name"],
-                              *args)
-            new_item._activate(shell)
-            self._items.append(new_item)
+            # Model item
+            new_item = QtGui.QStandardItem(branch_dict["name"])
+            root_item.appendRow(new_item)
             
+            # Controller
+            new_control = HubCls(new_item,
+                                 branch_dict["name"],
+                                 self.treeView,
+                                 source_model,
+                                 self._proxy,
+                                 *args)
+            new_control._init_ui(new_item)
+            new_control._activate(shell, new_item)
+            
+            self._controls.append(new_control)
+        
         return
         
     def _expand(self, shell):
         
-        for item in self._items:
-            item._expand(shell)
+        for controller in self._controls:
+            controller._expand(shell)
         
         return
     
@@ -118,16 +195,10 @@ class PipeLine(PipeLineDock):
         
     def _clear(self):
         
-        root = self.treeWidget.invisibleRootItem()
+        root = self._model.invisibleRootItem()
+        root.removeRows(0, root.rowCount())
         
-        for widget in self._items:
-            
-            widget._clear()
-            
-            if not isinstance(widget, HiddenHub):
-                root.removeChild(widget)
-            
-        self._items = []
+        self._controls = []
 
         return
         
@@ -149,9 +220,9 @@ class PipeLine(PipeLineDock):
         
     def _make_menus(self, shell, position):
                 
-        item = self.treeWidget.currentItem()
+        item_index = self.treeView.currentIndex()
 
-        if isinstance(item, InputBranchItem):
+        if isinstance(item, InputBranchModel):
             
             # Set the widget action
             self._test_data_picker.buttonBox.button(
@@ -199,22 +270,25 @@ class PipeLine(PipeLineDock):
                     
                 menu.addAction('Load test data...', 
                                self._test_data_picker.show)
-                menu.exec_(self.treeWidget.mapToGlobal(position))
+                menu.exec_(self.treeView.mapToGlobal(position))
             
-        elif isinstance(item, OutputBranchItem):
+        elif isinstance(item, OutputBranchModel):
             
             # Build module context menu
             if item._hub_title == "Modules":
                 
                 menu = QtGui.QMenu()
                 menu.addAction('Inspect', lambda: item._inspect(shell))
-                menu.exec_(self.treeWidget.mapToGlobal(position))
+                menu.exec_(self.treeView.mapToGlobal(position))
      
         return
         
     def _set_top_item(self):
         
-        self.treeWidget.itemClicked.emit(self.treeWidget.topLevelItem(0), -1)
+        source_model = self._model
+        index = source_model.indexFromItem(self._controls[0]._item)
+        proxy_index = self._proxy.mapFromSource(index)
+        self.treeView.clicked.emit(proxy_index)
         
         return
     
@@ -247,48 +321,54 @@ class PipeLine(PipeLineDock):
         return
 
 
-class BaseItem(QtGui.QTreeWidgetItem):
+class BaseControl(object):
     
-    def __init__(self, parent,
-                       title):
+    def __init__(self, item,
+                       title,
+                       view,
+                       model,
+                       proxy):
 
-        super(BaseItem, self).__init__(parent)
+        self._item = item
         self._title = title
+        self._view = view
+        self._model = model
+        self._proxy = proxy
         self._id = None
         self._status = None
-        self._items = []
+        self._controls = []
 
-        self._init_ui(title)
+        return
+    
+    def _init_ui(self, item):
+
+        item.setText(self._title)
 
         return
         
-    def _init_ui(self, title):
-
-        self.setText(0, title)
-
-        return
-        
-    def _activate(self, shell):
+    def _activate(self, shell, parent):
             
         return
         
     def _expand(self, shell):
         
-        for item in self._items:
-            item._expand(shell)
-            
-        self.setExpanded(True)
+        for controller in self._controls:
+            controller._expand(shell)
+        
+        index = self._model.indexFromItem(self._item)
+        proxy_index = self._proxy.mapFromSource(index)
+        self._view.expand(proxy_index)
         
         return
         
     def _clear(self):
                 
-        for widget in self._items:
-            
-            widget._clear() 
-            self.removeChild(widget)
-            
-        self._items = []
+        for controller in self._controls:
+            index = self._model.indexFromItem(controller._item)
+            proxy_index = self._proxy.mapFromSource(index)
+            self._model.removeRow(proxy_index.row(), proxy_index.parent())
+        
+        self._controls = []
 
         return
         
@@ -301,18 +381,18 @@ class BaseItem(QtGui.QTreeWidgetItem):
         return None
 
 
-class SectionItem(BaseItem):
+class SectionControl(BaseControl):
     
-    def _init_ui(self, title):
+    def _init_ui(self, item):
         
         # Formatting
         section_wrapper = "------   {}   ------"
-        section_title = section_wrapper.format(title)
+        section_title = section_wrapper.format(self._title)
         
-        self.setText(0, section_title)
-        self.setTextAlignment(0, QtCore.Qt.AlignCenter)
+        item.setText(section_title)
+        item.setTextAlignment(QtCore.Qt.AlignCenter)
         bbrush = QtGui.QBrush(QtGui.QColor("lightgrey"))
-        self.setBackground(0, bbrush)
+        item.setBackground(bbrush)
         
         return
     
@@ -321,25 +401,32 @@ class SectionItem(BaseItem):
         return
 
         
-class HubRoot(object):
+class HubControl(BaseControl):
     
-    def __init__(self, title,
+    def __init__(self, item,
+                       title,
+                       view,
+                       model,
+                       proxy,
                        hub_name,
                        branch_cls,
                        active=True,
                        branch_order=None):
         
-        self._title = title
+        super(HubControl, self).__init__(item, title, view, model, proxy)
         self._tree = Tree()
         self._hub_name = hub_name
         self._BranchCls = branch_cls
         self._active = active
         self._branch_order = branch_order
-        self._items = []
-                
+        
         return
         
-    def _activate(self, parent, shell, hub_branches):
+    def _activate(self, shell, parent):
+        
+        hub_branches = self._tree.get_available_branches(shell.core,
+                                                         shell.project,
+                                                         [self._hub_name])
                                                                                                                   
         if self._branch_order is None:
             branch_order = hub_branches
@@ -352,121 +439,57 @@ class HubRoot(object):
             branch = self._tree.get_branch(shell.core,
                                            shell.project,
                                            branch_name)
-
-            new_item = self._BranchCls(parent,
-                                       branch,
-                                       self._title,
-                                       branch_name)
+            
+            # Model item
+            new_item = QtGui.QStandardItem(branch_name)
+            parent.appendRow(new_item)
+            
+            # Controller
+            new_control = self._BranchCls(new_item,
+                                          branch_name,
+                                          self._view,
+                                          self._model,
+                                          self._proxy,
+                                          branch,
+                                          self._title)
+            
+            new_control._init_ui(new_item)
             
             if self._active:
-                new_item._activate(shell)
-            else:
-                new_item.setDisabled(True)
+                new_control._activate(shell, new_item)
+#            else:
+#                new_item.setDisabled(True)
             
-            self._items.append(new_item)
-            
-        return
-        
-        
-class HubItem(BaseItem, HubRoot):
-    
-    def __init__(self, parent,
-                       title,
-                       hub_name,
-                       branch_cls,
-                       active=True,
-                       branch_order=None):
-                           
-        BaseItem.__init__(self, parent,
-                                title)
-        HubRoot.__init__(self, title,
-                               hub_name,
-                               branch_cls,
-                               active,
-                               branch_order)       
-        return
-        
-    def _activate(self, shell):
-        
-        hub_branches = self._tree.get_available_branches(shell.core,
-                                                         shell.project,
-                                                         [self._hub_name])
-                                                         
-#        if not hub_branches:
-#            self.setHidden(True)
-#            return
-        
-        HubRoot._activate(self, self, shell, hub_branches)
-        
-        return
-        
-        
-class HiddenHub(HubRoot):
-    
-    def __init__(self, parent,
-                       title,
-                       hub_name,
-                       branch_cls,
-                       active=True,
-                       branch_order=None):
-        
-        self._parent = parent
-        super(HiddenHub, self).__init__(title,
-                                        hub_name,
-                                        branch_cls,
-                                        active,
-                                        branch_order)
-        
-        return
-        
-    def _activate(self, shell):
-        
-        hub_branches = self._tree.get_available_branches(shell.core,
-                                                         shell.project,
-                                                         [self._hub_name])
-                                                         
-        if not hub_branches: return
-        
-        super(HiddenHub, self)._activate(self._parent, shell, hub_branches)
-        
-        return
-        
-    def _expand(self, shell):
-                        
-        for item in self._items:
-            item._expand(shell)  
+            self._controls.append(new_control)
             
         return
-        
-    def _clear(self):
-                
-        for widget in self._items:
-            
-            widget._clear() 
-            
-        self._items = []
 
-        return
-        
-        
-class InputBranchItem(BaseItem):
+
+class InputBranchControl(BaseControl):
     
-    def __init__(self, parent,
+    def __init__(self, item,
+                       title,
+                       view,
+                       model,
+                       proxy,
                        branch,
                        hub_title,
-                       title,
                        ignore_str="hidden",
                        sort=True):
                            
-        super(InputBranchItem, self).__init__(parent, title)
+        super(InputBranchControl, self).__init__(item, title, view, model, proxy)
         self._branch = branch
         self._hub_title = hub_title
         self._ignore_str = ignore_str
         self._sort = sort
+        self._parent = None
         
         return
         
-    def _activate(self, shell):
+    def _activate(self, shell, parent):
+        
+        # Store the parent item
+        self._parent = parent
         
         # Update status on variable updated events
         shell.update_pipeline.connect(self._update_status)
@@ -482,7 +505,9 @@ class InputBranchItem(BaseItem):
                                                      shell.project)
                                                      
         if not set(input_status.values()) == set(["unavailable"]):
-            self.setExpanded(True)
+            index = self._model.indexFromItem(self._item)
+            proxy_index = self._proxy.mapFromSource(index)
+            self._view.expand(proxy_index)
         
         return
     
@@ -506,19 +531,28 @@ class InputBranchItem(BaseItem):
         for variable_id, status in input_status.iteritems():
             
             if self._ignore_str in variable_id: continue
-            
+                    
             new_var = self._branch.get_input_variable(shell.core,
                                                       shell.project,
                                                       variable_id)
             metadata = new_var.get_metadata(shell.core)
 
-            new_item = InputVarItem(self,
-                                    new_var,
-                                    status,
-                                    metadata.title)
-
-            self._items.append(new_item)
+            # Model item
+            new_item = QtGui.QStandardItem(metadata.title)
+            self._parent.appendRow(new_item)
             
+            # Controller
+            new_control = InputVarControl(new_item,
+                                          metadata.title,
+                                          self._view,
+                                          self._model,
+                                          self._proxy,
+                                          new_var,
+                                          status)
+            new_control._init_ui(new_item)
+            
+            self._controls.append(new_control)
+        
         return
         
     def _get_required_address(self, shell):
@@ -595,25 +629,25 @@ class InputBranchItem(BaseItem):
         return
 
 
-class OutputBranchItem(BaseItem):
+class OutputBranchControl(BaseControl):
     
-    def __init__(self, parent,
+    def __init__(self, item,
+                       title,
+                       view,
+                       model,
+                       proxy,
                        branch,
                        hub_title,
-                       title,
                        ignore_str="hidden"):
                            
-        super(OutputBranchItem, self).__init__(parent, title)
+        super(OutputBranchControl, self).__init__(item, title, view, model, proxy)
         self._branch = branch
         self._hub_title = hub_title
         self._ignore_str = ignore_str
         
         return
         
-    def _activate(self, shell, sort=True):
-        
-        # Update status on variable updated events
-        shell.update_pipeline.connect(self._update_status)
+    def _activate(self, shell, parent, sort=True):
         
         output_status = self._branch.get_output_status(shell.core,
                                                        shell.project)
@@ -639,12 +673,21 @@ class OutputBranchItem(BaseItem):
                                                        variable_id)
             metadata = new_var.get_metadata(shell.core)
 
-            new_item = OutputVarItem(self,
-                                     new_var,
-                                     status,
-                                     metadata.title)
-
-            self._items.append(new_item)
+            # Model item
+            new_item = QtGui.QStandardItem(metadata.title)
+            parent.appendRow(new_item)
+            
+            # Controller
+            new_control = OutputVarControl(new_item,
+                                           metadata.title,
+                                           self._view,
+                                           self._model,
+                                           self._proxy,
+                                           new_var,
+                                           status)
+            new_control._init_ui(new_item)
+            
+            self._controls.append(new_control)
             
         return
         
@@ -654,7 +697,9 @@ class OutputBranchItem(BaseItem):
                                                        shell.project)
                                                      
         if not set(output_status.values()) == set(["unavailable"]):
-            self.setExpanded(True)
+            index = self._model.indexFromItem(self._item)
+            proxy_index = self._proxy.mapFromSource(index)
+            self._view.expand(proxy_index)
         
         return
             
@@ -681,14 +726,17 @@ class OutputBranchItem(BaseItem):
         return
 
 
-class VarItem(BaseItem):
+class VarControl(BaseControl):
         
-    def __init__(self, parent,
+    def __init__(self, item,
+                       title,
+                       view,
+                       model,
+                       proxy,
                        variable,
-                       status,
-                       title):
+                       status):
                            
-        super(VarItem, self).__init__(parent, title)
+        super(VarControl, self).__init__(item, title, view, model, proxy)
         self._variable = variable
         self._id = variable._id
         
@@ -711,12 +759,12 @@ class VarItem(BaseItem):
         return
 
     def _set_icon_green(self):
-
+        
         self._icon = QtGui.QIcon()
         self._icon.addPixmap(make_greenicon_pixmap(),
                        QtGui.QIcon.Normal,
                        QtGui.QIcon.Off)
-        self.setIcon(0, self._icon)
+        self._item.setIcon(self._icon)
 
         return
 
@@ -726,7 +774,7 @@ class VarItem(BaseItem):
         self._icon.addPixmap(make_blueicon_pixmap(),
                        QtGui.QIcon.Normal,
                        QtGui.QIcon.Off)
-        self.setIcon(0, self._icon)
+        self._item.setIcon(self._icon)
 
         return
 
@@ -736,30 +784,44 @@ class VarItem(BaseItem):
         self._icon.addPixmap(make_buttoncancel_pixmap(),
                        QtGui.QIcon.Normal,
                        QtGui.QIcon.Off)
-        self.setIcon(0, self._icon)
+        self._item.setIcon(self._icon)
 
         return
         
     def _update_status(self, status):
 
         self._status = status
+        index = self._model.indexFromItem(self._item)
+        proxy_index = self._proxy.mapFromSource(index)
 
         if status == "satisfied":
 
-            self.setHidden(False)
-            self.setDisabled(False)
+            self._view.setRowHidden(proxy_index.row(),
+                                    proxy_index.parent(),
+                                    False)
+            self._item.setFlags(QtCore.Qt.ItemIsSelectable |
+                                QtCore.Qt.ItemIsUserCheckable |
+                                QtCore.Qt.ItemIsEnabled)
             self._set_icon_green()
 
         elif status == "required":
 
-            self.setHidden(False)
-            self.setDisabled(False)
+            self._view.setRowHidden(proxy_index.row(),
+                                    proxy_index.parent(),
+                                    False)
+            self._item.setFlags(QtCore.Qt.ItemIsSelectable |
+                                QtCore.Qt.ItemIsUserCheckable |
+                                QtCore.Qt.ItemIsEnabled)
             self._set_icon_red()
 
         elif status == "optional":
 
-            self.setHidden(False)
-            self.setDisabled(False)
+            self._view.setRowHidden(proxy_index.row(),
+                                    proxy_index.parent(),
+                                    False)
+            self._item.setFlags(QtCore.Qt.ItemIsSelectable |
+                                QtCore.Qt.ItemIsUserCheckable |
+                                QtCore.Qt.ItemIsEnabled)
             self._set_icon_blue()
 
         return
@@ -841,21 +903,29 @@ class VarItem(BaseItem):
         return
 
 
-class InputVarItem(VarItem):
+
+class InputVarControl(VarControl):
     
     def _update_status(self, status):
+        
+        index = self._model.indexFromItem(self._item)
+        proxy_index = self._proxy.mapFromSource(index)
 
         if "unavailable" in status:
 
-            self.setHidden(False)
-            self.setDisabled(True)
+            self._view.setRowHidden(proxy_index.row(),
+                                    proxy_index.parent(),
+                                    False)
+            self._item.setFlags(QtCore.Qt.NoItemFlags)
             self._set_icon_cancel()
             
         elif "overwritten" in status:
 
-            self.setHidden(True)
+            self._view.setRowHidden(proxy_index.row(),
+                                    proxy_index.parent(),
+                                    True)
         
-        super(InputVarItem, self)._update_status(status)
+        super(InputVarControl, self)._update_status(status)
 
         return
         
@@ -873,7 +943,7 @@ class InputVarItem(VarItem):
                                                        "AutoInput",
                                                        allow_missing=True)
                                                    
-        widget = super(InputVarItem, self)._get_data_widget(shell, interface)
+        widget = super(InputVarControl, self)._get_data_widget(shell, interface)
         
         # Provide the cancel widget if no other can be found
         if widget is None: widget = CancelWidget()
@@ -881,14 +951,20 @@ class InputVarItem(VarItem):
         return widget
     
 
-class OutputVarItem(VarItem):
+class OutputVarControl(VarControl):
     
     def _update_status(self, status):
+        
+        index = self._model.indexFromItem(self._item)
+        proxy_index = self._proxy.mapFromSource(index)
 
         if "unavailable" in status or "overwritten" in status:
-            self.setHidden(True)
+            
+            self._view.setRowHidden(proxy_index.row(),
+                                    proxy_index.parent(),
+                                    True)
         
-        super(OutputVarItem, self)._update_status(status)
+        super(OutputVarControl, self)._update_status(status)
 
         return
         
@@ -906,7 +982,7 @@ class OutputVarItem(VarItem):
                                                        "AutoOutput",
                                                        allow_missing=True)
                                                    
-        widget = super(OutputVarItem, self)._get_data_widget(shell, interface)
+        widget = super(OutputVarControl, self)._get_data_widget(shell, interface)
 
         return widget
 
