@@ -51,12 +51,12 @@ from .menu import DBSelector
 from .simulation import SimulationDock
 from .extensions import GUIStrategyManager, GUIToolManager
 from .pipeline import (PipeLine,
-                       SectionItem,
-                       HubItem,
-                       InputBranchItem,
-                       OutputBranchItem,
-                       InputVarItem,
-                       OutputVarItem)
+                       SectionControl,
+                       HubControl,
+                       InputBranchControl,
+                       OutputBranchControl,
+                       InputVarControl,
+                       OutputVarControl)
 
 from .widgets.central import (ContextArea,
                               DetailsWidget,
@@ -1289,10 +1289,10 @@ class DTOceanWindow(MainWindow):
         
         shell.project_activated.connect(self._active_project_ui_switch)
         shell.project_closed.connect(self._closed_project_ui_switch)
-        shell.update_widgets.connect(
-                    lambda: self._set_context_widget(self._last_tree_item))
-        shell.reset_widgets.connect(
-                    lambda: self._set_context_widget(self._last_tree_item, -1))
+#        shell.update_widgets.connect(
+#                    lambda: self._set_context_widget(self._last_tree_item))
+#        shell.reset_widgets.connect(
+#                    lambda: self._set_context_widget(self._last_tree_item, -1))
         shell.pipeline_active.connect(self._active_pipeline_ui_switch)
         shell.bathymetry_active.connect(self._active_bathymetry_ui_switch)
         shell.filter_active.connect(self._active_filter_ui_switch)
@@ -1431,10 +1431,10 @@ class DTOceanWindow(MainWindow):
         self.addDockWidget(QtCore.Qt.DockWidgetArea(1), self._pipeline_dock)
         
         # Set widgets on tree click
-        self._pipeline_dock.treeWidget.itemClicked.connect(
-                                                self._set_details_widget)
-        self._pipeline_dock.treeWidget.itemClicked.connect(
-                                                self._set_context_widget)
+#        self._pipeline_dock.treeView.clicked.connect(
+#                                                self._set_details_widget)
+#        self._pipeline_dock.treeView.clicked.connect(
+#                                                self._set_context_widget)
                                                     
         # Change the output scope on button click
         self._pipeline_dock.globalRadioButton.clicked.connect(
@@ -1442,7 +1442,10 @@ class DTOceanWindow(MainWindow):
         self._pipeline_dock.localRadioButton.clicked.connect(
                             lambda: self._shell.set_output_scope("local"))
         self._pipeline_dock.scopeFrame.setDisabled(True)
-                                                    
+        
+        # Variable filtering
+        self._pipeline_dock.filterFrame.setDisabled(True)
+        
         # Refresh on module and theme activation or execution
         self._shell.modules_activated.connect(
                             lambda: self._pipeline_dock._refresh(self._shell))
@@ -1456,7 +1459,7 @@ class DTOceanWindow(MainWindow):
                             lambda: self._pipeline_dock._refresh(self._shell))
                             
         # Add context menu(s)
-        self._pipeline_dock.treeWidget.customContextMenuRequested.connect(
+        self._pipeline_dock.treeView.customContextMenuRequested.connect(
                     lambda x: self._pipeline_dock._make_menus(self._shell, x))
                     
         # Handle errors
@@ -1581,10 +1584,10 @@ class DTOceanWindow(MainWindow):
                             lambda: self.stackedWidget.setCurrentIndex(2))
         self.actionComparison.triggered.connect(
                             lambda: self.stackedWidget.setCurrentIndex(3))
-        self.actionData.triggered.connect(
-                        lambda: self._set_context_widget(self._last_tree_item))
-        self.actionPlots.triggered.connect(
-                        lambda: self._set_context_widget(self._last_tree_item))
+#        self.actionData.triggered.connect(
+#                        lambda: self._set_context_widget(self._last_tree_item))
+#        self.actionPlots.triggered.connect(
+#                        lambda: self._set_context_widget(self._last_tree_item))
                             
         self.contextGroup = QtGui.QActionGroup(self)
         self.contextGroup.addAction(self.actionData)
@@ -1715,12 +1718,12 @@ class DTOceanWindow(MainWindow):
         self.actionImport_skip.setEnabled(True)
         
         # Activate the pipeline
-        start_branch_map = [{"hub": SectionItem,
+        start_branch_map = [{"hub": SectionControl,
                              "name": "Configuration"},
-                            {"hub": HubItem,
+                            {"hub": HubControl,
                              "name": "Scenario",
                              "args": ["project",
-                                      InputBranchItem,
+                                      InputBranchControl,
                                       True,
                                       ["System Type Selection",
                                        "Database Filtering Interface",
@@ -1930,25 +1933,25 @@ class DTOceanWindow(MainWindow):
         self.actionInitiate_Dataflow.setEnabled(True)
         
         # Update the pipeline
-        fresh_branch_map = [{"hub": SectionItem,
+        fresh_branch_map = [{"hub": SectionControl,
                              "name": "Configuration"},
-                            {"hub": HubItem,
+                            {"hub": HubControl,
                              "name": "Scenario",
                              "args": ["project",
-                                      InputBranchItem,
+                                      InputBranchControl,
                                       True,
                                       ["System Type Selection",
                                        "Database Filtering Interface",
                                        "Project Boundaries Interface"]]},
-                            {"hub": HubItem,
+                            {"hub": HubControl,
                              "name": "Modules",
                              "args": ["modules",
-                                      InputBranchItem,
+                                      InputBranchControl,
                                       False]},
-                            {"hub": HubItem,
+                            {"hub": HubControl,
                              "name": "Assessment",
                              "args": ["themes",
-                                      InputBranchItem,
+                                      InputBranchControl,
                                       False]}
                             ]
                             
@@ -2143,9 +2146,11 @@ class DTOceanWindow(MainWindow):
         return
         
     @QtCore.pyqtSlot(object, int)
-    def _set_details_widget(self, var_item, column):
+    def _set_details_widget(self, var_index):
         
-        if isinstance(var_item, (InputVarItem, OutputVarItem)):
+        var_item = var_index.internalPointer()
+        
+        if isinstance(var_item, (InputVarControl, OutputVarControl)):
 
             # Collect the meta data from the variable
             meta = var_item._variable.get_metadata(self._shell.core)
@@ -2163,23 +2168,31 @@ class DTOceanWindow(MainWindow):
         return
         
     @QtCore.pyqtSlot(object, int)
-    def _set_context_widget(self, var_item, column=None):
+    def _set_context_widget(self, var_index, column=None):
+        
+        var_item = None
         
         # Use fake -1 column value to reset all the stored items and refresh
         # the var_item
-        if column == -1:
+        if column ==- 1:
             
             self._last_tree_item = None
             self._last_data_item = None
             self._last_data_item_status = None
             self._last_plot_id = None
             
-            if var_item is not None:
-                var_item = self._pipeline_dock._find_item(var_item._title)
+#            if var_index is not None:
+#                var_item = self._pipeline_dock._find_item(var_index._title)
+                
+        elif var_index is not None:
+        
+            var_item = var_index.internalPointer()
         
         # If given a hidden variable then reset to the pipeline root
-        if var_item is not None and var_item.isHidden():
-            var_item = self._pipeline_dock._items[0]
+#        if var_item is not None and var_item.isHidden():
+#            var_item = self._pipeline_dock._items[0]
+        
+        print var_item
 
         current_context_action = self.contextGroup.checkedAction()
           
@@ -2216,7 +2229,7 @@ class DTOceanWindow(MainWindow):
         
         load_ext_dict = {}
         
-        if isinstance(var_item, InputVarItem):
+        if isinstance(var_item, InputVarControl):
             
             variable = var_item._variable
             
@@ -2245,7 +2258,7 @@ class DTOceanWindow(MainWindow):
                                         
         save_ext_dict = {}
 
-        if isinstance(var_item, (InputVarItem, OutputVarItem)):
+        if isinstance(var_item, (InputVarControl, OutputVarControl)):
             
             variable = var_item._variable
             
@@ -2291,11 +2304,11 @@ class DTOceanWindow(MainWindow):
         
         if self._data_file_manager._file_mode is None: return
         
-        if isinstance(var_item, InputVarItem):
+        if isinstance(var_item, InputVarControl):
             self._data_file_manager.load_file.connect(self._shell.read_file)
             self._data_file_manager._load_connected = True
             
-        if isinstance(var_item, (InputVarItem, OutputVarItem)):
+        if isinstance(var_item, (InputVarControl, OutputVarControl)):
             self._data_file_manager.save_file.connect(self._shell.write_file)
             self._data_file_manager._save_connected = True
                     
@@ -2316,7 +2329,7 @@ class DTOceanWindow(MainWindow):
         plot_list = []
         plot_auto = False
         
-        if isinstance(var_item, (InputVarItem, OutputVarItem)):
+        if isinstance(var_item, (InputVarControl, OutputVarControl)):
                         
             plot_list = var_item._variable.get_available_plots(
                                                           self._shell.core,
@@ -2344,7 +2357,7 @@ class DTOceanWindow(MainWindow):
         
         if plot_list is None and not plot_auto: return
             
-        if isinstance(var_item, (InputVarItem, OutputVarItem)):
+        if isinstance(var_item, (InputVarControl, OutputVarControl)):
             self._plot_manager.plot.connect(self._set_plot_widget)
             self._plot_manager.save.connect(self._save_plot)
             self._plot_manager._plot_connected = True
@@ -2352,6 +2365,8 @@ class DTOceanWindow(MainWindow):
         return
         
     def _set_data_widget(self, var_item):
+        
+        print type(var_item)
        
         if var_item is None: return
 
@@ -2377,7 +2392,7 @@ class DTOceanWindow(MainWindow):
             self._data_context._bottom_contents = None
         
         self._last_data_item = var_item
-        self._last_data_item_status = var_item._status
+#        self._last_data_item_status = var_item._status
                     
         widget = var_item._get_data_widget(self._shell)
 
@@ -2771,37 +2786,37 @@ class DTOceanWindow(MainWindow):
         self._active_pipeline_ui_switch()
         
         # Recreate the existing branch map
-        new_branch_map = [{"hub": SectionItem,
+        new_branch_map = [{"hub": SectionControl,
                            "name": "Configuration"},
-                          {"hub": HubItem,
+                          {"hub": HubControl,
                            "name": "Scenario",
                            "args": ["project",
-                                    InputBranchItem,
+                                    InputBranchControl,
                                     True,
                                     ["System Type Selection",
                                      "Database Filtering Interface",
                                      "Project Boundaries Interface"]]},
-                          {"hub": HubItem,
+                          {"hub": HubControl,
                            "name": "Modules",
                            "args": ["modules",
-                                    InputBranchItem,
+                                    InputBranchControl,
                                     True]},
-                          {"hub": HubItem,
+                          {"hub": HubControl,
                            "name": "Assessment",
                            "args": ["themes",
-                                    InputBranchItem,
+                                    InputBranchControl,
                                     True]},
-                          {"hub": SectionItem,
+                          {"hub": SectionControl,
                            "name": "Results"},
-                          {"hub": HubItem,
+                          {"hub": HubControl,
                            "name": "Assessment",
                            "args": ["themes",
-                                    OutputBranchItem,
+                                    OutputBranchControl,
                                     True]},
-                          {"hub": HubItem,
+                          {"hub": HubControl,
                            "name": "Modules",
                            "args": ["modules",
-                                    OutputBranchItem,
+                                    OutputBranchControl,
                                     True]}
                            ]
                     
@@ -2944,7 +2959,7 @@ class DTOceanWindow(MainWindow):
         
         # Find the "System Type Selection" branch
         branch_item = self._pipeline_dock._find_item("System Type Selection",
-                                                     InputBranchItem)
+                                                     InputBranchControl)
                                                      
         # Check for required values
         required_address = branch_item._get_required_address(self._shell)
@@ -3006,7 +3021,7 @@ class DTOceanWindow(MainWindow):
             # Find the "Database Filtering Interface" branch
             branch_item = self._pipeline_dock._find_item(
                                                 "Database Filtering Interface",
-                                                InputBranchItem)
+                                                InputBranchControl)
                                                          
             # Check for required values
             required_address = branch_item._get_required_address(self._shell)
@@ -3036,7 +3051,7 @@ class DTOceanWindow(MainWindow):
         
         # Find the module branch
         branch_item = self._pipeline_dock._find_item(current_mod,
-                                                     InputBranchItem)
+                                                     InputBranchControl)
                                                          
         # Check for required values
         required_address = branch_item._get_required_address(self._shell)
@@ -3047,7 +3062,7 @@ class DTOceanWindow(MainWindow):
         for theme_name in all_themes:
             
             branch_item = self._pipeline_dock._find_item(theme_name,
-                                                         InputBranchItem)
+                                                         InputBranchControl)
             
             # Check for required values
             theme_address = branch_item._get_required_address(self._shell)
@@ -3091,7 +3106,7 @@ class DTOceanWindow(MainWindow):
         for theme_name in all_themes:
             
             branch_item = self._pipeline_dock._find_item(theme_name,
-                                                         InputBranchItem)
+                                                         InputBranchControl)
             
             # Check for required values
             theme_address = branch_item._get_required_address(self._shell)
@@ -3135,7 +3150,7 @@ class DTOceanWindow(MainWindow):
         
             # Find the module branch
             branch_item = self._pipeline_dock._find_item(scheduled_mod,
-                                                         InputBranchItem)
+                                                         InputBranchControl)
                                                              
             # Check for required values
             mod_address = branch_item._get_required_address(self._shell)
@@ -3156,7 +3171,7 @@ class DTOceanWindow(MainWindow):
         for theme_name in all_themes:
             
             branch_item = self._pipeline_dock._find_item(theme_name,
-                                                         InputBranchItem)
+                                                         InputBranchControl)
             
             # Check for required values
             theme_address = branch_item._get_required_address(self._shell)
@@ -3189,37 +3204,37 @@ class DTOceanWindow(MainWindow):
     def _progress_dataflow(self):
         
         # Recreate the existing branch map
-        new_branch_map = [{"hub": SectionItem,
+        new_branch_map = [{"hub": SectionControl,
                            "name": "Configuration"},
-                          {"hub": HubItem,
+                          {"hub": HubControl,
                            "name": "Scenario",
                            "args": ["project",
-                                    InputBranchItem,
+                                    InputBranchControl,
                                     True,
                                     ["System Type Selection",
                                      "Database Filtering Interface",
                                      "Project Boundaries Interface"]]},
-                          {"hub": HubItem,
+                          {"hub": HubControl,
                            "name": "Modules",
                            "args": ["modules",
-                                    InputBranchItem,
+                                    InputBranchControl,
                                     True]},
-                          {"hub": HubItem,
+                          {"hub": HubControl,
                            "name": "Assessment",
                            "args": ["themes",
-                                    InputBranchItem,
+                                    InputBranchControl,
                                     True]},
-                          {"hub": SectionItem,
+                          {"hub": SectionControl,
                            "name": "Results"},
-                          {"hub": HubItem,
+                          {"hub": HubControl,
                            "name": "Assessment",
                            "args": ["themes",
-                                    OutputBranchItem,
+                                    OutputBranchControl,
                                     True]},
-                          {"hub": HubItem,
+                          {"hub": HubControl,
                            "name": "Modules",
                            "args": ["modules",
-                                    OutputBranchItem,
+                                    OutputBranchControl,
                                     True]}
                            ]
                             

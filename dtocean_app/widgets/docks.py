@@ -68,7 +68,7 @@ class PipeLineDock(QtGui.QDockWidget, Ui_PipeLineDock):
         QtGui.QDockWidget.__init__(self, "Dockable", parent)
         Ui_TreeDock.__init__(self)
         self.setupUi(self)
-        self.treeWidget.setIconSize(QtCore.QSize(12,12))
+        self.treeView.setIconSize(QtCore.QSize(12,12))
         
         self._showclose_filter = DockShowCloseFilter(self)
         self.installEventFilter(self._showclose_filter)
