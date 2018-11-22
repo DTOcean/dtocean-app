@@ -76,15 +76,6 @@ class PipelineFilterProxyModel(QtGui.QSortFilterProxyModel):
         source_user_data = model.data(source_index, QtCore.Qt.UserRole)
         source_user_data_str = source_user_data.toString()
         
-        source_icon_data = model.data(source_index, QtCore.Qt.DecorationRole)
-        source_icon_data.convert(QtGui.QIcon)
-        print source_icon_data
-       
-        if isinstance(source_icon_data, QtGui.QIcon):
-            print str(source_icon_data)
-            import sys
-            sys.exit()
-        
         # If the row is a section title then allow
         if "------" in source_data_str: return True
                 
