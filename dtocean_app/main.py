@@ -1243,10 +1243,11 @@ class DTOceanWindow(MainWindow):
         self._system_dock = None
         
         # Widget re-use
-        self._last_tree_item = None
-        self._last_data_item = None
-        self._last_data_item_status = None
+        self._last_tree_controller = None
+        self._last_data_controller = None
+        self._last_data_controller_status = None
         self._last_plot_id = None
+        self._last_plot_name = "auto"
                 
         # Last used stack index
         self._last_stack_index = None
@@ -1289,10 +1290,10 @@ class DTOceanWindow(MainWindow):
         
         shell.project_activated.connect(self._active_project_ui_switch)
         shell.project_closed.connect(self._closed_project_ui_switch)
-#        shell.update_widgets.connect(
-#                    lambda: self._set_context_widget(self._last_tree_item))
-#        shell.reset_widgets.connect(
-#                    lambda: self._set_context_widget(self._last_tree_item, -1))
+        shell.update_widgets.connect(
+            lambda: self._set_context_widget(self._last_tree_controller))
+        shell.reset_widgets.connect(
+            lambda: self._set_context_widget(self._last_tree_controller, True))
         shell.pipeline_active.connect(self._active_pipeline_ui_switch)
         shell.bathymetry_active.connect(self._active_bathymetry_ui_switch)
         shell.filter_active.connect(self._active_filter_ui_switch)
@@ -1431,10 +1432,10 @@ class DTOceanWindow(MainWindow):
         self.addDockWidget(QtCore.Qt.DockWidgetArea(1), self._pipeline_dock)
         
         # Set widgets on tree click
-#        self._pipeline_dock.treeView.clicked.connect(
-#                                                self._set_details_widget)
-#        self._pipeline_dock.treeView.clicked.connect(
-#                                                self._set_context_widget)
+        self._pipeline_dock.treeView.clicked.connect(
+                                                self._set_details_widget)
+        self._pipeline_dock.treeView.clicked.connect(
+                                                self._set_context_widget)
                                                     
         # Change the output scope on button click
         self._pipeline_dock.globalRadioButton.clicked.connect(
@@ -1457,6 +1458,10 @@ class DTOceanWindow(MainWindow):
                             lambda: self._pipeline_dock._refresh(self._shell))
         self._shell.strategy_executed.connect(
                             lambda: self._pipeline_dock._refresh(self._shell))
+        
+        # Repeat any filtering on widget update
+        self._shell.update_widgets.connect(self._pipeline_dock._repeat_filter)
+        self._shell.reset_widgets.connect(self._pipeline_dock._repeat_filter)
                             
         # Add context menu(s)
         self._pipeline_dock.treeView.customContextMenuRequested.connect(
@@ -1584,10 +1589,10 @@ class DTOceanWindow(MainWindow):
                             lambda: self.stackedWidget.setCurrentIndex(2))
         self.actionComparison.triggered.connect(
                             lambda: self.stackedWidget.setCurrentIndex(3))
-#        self.actionData.triggered.connect(
-#                        lambda: self._set_context_widget(self._last_tree_item))
-#        self.actionPlots.triggered.connect(
-#                        lambda: self._set_context_widget(self._last_tree_item))
+        self.actionData.triggered.connect(
+                lambda: self._set_context_widget(self._last_tree_controller))
+        self.actionPlots.triggered.connect(
+                lambda: self._set_context_widget(self._last_tree_controller))
                             
         self.contextGroup = QtGui.QActionGroup(self)
         self.contextGroup.addAction(self.actionData)
@@ -1734,6 +1739,7 @@ class DTOceanWindow(MainWindow):
         self._pipeline_dock._refresh(self._shell)
         self._pipeline_dock._set_title("Define scenario selections...")
         self._pipeline_dock.scopeFrame.setEnabled(True)
+        self._pipeline_dock.filterFrame.setEnabled(True)
         
         # Link the project to the simulation dock and initialise the list
         self._simulation_dock.setDisabled(True)
@@ -1837,8 +1843,10 @@ class DTOceanWindow(MainWindow):
 
         # Clear the pipeline
         self._pipeline_dock._clear()
+        self._pipeline_dock._clear_filter()
         self._pipeline_dock._set_title("Waiting...")
         self._pipeline_dock.scopeFrame.setDisabled(True)
+        self._pipeline_dock.filterFrame.setDisabled(True)
         
         # Disable the simulation widget
         self._simulation_dock.setDisabled(True)
@@ -1896,10 +1904,11 @@ class DTOceanWindow(MainWindow):
 
         # Update the central widget
         self.stackedWidget.setCurrentIndex(0)
-        self._last_tree_item = None
-        self._last_data_item = None
-        self._last_data_item_status = None
+        self._last_tree_controller = None
+        self._last_data_controller = None
+        self._last_data_controller_status = None
         self._last_plot_id = None
+        self._last_plot_name = "auto"
         
         # Trigger the tool menu switcher (not likely concurrent)
         self._tool_menu_ui_switch(self._shell)
@@ -2146,14 +2155,14 @@ class DTOceanWindow(MainWindow):
         return
         
     @QtCore.pyqtSlot(object, int)
-    def _set_details_widget(self, var_index):
+    def _set_details_widget(self, proxy_index):
         
-        var_item = var_index.internalPointer()
+        controller = self._pipeline_dock._find_controller(proxy_index)
         
-        if isinstance(var_item, (InputVarControl, OutputVarControl)):
+        if isinstance(controller, (InputVarControl, OutputVarControl)):
 
             # Collect the meta data from the variable
-            meta = var_item._variable.get_metadata(self._shell.core)
+            meta = controller._variable.get_metadata(self._shell.core)
             title = meta.title
             description = meta.description
         
@@ -2167,33 +2176,35 @@ class DTOceanWindow(MainWindow):
         
         return
         
-    @QtCore.pyqtSlot(object, int)
-    def _set_context_widget(self, var_index, column=None):
+    @QtCore.pyqtSlot(object, bool)
+    def _set_context_widget(self, proxy_index_or_controller,
+                                  reset=False):
         
-        var_item = None
+        controller = None
+        force_plot = False
         
-        # Use fake -1 column value to reset all the stored items and refresh
-        # the var_item
-        if column ==- 1:
+        # Reset all the stored items and refresh the var_item
+        if reset:
             
-            self._last_tree_item = None
-            self._last_data_item = None
-            self._last_data_item_status = None
-            self._last_plot_id = None
+            self._last_tree_controller = None
+            self._last_data_controller = None
+            self._last_data_controller_status = None
+            force_plot = True
             
-#            if var_index is not None:
-#                var_item = self._pipeline_dock._find_item(var_index._title)
-                
-        elif var_index is not None:
+        # Return a controller class
+        if proxy_index_or_controller is not None:
         
-            var_item = var_index.internalPointer()
+            # If this is a proxy index then get the controller
+            if isinstance(proxy_index_or_controller, QtCore.QModelIndex):
+                controller = self._pipeline_dock._find_controller(
+                                                    proxy_index_or_controller)
+            else:
+                controller = proxy_index_or_controller
         
         # If given a hidden variable then reset to the pipeline root
-#        if var_item is not None and var_item.isHidden():
-#            var_item = self._pipeline_dock._items[0]
+        if controller is not None and controller._is_hidden():
+            controller = self._pipeline_dock._controls[0]
         
-        print var_item
-
         current_context_action = self.contextGroup.checkedAction()
           
         if current_context_action is None:
@@ -2201,19 +2212,19 @@ class DTOceanWindow(MainWindow):
           
         elif str(current_context_action.text()) == "Data":
             
-            self._set_data_widget(var_item)
-            self._set_file_manager_widget(var_item)
+            self._set_data_widget(controller)
+            self._set_file_manager_widget(controller)
             
         elif str(current_context_action.text()) == "Plots":
             
-            self._set_plot_widget(var_item)
-            self._set_plot_manager_widget(var_item)
+            self._set_plot_widget(controller, force_plot=force_plot)
+            self._set_plot_manager_widget(controller)
             
-        self._last_tree_item = var_item
+        self._last_tree_controller = controller
         
         return
         
-    def _set_file_manager_widget(self, var_item):
+    def _set_file_manager_widget(self, controller):
         
         # Avoid being in a race where the data file manager is None
         if self._data_file_manager is None: return
@@ -2229,11 +2240,11 @@ class DTOceanWindow(MainWindow):
         
         load_ext_dict = {}
         
-        if isinstance(var_item, InputVarControl):
+        if isinstance(controller, InputVarControl):
             
-            variable = var_item._variable
+            variable = controller._variable
             
-            interface_dict = var_item._variable.get_file_input_interfaces(
+            interface_dict = controller._variable.get_file_input_interfaces(
                                                           self._shell.core,
                                                           include_auto=True)
             
@@ -2258,11 +2269,11 @@ class DTOceanWindow(MainWindow):
                                         
         save_ext_dict = {}
 
-        if isinstance(var_item, (InputVarControl, OutputVarControl)):
+        if isinstance(controller, (InputVarControl, OutputVarControl)):
             
-            variable = var_item._variable
+            variable = controller._variable
             
-            interface_dict = var_item._variable.get_file_output_interfaces(
+            interface_dict = controller._variable.get_file_output_interfaces(
                                                           self._shell.core,
                                                           self._shell.project,
                                                           include_auto=True)
@@ -2304,17 +2315,17 @@ class DTOceanWindow(MainWindow):
         
         if self._data_file_manager._file_mode is None: return
         
-        if isinstance(var_item, InputVarControl):
+        if isinstance(controller, InputVarControl):
             self._data_file_manager.load_file.connect(self._shell.read_file)
             self._data_file_manager._load_connected = True
             
-        if isinstance(var_item, (InputVarControl, OutputVarControl)):
+        if isinstance(controller, (InputVarControl, OutputVarControl)):
             self._data_file_manager.save_file.connect(self._shell.write_file)
             self._data_file_manager._save_connected = True
                     
         return
         
-    def _set_plot_manager_widget(self, var_item):
+    def _set_plot_manager_widget(self, controller):
         
         # Avoid race condition
         if self._plot_manager is None: return
@@ -2329,13 +2340,13 @@ class DTOceanWindow(MainWindow):
         plot_list = []
         plot_auto = False
         
-        if isinstance(var_item, (InputVarControl, OutputVarControl)):
+        if isinstance(controller, (InputVarControl, OutputVarControl)):
                         
-            plot_list = var_item._variable.get_available_plots(
+            plot_list = controller._variable.get_available_plots(
                                                           self._shell.core,
                                                           self._shell.project)
             
-            all_interfaces = var_item._variable._get_receivers(
+            all_interfaces = controller._variable._get_receivers(
                                                           self._shell.core,
                                                           self._shell.project,
                                                           "PlotInterface",
@@ -2351,34 +2362,32 @@ class DTOceanWindow(MainWindow):
         
         if not plot_list: plot_list = None
             
-        self._plot_manager._set_plots(var_item,
+        self._plot_manager._set_plots(controller,
                                       plot_list,
                                       plot_auto)
         
         if plot_list is None and not plot_auto: return
             
-        if isinstance(var_item, (InputVarControl, OutputVarControl)):
+        if isinstance(controller, (InputVarControl, OutputVarControl)):
             self._plot_manager.plot.connect(self._set_plot_widget)
             self._plot_manager.save.connect(self._save_plot)
             self._plot_manager._plot_connected = True
                             
         return
         
-    def _set_data_widget(self, var_item):
-        
-        print type(var_item)
-       
-        if var_item is None: return
+    def _set_data_widget(self, controller):
+               
+        if controller is None: return
 
-        if (self._last_data_item is not None and 
-            var_item._id == self._last_data_item._id and
-            type(var_item) == type(self._last_data_item)):
+        if (self._last_data_controller is not None and 
+            controller._id == self._last_data_controller._id and
+            type(controller) == type(self._last_data_controller)):
 
-            if (var_item._status != self._last_data_item_status and
-                                        "unavailable" in var_item._status):
+            if (controller._status != self._last_data_controller_status and
+                "unavailable" in controller._status):
                 
                 self._data_context._bottom_contents.setDisabled(True)
-                self._last_data_item_status = var_item._status
+                self._last_data_controller_status = controller._status
                           
             return
                                  
@@ -2391,10 +2400,10 @@ class DTOceanWindow(MainWindow):
             sip.delete(self._data_context._bottom_contents)
             self._data_context._bottom_contents = None
         
-        self._last_data_item = var_item
-#        self._last_data_item_status = var_item._status
+        self._last_data_controller = controller
+#        self._last_data_controller_status = controller._status
                     
-        widget = var_item._get_data_widget(self._shell)
+        widget = controller._get_data_widget(self._shell)
 
         if widget is None: return
     
@@ -2404,12 +2413,12 @@ class DTOceanWindow(MainWindow):
         
         # Connect the widgets read and nullify events
         widget._get_read_event().connect(
-            lambda: self._read_raw(var_item._variable, widget._get_result()))
+            lambda: self._read_raw(controller._variable, widget._get_result()))
             
         widget._get_nullify_event().connect(
-            lambda: self._read_raw(var_item._variable, None))
+            lambda: self._read_raw(controller._variable, None))
             
-        if "unavailable" in var_item._status:
+        if "unavailable" in controller._status:
             
             if "_disable" in dir(widget):
                 widget._disable()
@@ -2419,11 +2428,19 @@ class DTOceanWindow(MainWindow):
         return
         
     @QtCore.pyqtSlot(object, str)
-    def _set_plot_widget(self, var_item,  plot_name="auto"):
+    def _set_plot_widget(self, controller,
+                               plot_name=None,
+                               force_plot=False):
         
-        if var_item is None: return
+        if controller is None: return
 
-        if var_item._id == self._last_plot_id and plot_name is "auto": return
+        if (controller._id == self._last_plot_id and
+            plot_name == self._last_plot_name and
+            not force_plot): return
+        
+        if (controller._id == self._last_plot_id and
+            plot_name is None):
+            plot_name = self._last_plot_name
         
         if plot_name == "auto": plot_name = None
         
@@ -2439,10 +2456,11 @@ class DTOceanWindow(MainWindow):
             plt.close(fignum)
             
             self._plot_context._bottom_contents = None
-        
-        self._last_plot_id = var_item._id
-                                        
-        widget = var_item._get_plot_widget(self._shell, plot_name)
+
+        self._last_plot_id = controller._id
+        self._last_plot_name = plot_name
+
+        widget = controller._get_plot_widget(self._shell, plot_name)
         
         if widget is None: return
     
@@ -2455,7 +2473,7 @@ class DTOceanWindow(MainWindow):
         
         assert len(plt.get_fignums()) <= 2
             
-        if "unavailable" in var_item._status: widget.setDisabled(True)
+        if "unavailable" in controller._status: widget.setDisabled(True)
         
         return
     

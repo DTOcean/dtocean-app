@@ -504,7 +504,7 @@ class PlotManagerWidget(QtGui.QWidget, Ui_PlotManagerWidget):
     @QtCore.pyqtSlot()    
     def _emit_default_plot(self):
     
-        self.plot.emit(self._var_item, None)
+        self.plot.emit(self._var_item, "auto")
         self._current_plot = None
 
     @QtCore.pyqtSlot()    

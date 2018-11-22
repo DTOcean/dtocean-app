@@ -199,6 +199,9 @@
        </item>
        <item>
         <widget class="QPushButton" name="clearButton">
+         <property name="toolTip">
+          <string>Clear filter</string>
+         </property>
          <property name="text">
           <string/>
          </property>
