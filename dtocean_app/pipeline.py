@@ -70,18 +70,14 @@ class PipelineFilterProxyModel(QtGui.QSortFilterProxyModel):
         model = self.sourceModel()
         source_index = model.index(row_num, 0, parent)
         
-        source_data = model.data(source_index)
-        source_data_str = source_data.toString()
-        
-        source_user_data = model.data(source_index, QtCore.Qt.UserRole)
-        source_user_data_str = source_user_data.toString()
+        source_user_data = model.data(source_index, 33)
+        source_user_dict = source_user_data.toPyObject()[0]
         
         # If the row is a section title then allow
-        if "------" in source_data_str: return True
+        if source_user_dict["section"] == "section": return True
                 
-        # If the row address ends in "-" then disallow
-        if source_user_data_str[-1] == "-":
-            return False
+        # If the row is not visible then disallow
+        if not source_user_dict["visible"]: return False
         
         return super(PipelineFilterProxyModel, self).filterAcceptsRow(row_num,
                                                                       parent)
@@ -173,11 +169,19 @@ class PipeLine(PipeLineDock):
             if HubCls == SectionControl:
                 section_address = branch_dict["name"]
                 address = section_address
+                section = "section"
             else:
                 address = section_address + "." +  branch_dict["name"]
+                section = "hub"
             
-            name_item = QtGui.QStandardItem(address)
+            user_dict = {"address": address,
+                         "visible": True,
+                         "section": section,
+                         "status": None}
+            
+            name_item = QtGui.QStandardItem(branch_dict["name"])
             name_item.setData(address, QtCore.Qt.UserRole)
+            name_item.setData((user_dict,), 33)
             self._model.appendRow(name_item)
 
             # Controller
@@ -522,8 +526,15 @@ class HubControl(BaseControl):
             
             # Model item
             address = self._address + "." + branch_name
-            name_item = QtGui.QStandardItem(address)
+
+            user_dict = {"address": address,
+                         "visible": True,
+                         "section": "branch",
+                         "status": None}
+            
+            name_item = QtGui.QStandardItem(branch_name)
             name_item.setData(address, QtCore.Qt.UserRole)
+            name_item.setData((user_dict,), 33)
             parent.appendRow(name_item)
             
             # Controller
@@ -538,9 +549,9 @@ class HubControl(BaseControl):
             new_control._init_ui(name_item)
             
             if self._active:
-                new_control._activate(shell, name_item, address)
-#            else:
-#                new_item.setDisabled(True)
+                new_control._activate(shell, name_item)
+            else:
+                name_item.setFlags(QtCore.Qt.NoItemFlags)
             
             self._controls.append(new_control)
             
@@ -572,10 +583,7 @@ class InputBranchControl(BaseControl):
         
         return
         
-    def _activate(self, shell, parent, parent_address):
-        
-        # Save the parent's address
-        self._parent_address = parent_address
+    def _activate(self, shell, parent):
 
         # Update status on variable updated events
         shell.update_pipeline.connect(self._update_status)
@@ -602,7 +610,7 @@ class InputBranchControl(BaseControl):
         input_status = self._branch.get_input_status(shell.core,
                                                      shell.project)
         
-        parent_index = self._get_index_from_address(self._parent_address)
+        parent_index = self._get_index_from_address(self._address)
         parent_item = self._model.itemFromIndex(parent_index)
         
         if self._sort: 
@@ -627,13 +635,20 @@ class InputBranchControl(BaseControl):
             metadata = new_var.get_metadata(shell.core)
 
             # Model item
-            address = self._address + "." + metadata.title
-            name_item = QtGui.QStandardItem(address)
+            address = self._address + "." + metadata.identifier
+            
+            user_dict = {"address": address,
+                         "visible": True,
+                         "section": "input",
+                         "status": None}
+            
+            name_item = QtGui.QStandardItem(metadata.title)
             name_item.setData(address, QtCore.Qt.UserRole)
+            name_item.setData((user_dict,), 33)
             parent_item.appendRow(name_item)
             
             # Controller
-            new_control = InputVarControl(self._address + "." + metadata.title,
+            new_control = InputVarControl(address,
                                           metadata.title,
                                           self._view,
                                           self._model,
@@ -743,7 +758,7 @@ class OutputBranchControl(BaseControl):
         
         return
         
-    def _activate(self, shell, parent, parent_address, sort=True):
+    def _activate(self, shell, parent, sort=True):
         
         # Update status on variable updated events
         shell.update_pipeline.connect(self._update_status)
@@ -773,20 +788,26 @@ class OutputBranchControl(BaseControl):
             metadata = new_var.get_metadata(shell.core)
 
             # Model item
-            address = self._address + "." + metadata.title
-            name_item = QtGui.QStandardItem(address)
+            address = self._address + "." + metadata.identifier
+            
+            user_dict = {"address": address,
+                         "visible": True,
+                         "section": "output",
+                         "status": None}
+            
+            name_item = QtGui.QStandardItem(metadata.title)
             name_item.setData(address, QtCore.Qt.UserRole)
+            name_item.setData((user_dict,), 33)
             parent.appendRow(name_item)
             
             # Controller
-            new_control = OutputVarControl(
-                                        self._address + "." + metadata.title,
-                                        metadata.title,
-                                        self._view,
-                                        self._model,
-                                        self._proxy,
-                                        new_var,
-                                        status)
+            new_control = OutputVarControl(address,
+                                           metadata.title,
+                                           self._view,
+                                           self._model,
+                                           self._proxy,
+                                           new_var,
+                                           status)
             
             new_control._init_ui(name_item)
             
@@ -912,12 +933,12 @@ class VarControl(BaseControl):
         
         index = self._get_index_from_address()
         item = self._model.itemFromIndex(index)
-        item_user_data = item.data(QtCore.Qt.UserRole).toString()
+        item_user_dict = item.data(33).toPyObject()[0]
 
         if status == "satisfied":
 
-            if item_user_data[-1] == "-":
-                item_user_data = item_user_data[:-1]
+            item_user_dict["visible"] = True
+            item_user_dict["status"] = "satisfied"
             
             item.setFlags(QtCore.Qt.ItemIsSelectable |
                           QtCore.Qt.ItemIsUserCheckable |
@@ -926,8 +947,8 @@ class VarControl(BaseControl):
 
         elif status == "required":
 
-            if item_user_data[-1] == "-":
-                item_user_data = item_user_data[:-1]
+            item_user_dict["visible"] = True
+            item_user_dict["status"] = "required"
             
             item.setFlags(QtCore.Qt.ItemIsSelectable |
                           QtCore.Qt.ItemIsUserCheckable |
@@ -936,16 +957,15 @@ class VarControl(BaseControl):
 
         elif status == "optional":
 
-            if item_user_data[-1] == "-":
-                item_user_data = item_user_data[:-1]
+            item_user_dict["visible"] = True
+            item_user_dict["status"] = "optional"
             
             item.setFlags(QtCore.Qt.ItemIsSelectable |
                           QtCore.Qt.ItemIsUserCheckable |
                           QtCore.Qt.ItemIsEnabled)
             self._set_icon_blue()
         
-        self._address = item_user_data
-        item.setData(item_user_data, QtCore.Qt.UserRole)
+        item.setData((item_user_dict,), 33)
 
         return
         
@@ -1054,23 +1074,22 @@ class InputVarControl(VarControl):
         
         index = self._get_index_from_address()
         item = self._model.itemFromIndex(index)
-        item_user_data = item.data(QtCore.Qt.UserRole).toString()
+        item_user_dict = item.data(33).toPyObject()[0]
 
         if "unavailable" in status:
 
-            if item_user_data[-1] == "-":
-                item_user_data = item_user_data[:-1]
+            item_user_dict["visible"] = True
+            item_user_dict["status"] = "unavailable"
             
             item.setFlags(QtCore.Qt.NoItemFlags)
             self._set_icon_cancel()
             
         elif "overwritten" in status:
 
-            if item_user_data[-1] != "-":
-                item_user_data += "-"
+            item_user_dict["visible"] = False
+            item_user_dict["status"] = "unavailable"
         
-        self._address = item_user_data
-        item.setData(item_user_data, QtCore.Qt.UserRole)
+        item.setData((item_user_dict,), 33)
         
         super(InputVarControl, self)._update_status(status)
 
@@ -1090,7 +1109,8 @@ class InputVarControl(VarControl):
                                                        "AutoInput",
                                                        allow_missing=True)
                                                    
-        widget = super(InputVarControl, self)._get_data_widget(shell, interface)
+        widget = super(InputVarControl, self)._get_data_widget(shell,
+                                                               interface)
         
         # Provide the cancel widget if no other can be found
         if widget is None: widget = CancelWidget()
@@ -1110,15 +1130,14 @@ class OutputVarControl(VarControl):
         
         index = self._get_index_from_address()
         item = self._model.itemFromIndex(index)
-        item_user_data = item.data(QtCore.Qt.UserRole).toString()
+        item_user_dict = item.data(33).toPyObject()[0]
 
         if "unavailable" in status or "overwritten" in status:
 
-            if item_user_data[-1] != "-":
-                item_user_data += "-"
+            item_user_dict["visible"] = False
+            item_user_dict["status"] = status
         
-        self._address = item_user_data
-        item.setData(item_user_data, QtCore.Qt.UserRole)
+        item.setData((item_user_dict,), 33)
         
         super(OutputVarControl, self)._update_status(status)
 
@@ -1138,7 +1157,8 @@ class OutputVarControl(VarControl):
                                                        "AutoOutput",
                                                        allow_missing=True)
                                                    
-        widget = super(OutputVarControl, self)._get_data_widget(shell, interface)
+        widget = super(OutputVarControl, self)._get_data_widget(shell,
+                                                                interface)
 
         return widget
 
