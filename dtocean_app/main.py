@@ -121,11 +121,11 @@ class ThreadReadTest(QtCore.QThread):
     taskFinished = QtCore.pyqtSignal()
     error_detected =  QtCore.pyqtSignal(object, object, object)
     
-    def __init__(self, shell, item , path, overwrite):
+    def __init__(self, shell, control , path, overwrite):
         
         super(ThreadReadTest, self).__init__()
         self.shell = shell
-        self.item = item
+        self.control = control
         self.path = path
         self.overwrite = overwrite
         
@@ -135,9 +135,9 @@ class ThreadReadTest(QtCore.QThread):
         
         try:
         
-            self.item._read_test_data(self.shell,
-                                      self.path,
-                                      self.overwrite)
+            self.control._read_test_data(self.shell,
+                                         self.path,
+                                         self.overwrite)
             self.taskFinished.emit()
         
         except: 
@@ -1204,12 +1204,12 @@ class Shell(QtCore.QObject):
         
         return
 
-    def read_test_data(self, item, path, overwrite):
+    def read_test_data(self, control, path, overwrite):
         
         if self._active_thread is not None: self._active_thread.wait()
     
         self._active_thread = ThreadReadTest(self,
-                                             item,
+                                             control,
                                              path,
                                              overwrite)
         self._active_thread.taskFinished.connect(self._clear_active_thread)
@@ -2364,7 +2364,7 @@ class DTOceanWindow(MainWindow):
         controller = None
         force_plot = False
         
-        # Reset all the stored items and refresh the var_item
+        # Reset all the stored controllers
         if reset:
             
             self._last_tree_controller = None
@@ -2377,8 +2377,8 @@ class DTOceanWindow(MainWindow):
         
             # If this is a proxy index then get the controller
             if isinstance(proxy_index_or_controller, QtCore.QModelIndex):
-                controller = self._pipeline_dock._find_controller(
-                                                    proxy_index_or_controller)
+                proxy_index = proxy_index_or_controller
+                controller = self._pipeline_dock._find_controller(proxy_index)
             else:
                 controller = proxy_index_or_controller
         
@@ -2659,12 +2659,12 @@ class DTOceanWindow(MainWindow):
         return
     
     @QtCore.pyqtSlot(object, str, object, object)
-    def _save_plot(self, var_item, file_path, size, plot_name="auto"):
+    def _save_plot(self, controller, file_path, size, plot_name="auto"):
         
-        if var_item is None: return
+        if controller is None: return
         if plot_name == "auto": plot_name = None
 
-        var_item._save_plot(self._shell, file_path, size, plot_name)
+        controller._save_plot(self._shell, file_path, size, plot_name)
         
         assert len(plt.get_fignums()) <= 2
         
@@ -3162,11 +3162,12 @@ class DTOceanWindow(MainWindow):
     def _initiate_pipeline(self):
         
         # Find the "System Type Selection" branch
-        branch_item = self._pipeline_dock._find_item("System Type Selection",
-                                                     InputBranchControl)
+        branch_control = self._pipeline_dock._find_controller(
+                                    controller_title="System Type Selection",
+                                    controller_class=InputBranchControl)
                                                      
         # Check for required values
-        required_address = branch_item._get_required_address(self._shell)
+        required_address = branch_control._get_required_address(self._shell)
         
         # Remap OK button
         self._data_check.buttonBox.button(
@@ -3223,12 +3224,13 @@ class DTOceanWindow(MainWindow):
                                                     self._shell.project)):
                 
             # Find the "Database Filtering Interface" branch
-            branch_item = self._pipeline_dock._find_item(
-                                                "Database Filtering Interface",
-                                                InputBranchControl)
+            branch_control = self._pipeline_dock._find_controller(
+                            controller_title="Database Filtering Interface",
+                            controller_class=InputBranchControl)
                                                          
             # Check for required values
-            required_address = branch_item._get_required_address(self._shell)
+            required_address = branch_control._get_required_address(
+                                                                self._shell)
         
         # Remap OK button
         self._data_check.buttonBox.button(
@@ -3254,22 +3256,24 @@ class DTOceanWindow(MainWindow):
         current_mod = self._shell.get_current_module()
         
         # Find the module branch
-        branch_item = self._pipeline_dock._find_item(current_mod,
-                                                     InputBranchControl)
+        branch_control = self._pipeline_dock._find_controller(
+                                        controller_title=current_mod,
+                                        controller_class=InputBranchControl)
                                                          
         # Check for required values
-        required_address = branch_item._get_required_address(self._shell)
+        required_address = branch_control._get_required_address(self._shell)
         
         # Find any required values for any themes:
         all_themes = self._shell.get_active_themes()
         
         for theme_name in all_themes:
             
-            branch_item = self._pipeline_dock._find_item(theme_name,
-                                                         InputBranchControl)
+            branch_control = self._pipeline_dock._find_controller(
+                                        controller_title=theme_name,
+                                        controller_class=InputBranchControl)
             
             # Check for required values
-            theme_address = branch_item._get_required_address(self._shell)
+            theme_address = branch_control._get_required_address(self._shell)
             
             # Loop if None
             if theme_address is None: continue
@@ -3309,11 +3313,12 @@ class DTOceanWindow(MainWindow):
         
         for theme_name in all_themes:
             
-            branch_item = self._pipeline_dock._find_item(theme_name,
-                                                         InputBranchControl)
+            branch_control = self._pipeline_dock._find_controller(
+                                        controller_title=theme_name,
+                                        controller_class=InputBranchControl)
             
             # Check for required values
-            theme_address = branch_item._get_required_address(self._shell)
+            theme_address = branch_control._get_required_address(self._shell)
             
             # Loop if None
             if theme_address is None: continue
@@ -3353,11 +3358,12 @@ class DTOceanWindow(MainWindow):
         for scheduled_mod in scheduled_mods:
         
             # Find the module branch
-            branch_item = self._pipeline_dock._find_item(scheduled_mod,
-                                                         InputBranchControl)
+            branch_control = self._pipeline_dock._find_controller(
+                                        controller_title=scheduled_mod,
+                                        controller_class=InputBranchControl)
                                                              
             # Check for required values
-            mod_address = branch_item._get_required_address(self._shell)
+            mod_address = branch_control._get_required_address(self._shell)
             
             # Loop if None
             if mod_address is None: continue
@@ -3374,11 +3380,12 @@ class DTOceanWindow(MainWindow):
         
         for theme_name in all_themes:
             
-            branch_item = self._pipeline_dock._find_item(theme_name,
-                                                         InputBranchControl)
+            branch_control = self._pipeline_dock._find_controller(
+                                        controller_title=theme_name,
+                                        controller_class=InputBranchControl)
             
             # Check for required values
-            theme_address = branch_item._get_required_address(self._shell)
+            theme_address = branch_control._get_required_address(self._shell)
             
             # Loop if None
             if theme_address is None: continue
