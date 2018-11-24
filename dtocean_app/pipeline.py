@@ -444,11 +444,13 @@ class BaseControl(object):
         
         return
         
-    def _clear(self):
+    def _clear(self, item=None):
         
-        for controller in self._controls:
-            index = controller._get_index_from_address()
-            self._model.removeRow(index.row(), index.parent())
+        if item is None:
+            index = self._get_index_from_address()
+            item = self._model.itemFromIndex(index)
+        
+        item.removeRows(0, item.rowCount())
         
         self._controls = []
 
@@ -462,7 +464,8 @@ class BaseControl(object):
                                     QtCore.Qt.UserRole,
                                     address,
                                     -1,
-                                    QtCore.Qt.MatchRecursive)
+                                    QtCore.Qt.MatchFixedString | 
+                                                    QtCore.Qt.MatchRecursive)
         
         if not indexes:
             return None
@@ -618,13 +621,14 @@ class InputBranchControl(BaseControl):
         
         return
     
-    def _make_input_items(self, shell):
+    def _make_input_items(self, shell, parent_item=None):
         
         input_status = self._branch.get_input_status(shell.core,
                                                      shell.project)
         
-        parent_index = self._get_index_from_address(self._address)
-        parent_item = self._model.itemFromIndex(parent_index)
+        if parent_item is None:
+            index = self._get_index_from_address()
+            parent_item = self._model.itemFromIndex(index)
         
         if self._sort: 
             
@@ -653,7 +657,7 @@ class InputBranchControl(BaseControl):
             user_dict = {"address": address,
                          "visible": True,
                          "section": "input",
-                         "status": None}
+                         "status": status}
             
             name_item = QtGui.QStandardItem(metadata.title)
             name_item.setData(address, QtCore.Qt.UserRole)
@@ -667,7 +671,9 @@ class InputBranchControl(BaseControl):
                                           self._model,
                                           self._proxy,
                                           new_var,
-                                          status)
+                                          status,
+                                          name_item,
+                                          user_dict)
             
             new_control._init_ui(name_item)
             
@@ -707,9 +713,13 @@ class InputBranchControl(BaseControl):
     @QtCore.pyqtSlot(object)
     def _update_status(self, shell):
         
+        # Get this item
+        index = self._get_index_from_address()
+        item = self._model.itemFromIndex(index)
+        
         # Remake the items
-        self._clear()
-        self._make_input_items(shell)
+        self._clear(item)
+        self._make_input_items(shell, item)
         
         return
 
@@ -806,7 +816,7 @@ class OutputBranchControl(BaseControl):
             user_dict = {"address": address,
                          "visible": True,
                          "section": "output",
-                         "status": None}
+                         "status": status}
             
             name_item = QtGui.QStandardItem(metadata.title)
             name_item.setData(address, QtCore.Qt.UserRole)
@@ -820,7 +830,9 @@ class OutputBranchControl(BaseControl):
                                            self._model,
                                            self._proxy,
                                            new_var,
-                                           status)
+                                           status,
+                                           name_item,
+                                           user_dict)
             
             new_control._init_ui(name_item)
             
@@ -871,13 +883,15 @@ class VarControl(BaseControl):
                        model,
                        proxy,
                        variable,
-                       status):
+                       status,
+                       item=None,
+                       item_user_dict=None):
                            
         super(VarControl, self).__init__(address, title, view, model, proxy)
         self._variable = variable
         self._id = variable._id
         
-        self._update_status(status)
+        self._update_status(status, item, item_user_dict)
         
         return
         
@@ -885,11 +899,8 @@ class VarControl(BaseControl):
         
         return
         
-    def _set_icon_red(self):
+    def _set_icon_red(self, item):
         
-        index = self._get_index_from_address()
-        item = self._model.itemFromIndex(index)
-
         self._icon = QtGui.QIcon()
         self._icon.addPixmap(make_redicon_pixmap(),
                              QtGui.QIcon.Normal,
@@ -898,10 +909,7 @@ class VarControl(BaseControl):
 
         return
 
-    def _set_icon_green(self):
-        
-        index = self._get_index_from_address()
-        item = self._model.itemFromIndex(index)
+    def _set_icon_green(self, item):
         
         self._icon = QtGui.QIcon()
         self._icon.addPixmap(make_greenicon_pixmap(),
@@ -911,11 +919,8 @@ class VarControl(BaseControl):
 
         return
 
-    def _set_icon_blue(self):
+    def _set_icon_blue(self, item):
         
-        index = self._get_index_from_address()
-        item = self._model.itemFromIndex(index)
-
         self._icon = QtGui.QIcon()
         self._icon.addPixmap(make_blueicon_pixmap(),
                              QtGui.QIcon.Normal,
@@ -924,11 +929,8 @@ class VarControl(BaseControl):
 
         return
 
-    def _set_icon_cancel(self):
+    def _set_icon_cancel(self, item):
         
-        index = self._get_index_from_address()
-        item = self._model.itemFromIndex(index)
-
         self._icon = QtGui.QIcon()
         self._icon.addPixmap(make_buttoncancel_pixmap(),
                              QtGui.QIcon.Normal,
@@ -937,46 +939,47 @@ class VarControl(BaseControl):
 
         return
         
-    def _update_status(self, status=None):
+    def _update_status(self, status=None, item=None, item_user_dict=None):
         
         if status is None:
             status = self._status
         else:
             self._status = status
         
-        index = self._get_index_from_address()
-        item = self._model.itemFromIndex(index)
-        item_user_dict = item.data(33).toPyObject()[0]
+        if item is None:
+            index = self._get_index_from_address()
+            item = self._model.itemFromIndex(index)
+        
+        if item_user_dict is None:
+            item_user_dict = item.data(33).toPyObject()[0]
+            item_user_dict["status"] = status
 
         if status == "satisfied":
 
             item_user_dict["visible"] = True
-            item_user_dict["status"] = "satisfied"
             
             item.setFlags(QtCore.Qt.ItemIsSelectable |
                           QtCore.Qt.ItemIsUserCheckable |
                           QtCore.Qt.ItemIsEnabled)
-            self._set_icon_green()
+            self._set_icon_green(item)
 
         elif status == "required":
 
             item_user_dict["visible"] = True
-            item_user_dict["status"] = "required"
             
             item.setFlags(QtCore.Qt.ItemIsSelectable |
                           QtCore.Qt.ItemIsUserCheckable |
                           QtCore.Qt.ItemIsEnabled)
-            self._set_icon_red()
+            self._set_icon_red(item)
 
         elif status == "optional":
 
             item_user_dict["visible"] = True
-            item_user_dict["status"] = "optional"
             
             item.setFlags(QtCore.Qt.ItemIsSelectable |
                           QtCore.Qt.ItemIsUserCheckable |
                           QtCore.Qt.ItemIsEnabled)
-            self._set_icon_blue()
+            self._set_icon_blue(item)
         
         item.setData((item_user_dict,), 33)
 
@@ -1077,34 +1080,35 @@ class VarControl(BaseControl):
 
 class InputVarControl(VarControl):
     
-    @QtCore.pyqtSlot(str)
-    def _update_status(self, status=None):
+    def _update_status(self, status=None, item=None, item_user_dict=None):
         
         if status is None:
             status = self._status
         else:
             self._status = status
         
-        index = self._get_index_from_address()
-        item = self._model.itemFromIndex(index)
-        item_user_dict = item.data(33).toPyObject()[0]
+        if item is None:
+            index = self._get_index_from_address()
+            item = self._model.itemFromIndex(index)
+        
+        if item_user_dict is None:
+            item_user_dict = item.data(33).toPyObject()[0]
+            item_user_dict["status"] = status
 
         if "unavailable" in status:
 
             item_user_dict["visible"] = True
-            item_user_dict["status"] = "unavailable"
             
             item.setFlags(QtCore.Qt.NoItemFlags)
-            self._set_icon_cancel()
+            self._set_icon_cancel(item)
             
         elif "overwritten" in status:
 
             item_user_dict["visible"] = False
-            item_user_dict["status"] = "unavailable"
         
-        item.setData((item_user_dict,), 33)
-        
-        super(InputVarControl, self)._update_status(status)
+        super(InputVarControl, self)._update_status(status,
+                                                    item,
+                                                    item_user_dict)
 
         return
         
@@ -1133,26 +1137,29 @@ class InputVarControl(VarControl):
 
 class OutputVarControl(VarControl):
     
-    @QtCore.pyqtSlot(str)
-    def _update_status(self, status=None):
+    def _update_status(self, status=None, item=None, item_user_dict=None):
         
         if status is None:
             status = self._status
         else:
             self._status = status
         
-        index = self._get_index_from_address()
-        item = self._model.itemFromIndex(index)
-        item_user_dict = item.data(33).toPyObject()[0]
+        if item is None:
+            index = self._get_index_from_address()
+            item = self._model.itemFromIndex(index)
+        
+        if item_user_dict is None:
+            item_user_dict = item.data(33).toPyObject()[0]
+            item_user_dict["status"] = status
 
         if "unavailable" in status or "overwritten" in status:
 
             item_user_dict["visible"] = False
-            item_user_dict["status"] = status
+            
         
-        item.setData((item_user_dict,), 33)
-        
-        super(OutputVarControl, self)._update_status(status)
+        super(OutputVarControl, self)._update_status(status,
+                                                     item,
+                                                     item_user_dict)
 
         return
         
