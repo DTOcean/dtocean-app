@@ -346,7 +346,7 @@ class PlotManagerWidget(QtGui.QWidget, Ui_PlotManagerWidget):
 
         QtGui.QWidget.__init__(self, parent)
         Ui_PlotManagerWidget.__init__(self)
-        self._var_item = None
+        self._controller = None
         self._ext_types = None
         self._plot_connected = False
         self._current_plot = None
@@ -380,20 +380,20 @@ class PlotManagerWidget(QtGui.QWidget, Ui_PlotManagerWidget):
         
         return
         
-    def _set_plots(self, var_item, plot_list=None, plot_auto=False):
+    def _set_plots(self, controller, plot_list=None, plot_auto=False):
         
-        self._var_item = None
+        self._controller = None
         self._ext_types = None
         self._current_plot = None
         
-        if var_item is None or (plot_list is None and not plot_auto):
+        if controller is None or (plot_list is None and not plot_auto):
             
             self.setDisabled(True)
             return
         
         self.setEnabled(True)
         
-        self._var_item = var_item
+        self._controller = controller
         self._ext_types = get_current_filetypes()
                 
         if not self._ext_types:
@@ -496,7 +496,7 @@ class PlotManagerWidget(QtGui.QWidget, Ui_PlotManagerWidget):
     def _emit_named_plot(self):
         
         plot_name = str(self.plotBox.currentText())
-        self.plot.emit(self._var_item, plot_name)
+        self.plot.emit(self._controller, plot_name)
         self._current_plot = plot_name
                 
         return
@@ -504,7 +504,7 @@ class PlotManagerWidget(QtGui.QWidget, Ui_PlotManagerWidget):
     @QtCore.pyqtSlot()    
     def _emit_default_plot(self):
     
-        self.plot.emit(self._var_item, "auto")
+        self.plot.emit(self._controller, "auto")
         self._current_plot = None
 
     @QtCore.pyqtSlot()    
@@ -518,7 +518,7 @@ class PlotManagerWidget(QtGui.QWidget, Ui_PlotManagerWidget):
         else:
             size = get_current_figure_size()
         
-        self.save.emit(self._var_item,
+        self.save.emit(self._controller,
                        figure_path,
                        size,
                        self._current_plot)
