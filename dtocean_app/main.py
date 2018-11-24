@@ -149,6 +149,200 @@ class ThreadReadTest(QtCore.QThread):
         return
 
 
+class ThreadOpen(QtCore.QThread):
+    
+    """QThread for opening save files"""
+    
+    taskFinished = QtCore.pyqtSignal()
+    error_detected =  QtCore.pyqtSignal(object, object, object)
+
+    def __init__(self, core, file_path):
+        
+        super(ThreadOpen, self).__init__()
+        self._core = core
+        self._file_path = file_path
+        self._project = None
+        self._current_scope = None
+        self._strategy = None
+        self._project_path = None
+        
+        return
+    
+    def run(self):
+        
+        try:
+
+            load_path = str(self._file_path)
+            dto_dir_path = None
+            prj_file_path = None
+            sco_file_path = None
+            stg_file_path = None
+            
+            # Check the extension
+            if os.path.splitext(load_path)[1] == ".dto":
+                
+                dto_dir_path = tempfile.mkdtemp()
+                tar = tarfile.open(load_path)
+                tar.extractall(dto_dir_path)
+                
+                prj_file_path = os.path.join(dto_dir_path, "project.prj")
+                sco_file_path = os.path.join(dto_dir_path, "scope.json")
+                stg_file_path = os.path.join(dto_dir_path, "strategy.pkl")
+                
+                if not os.path.isfile(stg_file_path): stg_file_path = None
+                
+            elif os.path.splitext(load_path)[1] == ".prj":
+                
+                prj_file_path = load_path
+                
+            else:
+                
+                errStr = ("The file path must be a file with either .dto or "
+                          ".prj extension")
+                raise ValueError(errStr)
+                
+            # Load up the project
+            load_project = self._core.load_project(prj_file_path)
+    
+            self._project = load_project
+            
+            # Load up the scope if one was found
+            if sco_file_path is not None:
+            
+                with open(sco_file_path, 'rb') as json_file:
+                    self._current_scope = json.load(json_file)
+                    
+            else:
+                
+                self._current_scope = "global"
+                
+            # Load up the strategy if one was found
+            if stg_file_path is not None:
+                
+                strategy_manager = GUIStrategyManager()
+                self._strategy = strategy_manager.load_strategy(stg_file_path)
+                
+            else:
+                
+                self._strategy = None
+                
+            # Record the path after a successful load
+            self._project_path = load_path
+            
+            # Delete temp directory
+            if dto_dir_path is not None: shutil.rmtree(dto_dir_path)
+            
+            self.taskFinished.emit()
+        
+        except: 
+            
+            etype, evalue, etraceback = sys.exc_info()
+            self.error_detected.emit(etype, evalue, etraceback)
+            
+            self.taskFinished.emit()
+
+        return
+
+
+class ThreadSave(QtCore.QThread):
+    
+    """QThread for saving files"""
+    
+    taskFinished = QtCore.pyqtSignal()
+    error_detected =  QtCore.pyqtSignal(object, object, object)
+
+    def __init__(self, core,
+                       project,
+                       save_path,
+                       current_scope,
+                       strategy):
+        
+        super(ThreadSave, self).__init__()
+        self._core = core
+        self._project = project
+        self._save_path = save_path
+        self._current_scope = current_scope
+        self._strategy = strategy
+        
+        return
+    
+    def run(self):
+        
+        try:
+            
+            if self._save_path is None:
+                
+                errStr = ("A file path must be provided in order to save a "
+                          "project")
+                raise ValueError(errStr)
+                
+            # Check the extension
+            if os.path.splitext(self._save_path)[1] not in [".dto", ".prj"]:
+            
+                errStr = ("The file path must be a file with either .dto or "
+                          ".prj extension")
+                raise ValueError(errStr)
+                
+            dto_dir_path = tempfile.mkdtemp()
+                
+            # Dump the project
+            prj_file_path = os.path.join(dto_dir_path, "project.prj")
+            self._core.dump_project(self._project, prj_file_path)
+            
+            # If saving a project file only
+            if os.path.splitext(self._save_path)[1] == ".prj":
+                
+                shutil.move(prj_file_path, self._save_path)
+                shutil.rmtree(dto_dir_path)
+                
+                return
+            
+            # Dump the output scope
+            sco_file_path = os.path.join(dto_dir_path, "scope.json")
+            
+            with open(sco_file_path, 'wb') as json_file:
+                json.dump(self._current_scope, json_file)
+            
+            # Set the standard archive contents
+            arch_files = [prj_file_path, sco_file_path]
+            arch_paths = ["project.prj", "scope.json"]
+            
+            # Dump the strategy (if there is one)
+            if self._strategy is not None:
+            
+                strategy_manager = GUIStrategyManager() 
+                stg_file_path = os.path.join(dto_dir_path, "strategy.pkl")
+                strategy_manager.dump_strategy(self.strategy, stg_file_path)
+                
+                arch_files.append(stg_file_path)
+                arch_paths.append("strategy.pkl")
+                
+            # Now tar the files together
+            dto_file_name = os.path.split(self._save_path)[1]
+            tar_file_name = "{}.tar".format(dto_file_name)
+        
+            archive = tarfile.open(tar_file_name, "w")
+            
+            for arch_file, arch_path in zip(arch_files, arch_paths):
+                archive.add(arch_file, arcname=arch_path)
+            
+            archive.close()
+            
+            shutil.move(tar_file_name, self._save_path)
+            shutil.rmtree(dto_dir_path)
+            
+            self.taskFinished.emit()
+        
+        except: 
+            
+            etype, evalue, etraceback = sys.exc_info()
+            self.error_detected.emit(etype, evalue, etraceback)
+            
+            self.taskFinished.emit()
+
+        return
+
+
 class ThreadDataFlow(QtCore.QThread):
     
     """QThread for initiating the dataflow"""
@@ -295,7 +489,7 @@ class ThreadThemes(QtCore.QThread):
 
         return
 
-        
+
 class ThreadStrategy(QtCore.QThread):
     
     """QThread for executing a strategy"""
@@ -303,13 +497,13 @@ class ThreadStrategy(QtCore.QThread):
     taskFinished = QtCore.pyqtSignal()
     error_detected =  QtCore.pyqtSignal(object, object, object)
 
-    def __init__(self, strategy, core, project):
+    def __init__(self, core, project, strategy):
         
         super(ThreadStrategy, self).__init__()
-        self._strategy = strategy
         self._core = core
         self._project = project
-                
+        self._strategy = strategy
+        
         return
     
     def run(self):
@@ -468,6 +662,56 @@ class ThreadLoad(QtCore.QThread):
             self.error_detected.emit(etype, evalue, etraceback)
             self.taskFinished.emit()
             
+        return
+
+
+class ThreadScope(QtCore.QThread):
+    
+    """QThread for setting the output scope"""
+    
+    taskFinished = QtCore.pyqtSignal()
+    error_detected =  QtCore.pyqtSignal(object, object, object)
+
+    def __init__(self, core, project, scope):
+        
+        super(ThreadScope, self).__init__()
+        self._core = core
+        self._project = project
+        self._scope = scope
+        
+        return
+    
+    def run(self):
+        
+        try:
+            
+            # Block signals
+            self._core.blockSignals(True)
+            self._project.blockSignals(True)
+            
+            # Switch the output scope on all simulations
+            for sim_idx in xrange(len(self._project)):
+            
+                set_output_scope(self._core,
+                                 self._project,
+                                 self._scope,
+                                 sim_index=sim_idx)
+            
+            # Reinstate signals and emit
+            self._core.blockSignals(False)
+            self._project.blockSignals(False)
+            self.taskFinished.emit()
+        
+        except: 
+            
+            etype, evalue, etraceback = sys.exc_info()
+            self.error_detected.emit(etype, evalue, etraceback)
+
+            # Reinstate signals and emit
+            self._core.blockSignals(False)
+            self._project.blockSignals(False)
+            self.taskFinished.emit()
+
         return
 
 
@@ -649,84 +893,24 @@ class Shell(QtCore.QObject):
     @QtCore.pyqtSlot(str)
     def open_project(self, file_path):
         
-        load_path = str(file_path)
-        dto_dir_path = None
-        prj_file_path = None
-        sco_file_path = None
-        stg_file_path = None
-        
-        # Check the extension
-        if os.path.splitext(load_path)[1] == ".dto":
-            
-            dto_dir_path = tempfile.mkdtemp()
-                                    
-            tar = tarfile.open(load_path)
-            tar.extractall(dto_dir_path)
-            
-            prj_file_path = os.path.join(dto_dir_path, "project.prj")
-            sco_file_path = os.path.join(dto_dir_path, "scope.json")
-            stg_file_path = os.path.join(dto_dir_path, "strategy.pkl")
-            
-            if not os.path.isfile(stg_file_path): stg_file_path = None
-            
-        elif os.path.splitext(load_path)[1] == ".prj":
-            
-            prj_file_path = load_path
-            
-        else:
-            
-            errStr = ("The file path must be a file with either .dto or "
-                      ".prj extension")
-            raise ValueError(errStr)
-            
-        # Load up the project
-        load_project = self.core.load_project(prj_file_path)
-
-        self.project = load_project
-        
-        # Load up the scope if one was found
-        if sco_file_path is not None:
-        
-            with open(sco_file_path, 'rb') as json_file:
-                self._current_scope = json.load(json_file)
-                
-        else:
-            
-            self._current_scope = "global"
-            
-        # Load up the strategy if one was found
-        if stg_file_path is not None:
-            
-            strategy_manager = GUIStrategyManager()
-            self.strategy = strategy_manager.load_strategy(stg_file_path)
-            self.strategy_loaded.emit(self.strategy)
-            
-        else:
-            
-            self.strategy = None
-            
-        # Record the path after a successful load
-        self.project_path = load_path
-        
-        self.project_title_change.emit(load_project.title)
-        
-        # Relay active simulation change
-        self.project.active_index_changed.connect(self._emit_update_pipeline)
-        self.project.active_index_changed.connect(
-            lambda: self.reset_widgets.emit())
-        self.project.active_index_changed.connect(
-            lambda: self.update_run_action.emit())
-            
-        # Update the scope widget
-        self.update_scope.emit(self._current_scope)
-            
-        # Delete temp directory
-        if dto_dir_path is not None: shutil.rmtree(dto_dir_path)
+        self._active_thread = ThreadOpen(self.core,
+                                         file_path)
+        self._active_thread.taskFinished.connect(self._finalize_open_project)
+        self._active_thread.start()
         
         return
-        
+
     @QtCore.pyqtSlot(str)
     def save_project(self, file_path=None):
+        """An example of profiling"""
+        import cProfile 
+        cProfile.runctx("self.save_project_(file_path)",
+                        globals(),
+                        locals(),
+                        "profile.stat")
+
+    @QtCore.pyqtSlot(str)
+    def save_project_(self, file_path=None):
         
         if self._active_thread is not None: self._active_thread.wait()
         
@@ -734,70 +918,15 @@ class Shell(QtCore.QObject):
             save_path = self.project_path
         else:
             save_path = str(file_path)
-            
-        if save_path is None:
-            
-            errStr = "A file path must be provided in order to save a project"
-            raise ValueError(errStr)
-            
-        # Check the extension
-        if os.path.splitext(save_path)[1] not in [".dto", ".prj"]:
         
-            errStr = ("The file path must be a file with either .dto or "
-                      ".prj extension")
-            raise ValueError(errStr)
-            
-        dto_dir_path = tempfile.mkdtemp()
-            
-        # Dump the project
-        prj_file_path = os.path.join(dto_dir_path, "project.prj")
-        self.core.dump_project(self.project, prj_file_path)
-        
-        # If saving a project file only
-        if os.path.splitext(save_path)[1] == ".prj":
-            
-            shutil.move(prj_file_path, save_path)
-            shutil.rmtree(dto_dir_path)
-            
-            return
-        
-        # Dump the output scope
-        sco_file_path = os.path.join(dto_dir_path, "scope.json")
-        
-        with open(sco_file_path, 'wb') as json_file:
-            json.dump(self._current_scope, json_file)
-        
-        # Set the standard archive contents
-        arch_files = [prj_file_path, sco_file_path]
-        arch_paths = ["project.prj", "scope.json"]
-        
-        # Dump the strategy (if there is one)
-        if self.strategy is not None:
-        
-            strategy_manager = GUIStrategyManager() 
-            stg_file_path = os.path.join(dto_dir_path, "strategy.pkl")
-            strategy_manager.dump_strategy(self.strategy, stg_file_path)
-            
-            arch_files.append(stg_file_path)
-            arch_paths.append("strategy.pkl")
-            
-        # Now tar the files together
-        dto_file_name = os.path.split(save_path)[1]
-        tar_file_name = "{}.tar".format(dto_file_name)
-    
-        archive = tarfile.open(tar_file_name, "w")
-        
-        for arch_file, arch_path in zip(arch_files, arch_paths):
-            archive.add(arch_file, arcname=arch_path)
-        
-        archive.close()
-        
-        shutil.move(tar_file_name, save_path)
-        shutil.rmtree(dto_dir_path)
-        
-        self.project_path = save_path
-        self.project_saved.emit()
-        
+        self._active_thread = ThreadSave(self.core,
+                                         self.project,
+                                         save_path,
+                                         self._current_scope,
+                                         self.strategy)
+        self._active_thread.taskFinished.connect(self._finalize_save_project)
+        self._active_thread.start()
+
         return
         
     @QtCore.pyqtSlot()
@@ -846,7 +975,7 @@ class Shell(QtCore.QObject):
             self.project.set_simulation_title(new_title, title=old_title)
                 
         return
-        
+    
     @QtCore.pyqtSlot(str)
     def set_active_simulation(self, title):
         
@@ -1125,9 +1254,9 @@ class Shell(QtCore.QObject):
         
         if self._active_thread is not None: self._active_thread.wait()
         
-        self._active_thread = ThreadStrategy(self.strategy,
-                                             self.core,
-                                             self.project)
+        self._active_thread = ThreadStrategy(self.core,
+                                             self.project,
+                                             self.strategy)
         
         self._active_thread.taskFinished.connect(
                                         lambda: self.strategy_executed.emit())
@@ -1135,19 +1264,60 @@ class Shell(QtCore.QObject):
         self._active_thread.start()
         
         return
-
+    
     @QtCore.pyqtSlot(str)
     def set_output_scope(self, scope):
         
-        # Switch the output scope on all simulations
-        for sim_idx in xrange(len(self.project)):
+        if self._active_thread is not None: self._active_thread.wait()
         
-            set_output_scope(self.core,
-                             self.project,
-                             scope,
-                             sim_index=sim_idx)
-                             
-        self._current_scope = scope
+        self._active_thread = ThreadScope(self.core,
+                                          self.project,
+                                          scope)
+        
+        self._active_thread.taskFinished.connect(
+                                        lambda: self._finalize_scope(scope))
+                                        
+        self._active_thread.start()
+
+        return
+
+    @QtCore.pyqtSlot()
+    def _finalize_open_project(self):
+        
+        self.project = self._active_thread._project
+        self.project_path = self._active_thread._project_path
+        self.strategy = self._active_thread._strategy
+        self._current_scope = self._active_thread._current_scope
+        
+        self.project_title_change.emit(self.project.title)
+        
+        # Relay active simulation change
+        self.project.active_index_changed.connect(self._emit_update_pipeline)
+        self.project.active_index_changed.connect(
+            lambda: self.reset_widgets.emit())
+        self.project.active_index_changed.connect(
+            lambda: self.update_run_action.emit())
+        
+        # Relay strategy change
+        if self.strategy is not None:
+            self.strategy_loaded.emit(self.strategy)
+            
+        # Update the scope widget
+        self.update_scope.emit(self._current_scope)
+
+        # Release the active thread
+        self._clear_active_thread()
+        
+        return
+
+    @QtCore.pyqtSlot()
+    def _finalize_save_project(self):
+        
+        self.project_path = self._active_thread._save_path
+        self.project_saved.emit()
+
+        # Release the active thread
+        self._clear_active_thread()
         
         return
 
@@ -1173,6 +1343,17 @@ class Shell(QtCore.QObject):
                                         for sim in self.project._simulations]
             
             self.strategy_completed.emit()
+        
+        # Emit signals on core
+        self._finalize_core()
+        
+        return
+
+    @QtCore.pyqtSlot(str)
+    def _finalize_scope(self, scope):
+        
+        # Record the scope
+        self._current_scope = scope
         
         # Emit signals on core
         self._finalize_core()
@@ -1439,9 +1620,9 @@ class DTOceanWindow(MainWindow):
                                                     
         # Change the output scope on button click
         self._pipeline_dock.globalRadioButton.clicked.connect(
-                            lambda: self._shell.set_output_scope("global"))
+                            lambda: self._waitcursor_scope("global"))
         self._pipeline_dock.localRadioButton.clicked.connect(
-                            lambda: self._shell.set_output_scope("local"))
+                            lambda: self._waitcursor_scope("local"))
         self._pipeline_dock.scopeFrame.setDisabled(True)
         
         # Variable filtering
@@ -2797,8 +2978,13 @@ class DTOceanWindow(MainWindow):
                 
         if self._shell.project is not None:
             self._shell.close_project()
-                
-        self._shell.open_project(file_path)
+        
+        self._waitcursor_open(file_path)
+        
+        return
+        
+    @QtCore.pyqtSlot()
+    def _open_project_finalize(self):
         
         self._active_project_ui_switch()
         self._active_pipeline_ui_switch()
@@ -2858,7 +3044,7 @@ class DTOceanWindow(MainWindow):
         if self._shell.project_path is None:
             result = self._saveas_project()
         else:
-            self._shell.save_project()
+            self._waitcursor_save()
         
         return result
         
@@ -2877,7 +3063,7 @@ class DTOceanWindow(MainWindow):
         result = False
         
         if file_path:
-            self._shell.save_project(file_path)
+            self._waitcursor_save(file_path)
             result = True
         
         return result
@@ -3218,6 +3404,36 @@ class DTOceanWindow(MainWindow):
         
         return
 
+    @QtCore.pyqtSlot(str)
+    def _waitcursor_open(self, file_path):
+        
+        self.setEnabled(False)
+        QtGui.QApplication.setOverrideCursor(
+                                        QtGui.QCursor(QtCore.Qt.WaitCursor))
+        
+        self._shell.open_project(file_path)
+        
+        self._shell._active_thread.error_detected.connect(self._display_error)
+        self._shell._active_thread.finished.connect(
+                                                 self._open_project_finalize)
+        self._shell._active_thread.finished.connect(self._reset_cursor)
+        
+        return
+
+    @QtCore.pyqtSlot(str)
+    def _waitcursor_save(self, file_path=None):
+        
+        self.setEnabled(False)
+        QtGui.QApplication.setOverrideCursor(
+                                        QtGui.QCursor(QtCore.Qt.WaitCursor))
+        
+        self._shell.save_project(file_path)
+        
+        self._shell._active_thread.error_detected.connect(self._display_error)
+        self._shell._active_thread.finished.connect(self._reset_cursor)
+        
+        return
+
     @QtCore.pyqtSlot()
     def _progress_dataflow(self):
         
@@ -3260,9 +3476,12 @@ class DTOceanWindow(MainWindow):
         
         self._progress.allow_close = False
         self._progress.set_pulsing()
+        
         self._shell.initiate_dataflow(self._pipeline_dock)
+        
         self._shell._active_thread.error_detected.connect(self._display_error)
         self._shell._active_thread.finished.connect(self._close_progress)
+        
         self._progress.show()
         
         return
@@ -3272,9 +3491,12 @@ class DTOceanWindow(MainWindow):
         
         self._progress.allow_close = False
         self._progress.set_pulsing()
+        
         self._shell.execute_current()
+        
         self._shell._active_thread.error_detected.connect(self._display_error)
         self._shell._active_thread.finished.connect(self._close_progress)
+        
         self._progress.show()
         
         return
@@ -3284,9 +3506,12 @@ class DTOceanWindow(MainWindow):
         
         self._progress.allow_close = False
         self._progress.set_pulsing()
+        
         self._shell.execute_themes()
+        
         self._shell._active_thread.error_detected.connect(self._display_error)
         self._shell._active_thread.finished.connect(self._close_progress)
+        
         self._progress.show()
         
         return
@@ -3299,13 +3524,31 @@ class DTOceanWindow(MainWindow):
         
         self._progress.allow_close = False
         self._progress.set_pulsing()
+        
         self._shell.execute_strategy()
+        
         self._shell._active_thread.error_detected.connect(self._display_error)
         self._shell._active_thread.finished.connect(self._close_progress)
+        
         self._progress.show()
         
         return
+    
+    @QtCore.pyqtSlot(str)
+    def _waitcursor_scope(self, scope):
         
+        self.setEnabled(False)
+        QtGui.QApplication.setOverrideCursor(
+                                        QtGui.QCursor(QtCore.Qt.WaitCursor))
+        
+        self._shell.set_output_scope(scope)
+        
+        self._shell._active_thread.error_detected.connect(self._display_error)
+        self._shell._active_thread.finished.connect(self._reset_cursor)
+        
+        return
+    
+    
     @QtCore.pyqtSlot(str)
     def _open_tool(self, tool_name):
         
@@ -3322,7 +3565,15 @@ class DTOceanWindow(MainWindow):
         self._thread_tool.finished.connect(lambda: self._close_tool(tool))
                 
         return
+
+    @QtCore.pyqtSlot()
+    def _reset_cursor(self):
         
+        QtGui.QApplication.restoreOverrideCursor()
+        self.setEnabled(True)
+        
+        return
+
     @QtCore.pyqtSlot(object)
     def _close_tool(self, tool):
         
