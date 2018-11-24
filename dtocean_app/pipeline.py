@@ -221,22 +221,35 @@ class PipeLine(PipeLineDock):
 
         return
         
-    def _find_controller(self, proxy_index,
+    def _find_controller(self, proxy_index=None,
+                               controller_title=None,
                                controller_class=None,
                                root=None):
         
+        if proxy_index is None and controller_title is None:
+            err_str = ("Either argument 'proxy_index' or 'controller_title' "
+                       "must be provided and 'proxy_index' will take "
+                       "precedence")
+            raise ValueError(err_str)
+        
         if root is None: root = self
         
-        address = self._proxy.data(proxy_index, QtCore.Qt.UserRole)
+        if proxy_index is not None:
+            match = self._proxy.data(proxy_index, QtCore.Qt.UserRole)
+            search_attr = "_address"
+        else:
+            match = controller_title
+            search_attr = "_title"
 
         for controller in root._controls:
             
-            if controller._address == address:
+            if getattr(controller, search_attr) == match:
                 if (controller_class is None or
                     isinstance(controller, controller_class)):
                     return controller
                     
             result = self._find_controller(proxy_index,
+                                           controller_title,
                                            controller_class,
                                            controller)
             
