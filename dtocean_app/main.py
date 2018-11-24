@@ -727,7 +727,6 @@ class Shell(QtCore.QObject):
     themes_activated = QtCore.pyqtSignal()
     update_pipeline = QtCore.pyqtSignal(object)
     update_scope = QtCore.pyqtSignal(str)
-    update_widgets = QtCore.pyqtSignal()
     reset_widgets = QtCore.pyqtSignal()
     update_run_action = QtCore.pyqtSignal()
     database_updated = QtCore.pyqtSignal(str)
@@ -1471,8 +1470,6 @@ class DTOceanWindow(MainWindow):
         
         shell.project_activated.connect(self._active_project_ui_switch)
         shell.project_closed.connect(self._closed_project_ui_switch)
-        shell.update_widgets.connect(
-            lambda: self._set_context_widget(self._last_tree_controller))
         shell.reset_widgets.connect(
             lambda: self._set_context_widget(self._last_tree_controller, True))
         shell.pipeline_active.connect(self._active_pipeline_ui_switch)
@@ -1641,7 +1638,6 @@ class DTOceanWindow(MainWindow):
                             lambda: self._pipeline_dock._refresh(self._shell))
         
         # Repeat any filtering on widget update
-        self._shell.update_widgets.connect(self._pipeline_dock._repeat_filter)
         self._shell.reset_widgets.connect(self._pipeline_dock._repeat_filter)
                             
         # Add context menu(s)
