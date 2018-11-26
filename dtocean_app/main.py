@@ -45,7 +45,6 @@ from dtocean_core.utils.database import (database_from_files,
                                          get_table_map)
 
 from . import get_log_dir
-from .core import GUICore
 from .help import HelpWidget
 from .menu import DBSelector
 from .simulation import SimulationDock
@@ -741,7 +740,7 @@ class Shell(QtCore.QObject):
     database_convert_active = QtCore.pyqtSignal()
     database_convert_complete = QtCore.pyqtSignal()
 
-    def __init__(self):
+    def __init__(self, core):
         
         super(Shell, self).__init__()
         
@@ -757,7 +756,7 @@ class Shell(QtCore.QObject):
         self._active_thread = None
         self._current_scope = None
         
-        self.core = self._init_core()
+        self.core = self._init_core(core)
         self.project_menu = self._init_project_menu()
         self.module_menu = self._init_module_menu()
         self.theme_menu = self._init_theme_menu()
@@ -772,9 +771,7 @@ class Shell(QtCore.QObject):
         
         return
     
-    def _init_core(self):
-        
-        core = GUICore()
+    def _init_core(self, core):
         
         # Relay status updated signal
         core.status_updated.connect(self._emit_update_pipeline)
