@@ -311,7 +311,7 @@ class ThreadSave(QtCore.QThread):
             
                 strategy_manager = GUIStrategyManager() 
                 stg_file_path = os.path.join(dto_dir_path, "strategy.pkl")
-                strategy_manager.dump_strategy(self.strategy, stg_file_path)
+                strategy_manager.dump_strategy(self._strategy, stg_file_path)
                 
                 arch_files.append(stg_file_path)
                 arch_paths.append("strategy.pkl")
