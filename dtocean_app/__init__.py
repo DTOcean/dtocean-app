@@ -134,16 +134,39 @@ def main(debug=False, trace_warnings=False):
     splash_path = os.path.join(module_path, '..', 'splash_loading.png')
     splash_pix = QtGui.QPixmap(splash_path)
     splash = QtGui.QSplashScreen(splash_pix, QtCore.Qt.WindowStaysOnTopHint)
+    splash_font = QtGui.QFont()
+    splash_font.setFamily("Verdana")
+    splash_font.setPointSize(7)
     splash.setMask(splash_pix.mask())
+    splash.setFont(splash_font)
     splash.show()
     app.processEvents()
+    
+    message_allignment = QtCore.Qt.AlignHCenter | QtCore.Qt.AlignBottom
+    message_color = QtCore.Qt.white
 
+    splash.showMessage("Loading application interface",
+                       message_allignment,
+                       message_color)
+    
     from .main import DTOceanWindow, Shell
+    
+    splash.showMessage("Loading DTOcean core",
+                       message_allignment,
+                       message_color)
+    
+    from .core import GUICore
+    
+    core = GUICore()
+    shell = Shell(core)
 
-    shell = Shell()
-
+    splash.showMessage("Starting application",
+                       message_allignment,
+                       message_color)
+    
     main_window = DTOceanWindow(shell, debug)
     main_window.show()
+    
     splash.finish(main_window)
 
     sys.exit(app.exec_())
