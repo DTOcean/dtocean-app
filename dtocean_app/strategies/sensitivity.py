@@ -23,6 +23,7 @@ from dtocean_core.strategies.sensitivity import UnitSensitivity
 
 from . import GUIStrategy, StrategyWidget, PyQtABCMeta
 from ..utils.display import is_high_dpi
+from ..widgets.extendedcombobox import ExtendedComboBox
 
 if is_high_dpi():
     
@@ -96,6 +97,15 @@ class UnitSensitivityWidget(QtGui.QWidget,
         
         # Disble line edit
         self.lineEdit.setDisabled(True)
+        
+        # Custom boxes
+        self.modBox = ExtendedComboBox(self)
+        self.modBox.setObjectName("modBox")
+        self.gridLayout.addWidget(self.modBox, 0, 1, 1, 1)
+        
+        self.varBox = ExtendedComboBox(self)
+        self.varBox.setObjectName("varBox")
+        self.gridLayout.addWidget(self.varBox, 1, 1, 1, 1)
         
         # Signals
         self.modBox.currentIndexChanged.connect(self._set_variables)

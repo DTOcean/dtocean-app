@@ -24,6 +24,7 @@ from dtocean_core.strategies.multi import MultiSensitivity
 
 from . import GUIStrategy, StrategyWidget, PyQtABCMeta
 from ..utils.display import is_high_dpi
+from ..widgets.extendedcombobox import ExtendedComboBox
 
 if is_high_dpi():
 
@@ -32,7 +33,6 @@ if is_high_dpi():
 else:
     
     from ..designer.low.multisensitivity import Ui_MultiSensitivityWidget
-
 
 
 class GUIMultiSensitivity(GUIStrategy, MultiSensitivity):
@@ -98,6 +98,15 @@ class MultiSensitivityWidget(QtGui.QWidget,
     def _init_ui(self):
         
         self.setupUi(self)
+        
+        # Custom boxes
+        self.modBox = ExtendedComboBox(self)
+        self.modBox.setObjectName("modBox")
+        self.gridLayout.addWidget(self.modBox, 0, 1, 1, 1)
+        
+        self.varBox = ExtendedComboBox(self)
+        self.varBox.setObjectName("varBox")
+        self.gridLayout.addWidget(self.varBox, 1, 1, 1, 1)
         
         # Disble
         self.lineEdit.setDisabled(True)

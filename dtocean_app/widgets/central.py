@@ -30,6 +30,7 @@ from dtocean_core.pipeline import Tree
 
 from .display import (get_current_filetypes,
                       get_current_figure_size)
+from .extendedcombobox import ExtendedComboBox
 from ..utils.display import is_high_dpi
 
 if is_high_dpi():
@@ -663,6 +664,16 @@ class LevelComparison(QtGui.QWidget,
         self.buttonBox.button(QtGui.QDialogButtonBox.Save).clicked.connect(
                                                 self._save)
         
+        # Custom var box
+        self.varBox = ExtendedComboBox(self)
+        sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Fixed)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.varBox.sizePolicy().hasHeightForWidth())
+        self.varBox.setSizePolicy(sizePolicy)
+        self.varBox.setObjectName("varBox")
+        self.bottomHorizontalLayout.addWidget(self.varBox)
+        
         # Signals
         self.varBox.currentIndexChanged.connect(self._ok_button_ui_switch)
         
@@ -732,6 +743,25 @@ class SimulationComparison(QtGui.QWidget,
                                                     self._emit_widget_request)
         self.buttonBox.button(QtGui.QDialogButtonBox.Save).clicked.connect(
                                                     self._save)
+        
+        # Custom var boxes
+        self.varBox = ExtendedComboBox(self)
+        sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Fixed)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.varBox.sizePolicy().hasHeightForWidth())
+        self.varBox.setSizePolicy(sizePolicy)
+        self.varBox.setObjectName("varBox")
+        self.bottomHorizontalLayout.addWidget(self.varBox)
+        
+        self.modBox = ExtendedComboBox(self)
+        sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Fixed)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.modBox.sizePolicy().hasHeightForWidth())
+        self.modBox.setSizePolicy(sizePolicy)
+        self.modBox.setObjectName("modBox")
+        self.middleHorizontalLayout.addWidget(self.modBox)
         
         # Signals
         self.varBox.currentIndexChanged.connect(self._set_modules)
