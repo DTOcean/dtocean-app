@@ -17,6 +17,7 @@
 
 import os
 import sys
+import time
 import argparse
 import warnings
 import traceback
@@ -117,6 +118,15 @@ def get_log_dir():
     return logdir
 
 
+#def main(debug=False, trace_warnings=False):
+#    """An example of profiling"""
+#    import cProfile 
+#    cProfile.runctx("main_(debug, trace_warnings)",
+#                    globals(),
+#                    locals(),
+#                    "profile.stat")
+
+
 def main(debug=False, trace_warnings=False):
 
     """Run the DTOcean tool"""
@@ -142,33 +152,68 @@ def main(debug=False, trace_warnings=False):
     splash.show()
     app.processEvents()
     
+    time.sleep(0.2)
+    
     message_allignment = QtCore.Qt.AlignHCenter | QtCore.Qt.AlignBottom
     message_color = QtCore.Qt.white
-
-    splash.showMessage("Loading application interface",
+    
+    splash.showMessage("Loading matplotlib",
                        message_allignment,
                        message_color)
     
-    from .main import DTOceanWindow, Shell
+    import matplotlib
+    import matplotlib.pyplot
+    
+    splash.showMessage("Loading pandas",
+                       message_allignment,
+                       message_color)
+    
+    import pandas
     
     splash.showMessage("Loading DTOcean core",
                        message_allignment,
                        message_color)
     
+    import dtocean_core.core
     from .core import GUICore
     
-    core = GUICore()
-    shell = Shell(core)
-
-    splash.showMessage("Starting application",
+    splash.showMessage("Loading DTOcean interface",
                        message_allignment,
                        message_color)
     
+    from .main import DTOceanWindow, Shell
+
+    splash.showMessage("Preparing data catalogue",
+                       message_allignment,
+                       message_color)
+    
+    core = GUICore()
+    core._create_data_catalog()
+    
+    splash.showMessage("Preparing modules",
+                       message_allignment,
+                       message_color)
+    
+    core._create_control()
+
+    splash.showMessage("Preparing IO",
+                       message_allignment,
+                       message_color)
+
+    core._create_sockets()
+    core._init_plots()
+    
+    splash.showMessage("Starting DTOcean application",
+                       message_allignment,
+                       message_color)
+    
+    time.sleep(0.2)
+    
+    shell = Shell(core)
     main_window = DTOceanWindow(shell, debug)
     main_window.show()
     
     splash.finish(main_window)
-
     sys.exit(app.exec_())
     
     return

@@ -188,10 +188,20 @@ class GUICore(QtCore.QObject, Core):
     def __init__(self):
         
         QtCore.QObject.__init__(self)
-        Core.__init__(self)
+        self.data_catalog = None
+        self.loader = None
+        self.control = None
+        self.socket_map = None
         self._input_parent = None
         
         return
+
+    def _create_data_catalog(self):
+
+        catalog = super(GUICore, self)._create_data_catalog()
+        self.data_catalog = catalog
+        
+        return 
 
     def _create_control(self):
         
@@ -205,9 +215,19 @@ class GUICore(QtCore.QObject, Core):
         loader = Loader(data_store)
         control = Controller(data_store,
                              sequencer)
-
-        return loader, control
         
+        self.loader = loader
+        self.control = control
+
+        return
+    
+    def _create_sockets(self):
+        
+        socket_map = super(GUICore, self)._create_sockets()
+        self.socket_map = socket_map
+        
+        return
+
     def new_project(self, project_title, simulation_title="Default"):
         
         new_project = GUIProject(project_title)
