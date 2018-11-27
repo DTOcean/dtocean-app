@@ -165,6 +165,16 @@ class ListSelect(QtGui.QWidget, Ui_ListSelect):
 
         return self.buttonBox.button(QtGui.QDialogButtonBox.Cancel).clicked
 
+    def _disable(self):
+        
+        self.buttonBox.setDisabled(True)
+        self.staticLabel.setDisabled(True)
+        self.valueLabel.setDisabled(True)
+        self.questionLabel.setDisabled(True)
+        self.unitsLabel.setDisabled(True)
+        
+        return
+
 
 class FloatSelect(QtGui.QWidget, Ui_ScientificSelect):
     
