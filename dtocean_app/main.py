@@ -896,17 +896,17 @@ class Shell(QtCore.QObject):
         
         return
 
-    @QtCore.pyqtSlot(str)
-    def save_project(self, file_path=None):
-        """An example of profiling"""
-        import cProfile 
-        cProfile.runctx("self.save_project_(file_path)",
-                        globals(),
-                        locals(),
-                        "profile.stat")
+#    @QtCore.pyqtSlot(str)
+#    def save_project(self, file_path=None):
+#        """An example of profiling"""
+#        import cProfile 
+#        cProfile.runctx("self.save_project_(file_path)",
+#                        globals(),
+#                        locals(),
+#                        "profile.stat")
 
     @QtCore.pyqtSlot(str)
-    def save_project_(self, file_path=None):
+    def save_project(self, file_path=None):
         
         if self._active_thread is not None: self._active_thread.wait()
         
