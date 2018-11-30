@@ -638,7 +638,9 @@ class InputBranchControl(BaseControl):
         
         return
     
-    def _make_input_items(self, shell, parent_item=None):
+    def _make_input_items(self, shell,
+                                parent_item=None,
+                                previous_item_address=None):
         
         input_status = self._branch.get_input_status(shell.core,
                                                      shell.project)
@@ -695,6 +697,14 @@ class InputBranchControl(BaseControl):
             new_control._init_ui(name_item)
             
             self._controls.append(new_control)
+            
+        if previous_item_address is not None:
+            
+            new_index = self._get_index_from_address(previous_item_address)
+            
+            if new_index is not None:
+                proxy_index = self._proxy.mapFromSource(new_index)
+                self._view.setCurrentIndex(proxy_index)
         
         return
         
@@ -734,9 +744,20 @@ class InputBranchControl(BaseControl):
         index = self._get_index_from_address()
         item = self._model.itemFromIndex(index)
         
-        # Remake the items
+        # Store last selected item if in this branch and then remake the inputs
+        current_item_address = None
+        
+        if self._view.selectedIndexes():
+            current_proxy_index = self._view.selectedIndexes()[0]
+            data_variant = self._proxy.data(current_proxy_index,
+                                            QtCore.Qt.UserRole)
+            test_item_address = str(data_variant.toString())
+            has_address = [control._address == test_item_address
+                                           for control in self._controls]
+            if any(has_address): current_item_address = test_item_address
+            
         self._clear(item)
-        self._make_input_items(shell, item)
+        self._make_input_items(shell, item, current_item_address)
         
         return
 
