@@ -362,6 +362,10 @@ class ThreadDataFlow(QtCore.QThread):
     def run(self):
         
         try:
+            
+            # Activate modules and themes
+            self.shell.activate_module_queue()
+            self.shell.activate_theme_queue()
         
             # Check if filters can be initiated
             if ("Database Filtering Interface" in
@@ -722,8 +726,8 @@ class Shell(QtCore.QObject):
     project_saved = QtCore.pyqtSignal()
     project_closed = QtCore.pyqtSignal()
     strategy_loaded = QtCore.pyqtSignal(object)
-    modules_activated = QtCore.pyqtSignal()
-    themes_activated = QtCore.pyqtSignal()
+    modules_queued = QtCore.pyqtSignal()
+    themes_queued = QtCore.pyqtSignal()
     update_pipeline = QtCore.pyqtSignal(object)
     update_scope = QtCore.pyqtSignal(str)
     reset_widgets = QtCore.pyqtSignal()
@@ -753,6 +757,8 @@ class Shell(QtCore.QObject):
         self.project_path = None
         self.project_unsaved = True
         self.strategy = None
+        self.queued_interfaces = {"modules": None,
+                                  "themes": None}
         self._active_thread = None
         self._current_scope = None
         
@@ -816,9 +822,12 @@ class Shell(QtCore.QObject):
         
     def get_active_modules(self):
         
-        active_modules = self.module_menu.get_active(self.core,
-                                                     self.project)
-                                                            
+        if self.queued_interfaces["modules"] is not None:
+            active_modules = self.queued_interfaces["modules"]
+        else:
+            active_modules = self.module_menu.get_active(self.core,
+                                                         self.project)
+        
         return active_modules
         
     def get_current_module(self):
@@ -851,8 +860,11 @@ class Shell(QtCore.QObject):
         
     def get_active_themes(self):
         
-        active_themes = self.theme_menu.get_active(self.core,
-                                                   self.project)
+        if self.queued_interfaces["themes"] is not None:
+            active_themes = self.queued_interfaces["themes"]
+        else:
+            active_themes = self.theme_menu.get_active(self.core,
+                                                       self.project)
                                                             
         return active_themes
         
@@ -1059,42 +1071,56 @@ class Shell(QtCore.QObject):
         return
 
     @QtCore.pyqtSlot(list)
-    def activate_module_list(self, module_list):
+    def queue_module_list(self, module_list):
         
         all_mods = self.module_menu.get_available(self.core, self.project)
         ordered_mods = [x for x in all_mods if x in module_list]
+        
+        self.queued_interfaces["modules"] = ordered_mods
+        self.modules_queued.emit()
+
+        return
+
+    @QtCore.pyqtSlot(list)
+    def queue_theme_list(self, theme_list):
+
+        all_themes = self.theme_menu.get_available(self.core, self.project)
+        ordered_themes = [x for x in all_themes if x in theme_list]
+        
+        self.queued_interfaces["themes"] = ordered_themes
+        self.themes_queued.emit()
+        
+        return
+
+    def activate_module_queue(self):
 
         active_mods = self.module_menu.get_active(self.core, self.project)
 
-        for module_name in ordered_mods:
+        for module_name in self.queued_interfaces["modules"]:
 
             if module_name not in active_mods:
     
                 self.module_menu.activate(self.core,
                                           self.project,
                                           module_name)
-                                                        
-        self.modules_activated.emit()
+        
+        self.queued_interfaces["modules"] = None
 
         return
 
-    @QtCore.pyqtSlot(list)
-    def activate_theme_list(self, theme_list):
-
-        all_themes = self.theme_menu.get_available(self.core, self.project)
-        ordered_themes = [x for x in all_themes if x in theme_list]
-
+    def activate_theme_queue(self):
+        
         active_themes = self.theme_menu.get_active(self.core, self.project)
 
-        for theme_name in ordered_themes:
+        for theme_name in self.queued_interfaces["themes"]:
 
             if theme_name not in active_themes:
     
                 self.theme_menu.activate(self.core, 
                                          self.project,
                                          theme_name)
-                                                        
-        self.themes_activated.emit()
+
+        self.queued_interfaces["themes"] = None
 
         return
         
@@ -1520,22 +1546,12 @@ class DTOceanWindow(MainWindow):
         # Set up the module shuttle widget
         self._module_shuttle = Shuttle(self, "Add Modules...")
         self._module_shuttle.list_updated.connect(
-                                            self._shell.activate_module_list)
-                                            
-        # Close the button as undo is not yet available
-        self._module_shuttle.buttonBox.button(
-                    QtGui.QDialogButtonBox.Ok).clicked.connect(
-                        lambda: self.actionAdd_Modules.setDisabled(True))
-                             
+                                            self._shell.queue_module_list)
+        
         # Set up the assessment shuttle widget
         self._assessment_shuttle = Shuttle(self, "Add Assessment...")
         self._assessment_shuttle.list_updated.connect(
-                                            self._shell.activate_theme_list)
-                                            
-        # Close the button as undo is not yet available
-        self._assessment_shuttle.buttonBox.button(
-                    QtGui.QDialogButtonBox.Ok).clicked.connect(
-                         lambda: self.actionAdd_Assessment.setDisabled(True))
+                                            self._shell.queue_theme_list)
                              
         return
         
@@ -1623,9 +1639,9 @@ class DTOceanWindow(MainWindow):
         self._pipeline_dock.filterFrame.setDisabled(True)
         
         # Refresh on module and theme activation or execution
-        self._shell.modules_activated.connect(
+        self._shell.modules_queued.connect(
                             lambda: self._pipeline_dock._refresh(self._shell))
-        self._shell.themes_activated.connect(
+        self._shell.themes_queued.connect(
                             lambda: self._pipeline_dock._refresh(self._shell))
         self._shell.module_executed.connect(
                             lambda: self._pipeline_dock._refresh(self._shell))
