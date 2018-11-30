@@ -524,10 +524,20 @@ class HubControl(BaseControl):
         
     def _activate(self, shell, parent):
         
-        hub_branches = self._tree.get_available_branches(shell.core,
-                                                         shell.project,
-                                                         [self._hub_name])
-                                                                                                                  
+        retrieve_branch = True
+        
+        if (self._hub_name in shell.queued_interfaces and
+            shell.queued_interfaces[self._hub_name] is not None):
+            
+            hub_branches = shell.queued_interfaces[self._hub_name]
+            retrieve_branch = False
+        
+        else:
+            
+            hub_branches = self._tree.get_available_branches(shell.core,
+                                                             shell.project,
+                                                             [self._hub_name])
+        
         if self._branch_order is None:
             branch_order = hub_branches
         else:
@@ -536,9 +546,14 @@ class HubControl(BaseControl):
                                                          
         for branch_name in branch_order:
             
-            branch = self._tree.get_branch(shell.core,
-                                           shell.project,
-                                           branch_name)
+            if retrieve_branch:
+                
+                branch = self._tree.get_branch(shell.core,
+                                               shell.project,
+                                               branch_name)
+            else:
+                
+                branch = None
             
             # Model item
             address = self._address + "." + branch_name
@@ -559,8 +574,8 @@ class HubControl(BaseControl):
                                           self._view,
                                           self._model,
                                           self._proxy,
-                                          branch,
-                                          self._title)
+                                          self._title,
+                                          branch)
             
             new_control._init_ui(name_item)
             
@@ -581,8 +596,8 @@ class InputBranchControl(BaseControl):
                        view,
                        model,
                        proxy,
-                       branch,
                        hub_title,
+                       branch=None,
                        ignore_str="hidden",
                        sort=True):
                            
@@ -610,6 +625,8 @@ class InputBranchControl(BaseControl):
         return
     
     def _expand(self, shell):
+        
+        if self._branch is None: return
             
         input_status = self._branch.get_input_status(shell.core,
                                                      shell.project)
@@ -766,8 +783,8 @@ class OutputBranchControl(BaseControl):
                        view,
                        model,
                        proxy,
-                       branch,
                        hub_title,
+                       branch,
                        ignore_str="hidden"):
                            
         super(OutputBranchControl, self).__init__(address,
