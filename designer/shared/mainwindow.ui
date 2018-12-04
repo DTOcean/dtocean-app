@@ -127,8 +127,8 @@
     <property name="title">
      <string>&amp;View</string>
     </property>
-    <addaction name="actionShow_Simulations"/>
     <addaction name="actionShow_Pipeline"/>
+    <addaction name="actionShow_Simulations"/>
     <addaction name="actionSystem_Log"/>
     <addaction name="separator"/>
     <addaction name="actionData"/>
@@ -267,7 +267,7 @@
      <normaloff>:/icons/document-open.svg</normaloff>:/icons/document-open.svg</iconset>
    </property>
    <property name="text">
-    <string>Open</string>
+    <string>Open...</string>
    </property>
   </action>
   <action name="actionOpen_Recent">
@@ -394,7 +394,7 @@
      <normaloff>:/icons/player_end.png</normaloff>:/icons/player_end.png</iconset>
    </property>
    <property name="text">
-    <string>Run Strategy...</string>
+    <string>Run Strategy</string>
    </property>
    <property name="toolTip">
     <string>Run Strategy</string>
@@ -429,7 +429,7 @@
      <normaloff>:/icons/player_play.png</normaloff>:/icons/player_play.png</iconset>
    </property>
    <property name="text">
-    <string>Run Current Module...</string>
+    <string>Run Current Module</string>
    </property>
   </action>
   <action name="actionCopy">
@@ -497,7 +497,7 @@
     <bool>false</bool>
    </property>
    <property name="text">
-    <string>Show System Log</string>
+    <string>Show System</string>
    </property>
   </action>
   <action name="actionData">
@@ -582,7 +582,7 @@
      <normaloff>:/icons/player_calc.png</normaloff>:/icons/player_calc.png</iconset>
    </property>
    <property name="text">
-    <string>Run Themes...</string>
+    <string>Run Assessments</string>
    </property>
    <property name="toolTip">
     <string>Run Themes</string>
