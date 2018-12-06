@@ -2935,7 +2935,8 @@ class DTOceanWindow(MainWindow):
                                                       '.',
                                                       extStr)
         
-        save_current_figure(str(save_path))
+        if save_path:
+            save_current_figure(str(save_path))
         
         return
         
@@ -2952,8 +2953,9 @@ class DTOceanWindow(MainWindow):
                                                       '.',
                                                       extStr)
         
-        df = self._strategy_manager._last_df
-        df.to_csv(str(save_path), index=False)
+        if save_path:
+            df = self._strategy_manager._last_df
+            df.to_csv(str(save_path), index=False)
         
         return
         
