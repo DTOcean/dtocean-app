@@ -500,6 +500,7 @@ class PlotManagerWidget(QtGui.QWidget, Ui_PlotManagerWidget):
         msg = "Select path for save"
         dialog = SelectForSaveFileDialog(self, msg)
         dialog.setNameFilter(name_filter)
+        dialog.selectFile(self.pathEdit.text())
         
         if dialog.exec_():
             file_path = str(dialog.selectedFiles()[0])
