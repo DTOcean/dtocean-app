@@ -718,10 +718,12 @@ class LevelComparison(QtGui.QWidget,
         
         # Custom var box
         self.varBox = ExtendedComboBox(self)
-        sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Fixed)
+        sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Expanding,
+                                       QtGui.QSizePolicy.Fixed)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
-        sizePolicy.setHeightForWidth(self.varBox.sizePolicy().hasHeightForWidth())
+        sizePolicy.setHeightForWidth(
+                                self.varBox.sizePolicy().hasHeightForWidth())
         self.varBox.setSizePolicy(sizePolicy)
         self.varBox.setObjectName("varBox")
         self.bottomHorizontalLayout.addWidget(self.varBox)
@@ -798,19 +800,23 @@ class SimulationComparison(QtGui.QWidget,
         
         # Custom var boxes
         self.varBox = ExtendedComboBox(self)
-        sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Fixed)
+        sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Expanding,
+                                       QtGui.QSizePolicy.Fixed)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
-        sizePolicy.setHeightForWidth(self.varBox.sizePolicy().hasHeightForWidth())
+        sizePolicy.setHeightForWidth(
+                                self.varBox.sizePolicy().hasHeightForWidth())
         self.varBox.setSizePolicy(sizePolicy)
         self.varBox.setObjectName("varBox")
         self.bottomHorizontalLayout.addWidget(self.varBox)
         
         self.modBox = ExtendedComboBox(self)
-        sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Fixed)
+        sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Expanding,
+                                       QtGui.QSizePolicy.Fixed)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
-        sizePolicy.setHeightForWidth(self.modBox.sizePolicy().hasHeightForWidth())
+        sizePolicy.setHeightForWidth(
+                                self.modBox.sizePolicy().hasHeightForWidth())
         self.modBox.setSizePolicy(sizePolicy)
         self.modBox.setObjectName("modBox")
         self.middleHorizontalLayout.addWidget(self.modBox)
