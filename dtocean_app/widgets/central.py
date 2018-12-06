@@ -344,9 +344,11 @@ class FileManagerWidget(QtGui.QWidget, Ui_FileManagerWidget):
     @QtCore.pyqtSlot()    
     def _set_okay(self):
         
+        valid_exts = self._load_ext_dict.keys()
         file_path = str(self.pathEdit.text())
+        _, file_ext = os.path.splitext(str(file_path))
         
-        if file_path:
+        if file_ext in valid_exts:
             self.buttonBox.button(QtGui.QDialogButtonBox.Ok).setEnabled(True)
         else:
             self.buttonBox.button(QtGui.QDialogButtonBox.Ok).setDisabled(True)
@@ -512,9 +514,11 @@ class PlotManagerWidget(QtGui.QWidget, Ui_PlotManagerWidget):
     @QtCore.pyqtSlot()    
     def _set_save(self):
         
+        valid_exts = [".{}".format(k) for k in self._ext_types.keys()]
         file_path = str(self.pathEdit.text())
+        _, file_ext = os.path.splitext(str(file_path))
         
-        if file_path:
+        if file_ext in valid_exts:
             self.saveButton.setEnabled(True)
         else:
             self.saveButton.setDisabled(True)
