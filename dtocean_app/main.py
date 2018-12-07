@@ -2080,26 +2080,7 @@ class DTOceanWindow(MainWindow):
         
         # Remove main widget from comparison context
         if self._comp_context._bottom_contents is not None:
-            
-            self._comp_context._bottom_box.removeWidget(
-                                        self._comp_context._bottom_contents)
-            self._comp_context._bottom_contents.setParent(None)
-            
-            if isinstance(self._comp_context._bottom_contents, MPLWidget):
-                
-                fignum = self._comp_context._bottom_contents.figure.number
-                
-                log_msg = "Closing figure {}".format(fignum)
-                module_logger.debug(log_msg)
-                
-                sip.delete(self._comp_context._bottom_contents)
-                plt.close(fignum)
-                
-            else:
-                
-                sip.delete(self._comp_context._bottom_contents)
-            
-            self._comp_context._bottom_contents = None
+            self._clear_bottom_contents(self._comp_context)
 
         # Update the central widget
         self.stackedWidget.setCurrentIndex(0)
@@ -2591,16 +2572,9 @@ class DTOceanWindow(MainWindow):
             return
                                  
         if self._data_context._bottom_contents is not None:
-            
-            self._data_context._bottom_box.removeWidget(
-                                        self._data_context._bottom_contents)
-            self._data_context._bottom_contents.setParent(None)
-#            self._data_context._bottom_contents.deleteLater()
-            sip.delete(self._data_context._bottom_contents)
-            self._data_context._bottom_contents = None
+            self._clear_bottom_contents(self._data_context)
         
         self._last_data_controller = controller
-#        self._last_data_controller_status = controller._status
                     
         widget = controller._get_data_widget(self._shell)
 
@@ -2644,20 +2618,7 @@ class DTOceanWindow(MainWindow):
         if plot_name == "auto": plot_name = None
         
         if self._plot_context._bottom_contents is not None:
-                        
-            self._plot_context._bottom_box.removeWidget(
-                                        self._plot_context._bottom_contents)
-            self._plot_context._bottom_contents.setParent(None)
-            
-            fignum = self._plot_context._bottom_contents.figure.number
-            
-            log_msg = "Closing figure {}".format(fignum)
-            module_logger.debug(log_msg)
-            
-            sip.delete(self._plot_context._bottom_contents)
-            plt.close(fignum)
-            
-            self._plot_context._bottom_contents = None
+            self._clear_bottom_contents(self._plot_context)
 
         self._last_plot_id = controller._id
         self._last_plot_name = plot_name
@@ -2722,25 +2683,7 @@ class DTOceanWindow(MainWindow):
             
         if self._comp_context._bottom_contents is not None:
             
-            self._comp_context._bottom_box.removeWidget(
-                                        self._comp_context._bottom_contents)
-            self._comp_context._bottom_contents.setParent(None)
-            
-            if isinstance(self._comp_context._bottom_contents, MPLWidget):
-                
-                fignum = self._comp_context._bottom_contents.figure.number
-                
-                log_msg = "Closing figure {}".format(fignum)
-                module_logger.debug(log_msg)
-                
-                sip.delete(self._comp_context._bottom_contents)
-                plt.close(fignum)
-                
-            else:
-                
-                sip.delete(self._comp_context._bottom_contents)
-            
-            self._comp_context._bottom_contents = None
+            self._clear_bottom_contents(self._comp_context)
             
             # Switch off save button
             self._level_comparison.buttonBox.button(
@@ -2798,25 +2741,7 @@ class DTOceanWindow(MainWindow):
             
         if self._comp_context._bottom_contents is not None:
             
-            self._comp_context._bottom_box.removeWidget(
-                                        self._comp_context._bottom_contents)
-            self._comp_context._bottom_contents.setParent(None)
-            
-            if isinstance(self._comp_context._bottom_contents, MPLWidget):
-                
-                fignum = self._comp_context._bottom_contents.figure.number
-                
-                log_msg = "Closing figure {}".format(fignum)
-                module_logger.debug(log_msg)
-                
-                sip.delete(self._comp_context._bottom_contents)
-                plt.close(fignum)
-                
-            else:
-                
-                sip.delete(self._comp_context._bottom_contents)
-                
-            self._comp_context._bottom_contents = None
+            self._clear_bottom_contents(self._comp_context)
             
             # Switch off save button
             self._level_comparison.buttonBox.button(
@@ -2862,27 +2787,7 @@ class DTOceanWindow(MainWindow):
                         
         if self._comp_context._bottom_contents is not None:
             
-            self._comp_context._bottom_box.removeWidget(
-                                        self._comp_context._bottom_contents)
-            self._comp_context._bottom_contents.setParent(None)
-            
-            if isinstance(self._comp_context._bottom_contents, MPLWidget):
-                
-                fignum = self._comp_context._bottom_contents.figure.number
-                
-                log_msg = "Closing figure {}".format(fignum)
-                module_logger.debug(log_msg)
-                
-                sip.delete(self._comp_context._bottom_contents)
-                plt.close(fignum)
-                
-            else:
-                
-                sip.delete(self._comp_context._bottom_contents)
-                
-                
-#            self._comp_context._bottom_contents.deleteLater()
-            self._comp_context._bottom_contents = None
+            self._clear_bottom_contents(self._comp_context)
             
             # Switch off save button
             self._sim_comparison.buttonBox.button(
@@ -2942,26 +2847,8 @@ class DTOceanWindow(MainWindow):
             raise SystemError(errStr)
                         
         if self._comp_context._bottom_contents is not None:
-            
-            self._comp_context._bottom_box.removeWidget(
-                                        self._comp_context._bottom_contents)
-            self._comp_context._bottom_contents.setParent(None)
-            
-            if isinstance(self._comp_context._bottom_contents, MPLWidget):
-                
-                fignum = self._comp_context._bottom_contents.figure.number
-                
-                log_msg = "Closing figure {}".format(fignum)
-                module_logger.debug(log_msg)
-                
-                sip.delete(self._comp_context._bottom_contents)
-                plt.close(fignum)
-                
-            else:
-                
-                sip.delete(self._comp_context._bottom_contents)
-                
-            self._comp_context._bottom_contents = None
+
+            self._clear_bottom_contents(self._comp_context)
             
             # Switch off save button
             self._sim_comparison.buttonBox.button(
@@ -3750,5 +3637,29 @@ class DTOceanWindow(MainWindow):
             event.ignore()
         else:
             event.accept()
+        
+        return
+    
+    @classmethod
+    def _clear_bottom_contents(cls, context):
+    
+        context._bottom_box.removeWidget(context._bottom_contents)
+        context._bottom_contents.setParent(None)
+        
+        if isinstance(context._bottom_contents, MPLWidget):
+            
+            fignum = context._bottom_contents.figure.number
+            
+            log_msg = "Closing figure {}".format(fignum)
+            module_logger.debug(log_msg)
+            
+            sip.delete(context._bottom_contents)
+            plt.close(fignum)
+            
+        else:
+            
+            sip.delete(context._bottom_contents)
+        
+        context._bottom_contents = None
         
         return
