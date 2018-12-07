@@ -2088,6 +2088,10 @@ class DTOceanWindow(MainWindow):
             if isinstance(self._comp_context._bottom_contents, MPLWidget):
                 
                 fignum = self._comp_context._bottom_contents.figure.number
+                
+                log_msg = "Closing figure {}".format(fignum)
+                module_logger.debug(log_msg)
+                
                 sip.delete(self._comp_context._bottom_contents)
                 plt.close(fignum)
                 
@@ -2646,7 +2650,10 @@ class DTOceanWindow(MainWindow):
             self._plot_context._bottom_contents.setParent(None)
             
             fignum = self._plot_context._bottom_contents.figure.number
-#            self._plot_context._bottom_contents.deleteLater()
+            
+            log_msg = "Closing figure {}".format(fignum)
+            module_logger.debug(log_msg)
+            
             sip.delete(self._plot_context._bottom_contents)
             plt.close(fignum)
             
@@ -2666,7 +2673,14 @@ class DTOceanWindow(MainWindow):
         # Draw the widget
         widget.draw_idle()
         
-        assert len(plt.get_fignums()) <= 2
+        if len(plt.get_fignums()) > 2:
+            
+            num_strs = ["{}".format(x) for x in plt.get_fignums()]
+            num_str = ", ".join(num_strs)
+            err_msg = ("Too many matplotlib figures detected. "
+                       "Numbers: {}").format(num_str)
+            
+            raise RuntimeError(err_msg)
             
         if "unavailable" in controller._status: widget.setDisabled(True)
         
@@ -2680,7 +2694,14 @@ class DTOceanWindow(MainWindow):
 
         controller._save_plot(self._shell, file_path, size, plot_name)
         
-        assert len(plt.get_fignums()) <= 2
+        if len(plt.get_fignums()) > 2:
+            
+            num_strs = ["{}".format(x) for x in plt.get_fignums()]
+            num_str = ", ".join(num_strs)
+            err_msg = ("Too many matplotlib figures detected. "
+                       "Numbers: {}").format(num_str)
+            
+            raise RuntimeError(err_msg)
         
         return
     
@@ -2706,13 +2727,18 @@ class DTOceanWindow(MainWindow):
             self._comp_context._bottom_contents.setParent(None)
             
             if isinstance(self._comp_context._bottom_contents, MPLWidget):
+                
                 fignum = self._comp_context._bottom_contents.figure.number
+                
+                log_msg = "Closing figure {}".format(fignum)
+                module_logger.debug(log_msg)
+                
                 sip.delete(self._comp_context._bottom_contents)
                 plt.close(fignum)
-            else:
-                sip.delete(self._comp_context._bottom_contents)
                 
-#            self._plot_context._bottom_contents.deleteLater()
+            else:
+                
+                sip.delete(self._comp_context._bottom_contents)
             
             self._comp_context._bottom_contents = None
             
@@ -2738,7 +2764,14 @@ class DTOceanWindow(MainWindow):
         # Draw the widget
         widget.draw_idle()
         
-        assert len(plt.get_fignums()) <= 2
+        if len(plt.get_fignums()) > 2:
+            
+            num_strs = ["{}".format(x) for x in plt.get_fignums()]
+            num_str = ", ".join(num_strs)
+            err_msg = ("Too many matplotlib figures detected. "
+                       "Numbers: {}").format(num_str)
+            
+            raise RuntimeError(err_msg)
         
         # Switch on save button
         self._sim_comparison.buttonBox.button(
@@ -2770,10 +2803,17 @@ class DTOceanWindow(MainWindow):
             self._comp_context._bottom_contents.setParent(None)
             
             if isinstance(self._comp_context._bottom_contents, MPLWidget):
+                
                 fignum = self._comp_context._bottom_contents.figure.number
+                
+                log_msg = "Closing figure {}".format(fignum)
+                module_logger.debug(log_msg)
+                
                 sip.delete(self._comp_context._bottom_contents)
                 plt.close(fignum)
+                
             else:
+                
                 sip.delete(self._comp_context._bottom_contents)
                 
             self._comp_context._bottom_contents = None
@@ -2827,11 +2867,19 @@ class DTOceanWindow(MainWindow):
             self._comp_context._bottom_contents.setParent(None)
             
             if isinstance(self._comp_context._bottom_contents, MPLWidget):
+                
                 fignum = self._comp_context._bottom_contents.figure.number
+                
+                log_msg = "Closing figure {}".format(fignum)
+                module_logger.debug(log_msg)
+                
                 sip.delete(self._comp_context._bottom_contents)
                 plt.close(fignum)
+                
             else:
+                
                 sip.delete(self._comp_context._bottom_contents)
+                
                 
 #            self._comp_context._bottom_contents.deleteLater()
             self._comp_context._bottom_contents = None
@@ -2856,7 +2904,14 @@ class DTOceanWindow(MainWindow):
         # Draw the widget
         widget.draw_idle()
         
-        assert len(plt.get_fignums()) <= 2
+        if len(plt.get_fignums()) > 2:
+            
+            num_strs = ["{}".format(x) for x in plt.get_fignums()]
+            num_str = ", ".join(num_strs)
+            err_msg = ("Too many matplotlib figures detected. "
+                       "Numbers: {}").format(num_str)
+            
+            raise RuntimeError(err_msg)
         
         # Switch save buttons
         self._level_comparison.buttonBox.button(
@@ -2893,10 +2948,17 @@ class DTOceanWindow(MainWindow):
             self._comp_context._bottom_contents.setParent(None)
             
             if isinstance(self._comp_context._bottom_contents, MPLWidget):
+                
                 fignum = self._comp_context._bottom_contents.figure.number
+                
+                log_msg = "Closing figure {}".format(fignum)
+                module_logger.debug(log_msg)
+                
                 sip.delete(self._comp_context._bottom_contents)
                 plt.close(fignum)
+                
             else:
+                
                 sip.delete(self._comp_context._bottom_contents)
                 
             self._comp_context._bottom_contents = None
