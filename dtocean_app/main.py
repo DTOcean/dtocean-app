@@ -2086,10 +2086,15 @@ class DTOceanWindow(MainWindow):
             self._comp_context._bottom_contents.setParent(None)
             
             if isinstance(self._comp_context._bottom_contents, MPLWidget):
-                self._comp_context._bottom_contents.figure.clear()
-
-#            self._plot_context._bottom_contents.deleteLater()
-            sip.delete(self._comp_context._bottom_contents)
+                
+                fignum = self._comp_context._bottom_contents.figure.number
+                sip.delete(self._comp_context._bottom_contents)
+                plt.close(fignum)
+                
+            else:
+                
+                sip.delete(self._comp_context._bottom_contents)
+            
             self._comp_context._bottom_contents = None
 
         # Update the central widget
