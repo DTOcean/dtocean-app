@@ -2552,7 +2552,7 @@ class DTOceanWindow(MainWindow):
             self._plot_manager.plot.connect(self._set_plot_widget)
             self._plot_manager.save.connect(self._save_plot)
             self._plot_manager._plot_connected = True
-                            
+            
         return
         
     def _set_data_widget(self, controller):
@@ -2568,9 +2568,9 @@ class DTOceanWindow(MainWindow):
                 
                 self._data_context._bottom_contents.setDisabled(True)
                 self._last_data_controller_status = controller._status
-                          
+                
             return
-                                 
+        
         if self._data_context._bottom_contents is not None:
             self._clear_bottom_contents(self._data_context)
         
@@ -3640,8 +3640,8 @@ class DTOceanWindow(MainWindow):
         
         return
     
-    @classmethod
-    def _clear_bottom_contents(cls, context):
+    @staticmethod
+    def _clear_bottom_contents(context):
     
         context._bottom_box.removeWidget(context._bottom_contents)
         context._bottom_contents.setParent(None)
