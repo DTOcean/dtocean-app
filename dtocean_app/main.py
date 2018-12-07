@@ -1093,6 +1093,8 @@ class Shell(QtCore.QObject):
         return
 
     def activate_module_queue(self):
+        
+        if self.queued_interfaces["modules"] is None: return
 
         active_mods = self.module_menu.get_active(self.core, self.project)
 
@@ -1109,6 +1111,8 @@ class Shell(QtCore.QObject):
         return
 
     def activate_theme_queue(self):
+        
+        if self.queued_interfaces["themes"] is None: return
         
         active_themes = self.theme_menu.get_active(self.core, self.project)
 
