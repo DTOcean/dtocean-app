@@ -17,12 +17,14 @@
 
 import os
 
+import pytest
 from PyQt4 import QtCore, QtGui
 
 from polite.paths import Directory
 from dtocean_core.interfaces import ModuleInterface
+from dtocean_app.core import GUICore
 from dtocean_app.main import DTOceanWindow, Shell
-from dtocean_app.pipeline import InputVarItem
+from dtocean_app.pipeline import InputVarControl
 from dtocean_app.widgets.input import ListSelect
 
 
@@ -83,9 +85,21 @@ class MockModule(ModuleInterface):
         return
 
 
-def test_open_dtocean_window(qtbot, mocker):
+@pytest.fixture
+def core():
+    
+    core = GUICore()
+    core._create_data_catalog()
+    core._create_control()
+    core._create_sockets()
+    core._init_plots()
+    
+    return core
+
+
+def test_open_dtocean_window(qtbot, mocker, core):
         
-    shell = Shell()
+    shell = Shell(core)
     window = DTOceanWindow(shell)
     window.show()
     qtbot.addWidget(window)
@@ -97,9 +111,9 @@ def test_open_dtocean_window(qtbot, mocker):
     assert window.windowTitle() == "DTOcean"
 
 
-def test_close_open_dock(qtbot, mocker):
+def test_close_open_dock(qtbot, mocker, core):
         
-    shell = Shell()
+    shell = Shell(core)
     window = DTOceanWindow(shell)
     window.show()
     qtbot.addWidget(window)
@@ -128,9 +142,9 @@ def test_close_open_dock(qtbot, mocker):
     qtbot.waitUntil(dock_is_open)
 
 
-def test_new_project(qtbot, mocker):
+def test_new_project(qtbot, mocker, core):
     
-    shell = Shell()
+    shell = Shell(core)
     window = DTOceanWindow(shell)
     window.show()
     qtbot.addWidget(window)
@@ -146,15 +160,16 @@ def test_new_project(qtbot, mocker):
     assert window.windowTitle() == "DTOcean: Untitled project*"
     
     # Pick up the available pipeline item
-    test_var = window._pipeline_dock._find_item("Device Technology Type",
-                                                InputVarItem)
+    test_var = window._pipeline_dock._find_controller(
+                                    controller_title="Device Technology Type",
+                                    controller_class=InputVarControl)
     
     assert test_var._id == "device.system_type"
 
 
-def test_set_device_type(qtbot, mocker):
+def test_set_device_type(qtbot, mocker, core):
     
-    shell = Shell()
+    shell = Shell(core)
     window = DTOceanWindow(shell)
     window.show()
     qtbot.addWidget(window)
@@ -168,19 +183,24 @@ def test_set_device_type(qtbot, mocker):
     qtbot.mouseClick(new_project_button, QtCore.Qt.LeftButton)
         
     # Pick up the available pipeline item
-    test_var = window._pipeline_dock._find_item("Device Technology Type",
-                                                InputVarItem)
+    test_var = window._pipeline_dock._find_controller(
+                                    controller_title="Device Technology Type",
+                                    controller_class=InputVarControl)
     
     # obtain the rectangular coordinates of the child item
-    tree_widget = window._pipeline_dock.treeWidget
-    rect = tree_widget.visualItemRect(test_var)
+    tree_view = window._pipeline_dock.treeView
+    index = test_var._get_index_from_address()
+    proxy_index = test_var._proxy.mapFromSource(index)
+    rect = tree_view.visualRect(proxy_index)
     
     # simulate the mouse click within the button coordinates
-    qtbot.mouseClick(tree_widget.viewport(),
+    qtbot.mouseClick(tree_view.viewport(),
                      QtCore.Qt.LeftButton,
                      pos=rect.topLeft())
     
-    assert tree_widget.currentItem() == test_var
+    selected_index = tree_view.selectedIndexes()[0]
+    
+    assert selected_index == proxy_index
     assert window._data_context._bottom_contents is not None
     assert isinstance(window._data_context._bottom_contents, ListSelect)
                                   
@@ -198,8 +218,9 @@ def test_set_device_type(qtbot, mocker):
     def check_status():
         
         # Pick up pipeline item again as it's been rebuilt
-        test_var = window._pipeline_dock._find_item("Device Technology Type",
-                                                    InputVarItem)
+        test_var = window._pipeline_dock._find_controller(
+                                    controller_title="Device Technology Type",
+                                    controller_class=InputVarControl)
         
         assert test_var._status == "satisfied"
     
@@ -208,9 +229,9 @@ def test_set_device_type(qtbot, mocker):
     assert True
 
 
-def test_initiate_pipeline(qtbot, mocker):
+def test_initiate_pipeline(qtbot, mocker, core):
     
-    shell = Shell()
+    shell = Shell(core)
     window = DTOceanWindow(shell)
     window.show()
     qtbot.addWidget(window)
@@ -224,15 +245,18 @@ def test_initiate_pipeline(qtbot, mocker):
     qtbot.mouseClick(new_project_button, QtCore.Qt.LeftButton)
         
     # Pick up the available pipeline item
-    test_var = window._pipeline_dock._find_item("Device Technology Type",
-                                                InputVarItem)
+    test_var = window._pipeline_dock._find_controller(
+                                    controller_title="Device Technology Type",
+                                    controller_class=InputVarControl)
     
     # obtain the rectangular coordinates of the child item
-    tree_widget = window._pipeline_dock.treeWidget
-    rect = tree_widget.visualItemRect(test_var)
+    tree_view = window._pipeline_dock.treeView
+    index = test_var._get_index_from_address()
+    proxy_index = test_var._proxy.mapFromSource(index)
+    rect = tree_view.visualRect(proxy_index)
     
-    # simulate the mouse click within the button coordinates    
-    qtbot.mouseClick(tree_widget.viewport(),
+    # simulate the mouse click within the button coordinates
+    qtbot.mouseClick(tree_view.viewport(),
                      QtCore.Qt.LeftButton,
                      pos=rect.topLeft())
                                   
@@ -250,8 +274,9 @@ def test_initiate_pipeline(qtbot, mocker):
     def check_status():
         
         # Pick up pipeline item again as it's been rebuilt
-        test_var = window._pipeline_dock._find_item("Device Technology Type",
-                                                    InputVarItem)
+        test_var = window._pipeline_dock._find_controller(
+                                    controller_title="Device Technology Type",
+                                    controller_class=InputVarControl)
         
         assert test_var._status == "satisfied"
     
@@ -278,7 +303,7 @@ def test_initiate_pipeline(qtbot, mocker):
     assert True
 
 
-def test_export_data(qtbot, mocker, tmpdir):
+def test_export_data(qtbot, mocker, tmpdir, core):
 
     # File path
     datastate_file_name = "my_datastate.dts"
@@ -292,7 +317,7 @@ def test_export_data(qtbot, mocker, tmpdir):
                         'getSaveFileName',
                         return_value=datastate_file_path)
     
-    shell = Shell()
+    shell = Shell(core)
     window = DTOceanWindow(shell)
     window.show()
     qtbot.addWidget(window)
@@ -302,15 +327,18 @@ def test_export_data(qtbot, mocker, tmpdir):
     qtbot.mouseClick(new_project_button, QtCore.Qt.LeftButton)
         
     # Pick up the available pipeline item
-    test_var = window._pipeline_dock._find_item("Device Technology Type",
-                                                InputVarItem)
+    test_var = window._pipeline_dock._find_controller(
+                                    controller_title="Device Technology Type",
+                                    controller_class=InputVarControl)
     
     # obtain the rectangular coordinates of the child item
-    tree_widget = window._pipeline_dock.treeWidget
-    rect = tree_widget.visualItemRect(test_var)
+    tree_view = window._pipeline_dock.treeView
+    index = test_var._get_index_from_address()
+    proxy_index = test_var._proxy.mapFromSource(index)
+    rect = tree_view.visualRect(proxy_index)
     
-    # simulate the mouse click within the button coordinates    
-    qtbot.mouseClick(tree_widget.viewport(),
+    # simulate the mouse click within the button coordinates
+    qtbot.mouseClick(tree_view.viewport(),
                      QtCore.Qt.LeftButton,
                      pos=rect.topLeft())
                                   
@@ -328,8 +356,9 @@ def test_export_data(qtbot, mocker, tmpdir):
     def check_status():
         
         # Pick up pipeline item again as it's been rebuilt
-        test_var = window._pipeline_dock._find_item("Device Technology Type",
-                                                    InputVarItem)
+        test_var = window._pipeline_dock._find_controller(
+                                    controller_title="Device Technology Type",
+                                    controller_class=InputVarControl)
         
         assert test_var._status == "satisfied"
     
@@ -344,7 +373,7 @@ def test_export_data(qtbot, mocker, tmpdir):
     assert os.path.isfile(datastate_file_path)
     
     
-def test_import_data(qtbot, mocker, tmpdir):
+def test_import_data(qtbot, mocker, tmpdir, core):
 
     # File path
     datastate_file_name = "my_datastate.dts"
@@ -362,7 +391,7 @@ def test_import_data(qtbot, mocker, tmpdir):
                         'getOpenFileName',
                         return_value=datastate_file_path)
     
-    shell = Shell()
+    shell = Shell(core)
     window = DTOceanWindow(shell)
     window.show()
     qtbot.addWidget(window)
@@ -372,15 +401,18 @@ def test_import_data(qtbot, mocker, tmpdir):
     qtbot.mouseClick(new_project_button, QtCore.Qt.LeftButton)
         
     # Pick up the available pipeline item
-    test_var = window._pipeline_dock._find_item("Device Technology Type",
-                                                InputVarItem)
+    test_var = window._pipeline_dock._find_controller(
+                                    controller_title="Device Technology Type",
+                                    controller_class=InputVarControl)
     
     # obtain the rectangular coordinates of the child item
-    tree_widget = window._pipeline_dock.treeWidget
-    rect = tree_widget.visualItemRect(test_var)
+    tree_view = window._pipeline_dock.treeView
+    index = test_var._get_index_from_address()
+    proxy_index = test_var._proxy.mapFromSource(index)
+    rect = tree_view.visualRect(proxy_index)
     
-    # simulate the mouse click within the button coordinates    
-    qtbot.mouseClick(tree_widget.viewport(),
+    # simulate the mouse click within the button coordinates
+    qtbot.mouseClick(tree_view.viewport(),
                      QtCore.Qt.LeftButton,
                      pos=rect.topLeft())
                                   
@@ -398,8 +430,9 @@ def test_import_data(qtbot, mocker, tmpdir):
     def check_status():
         
         # Pick up pipeline item again as it's been rebuilt
-        test_var = window._pipeline_dock._find_item("Device Technology Type",
-                                                    InputVarItem)
+        test_var = window._pipeline_dock._find_controller(
+                                    controller_title="Device Technology Type",
+                                    controller_class=InputVarControl)
         
         assert test_var._status == "satisfied"
     
@@ -430,9 +463,9 @@ def test_import_data(qtbot, mocker, tmpdir):
     assert True
     
     
-def test_initiate_dataflow(qtbot, mocker):
+def test_initiate_dataflow(qtbot, mocker, core):
     
-    shell = Shell()
+    shell = Shell(core)
     
     # Add mock module
     socket = shell.core.control._sequencer.get_socket("ModuleInterface")
@@ -455,15 +488,18 @@ def test_initiate_dataflow(qtbot, mocker):
     qtbot.mouseClick(new_project_button, QtCore.Qt.LeftButton)
         
     # Pick up the available pipeline item
-    test_var = window._pipeline_dock._find_item("Device Technology Type",
-                                                InputVarItem)
+    test_var = window._pipeline_dock._find_controller(
+                                    controller_title="Device Technology Type",
+                                    controller_class=InputVarControl)
     
     # obtain the rectangular coordinates of the child item
-    tree_widget = window._pipeline_dock.treeWidget
-    rect = tree_widget.visualItemRect(test_var)
+    tree_view = window._pipeline_dock.treeView
+    index = test_var._get_index_from_address()
+    proxy_index = test_var._proxy.mapFromSource(index)
+    rect = tree_view.visualRect(proxy_index)
     
-    # simulate the mouse click within the button coordinates    
-    qtbot.mouseClick(tree_widget.viewport(),
+    # simulate the mouse click within the button coordinates
+    qtbot.mouseClick(tree_view.viewport(),
                      QtCore.Qt.LeftButton,
                      pos=rect.topLeft())
                                   
@@ -481,8 +517,9 @@ def test_initiate_dataflow(qtbot, mocker):
     def check_status():
         
         # Pick up pipeline item again as it's been rebuilt
-        test_var = window._pipeline_dock._find_item("Device Technology Type",
-                                                    InputVarItem)
+        test_var = window._pipeline_dock._find_controller(
+                                    controller_title="Device Technology Type",
+                                    controller_class=InputVarControl)
         
         assert test_var._status == "satisfied"
     
@@ -553,18 +590,19 @@ def test_initiate_dataflow(qtbot, mocker):
     def check_module_active():
         
         # Pick up pipeline item again as it's been rebuilt
-        test_item = window._pipeline_dock._find_item("Mock Module")
+        test_control = window._pipeline_dock._find_controller(
+                                            controller_title="Mock Module")
         
-        assert test_item is not None
+        assert test_control is not None
     
     qtbot.waitUntil(check_module_active)
     
     assert True
 
 
-def test_set_simulation_title(qtbot, mocker):
+def test_set_simulation_title(qtbot, mocker, core):
     
-    shell = Shell()
+    shell = Shell(core)
     
     # Add mock module
     socket = shell.core.control._sequencer.get_socket("ModuleInterface")
@@ -587,15 +625,18 @@ def test_set_simulation_title(qtbot, mocker):
     qtbot.mouseClick(new_project_button, QtCore.Qt.LeftButton)
         
     # Pick up the available pipeline item
-    test_var = window._pipeline_dock._find_item("Device Technology Type",
-                                                InputVarItem)
+    test_var = window._pipeline_dock._find_controller(
+                                    controller_title="Device Technology Type",
+                                    controller_class=InputVarControl)
     
     # obtain the rectangular coordinates of the child item
-    tree_widget = window._pipeline_dock.treeWidget
-    rect = tree_widget.visualItemRect(test_var)
+    tree_view = window._pipeline_dock.treeView
+    index = test_var._get_index_from_address()
+    proxy_index = test_var._proxy.mapFromSource(index)
+    rect = tree_view.visualRect(proxy_index)
     
-    # simulate the mouse click within the button coordinates    
-    qtbot.mouseClick(tree_widget.viewport(),
+    # simulate the mouse click within the button coordinates
+    qtbot.mouseClick(tree_view.viewport(),
                      QtCore.Qt.LeftButton,
                      pos=rect.topLeft())
                                   
@@ -613,8 +654,9 @@ def test_set_simulation_title(qtbot, mocker):
     def check_status():
         
         # Pick up pipeline item again as it's been rebuilt
-        test_var = window._pipeline_dock._find_item("Device Technology Type",
-                                                    InputVarItem)
+        test_var = window._pipeline_dock._find_controller(
+                                    controller_title="Device Technology Type",
+                                    controller_class=InputVarControl)
         
         assert test_var._status == "satisfied"
     
@@ -685,9 +727,10 @@ def test_set_simulation_title(qtbot, mocker):
     def check_module_active():
         
         # Pick up pipeline item again as it's been rebuilt
-        test_item = window._pipeline_dock._find_item("Mock Module")
+        test_control = window._pipeline_dock._find_controller(
+                                            controller_title="Mock Module")
         
-        assert test_item is not None
+        assert test_control is not None
     
     qtbot.waitUntil(check_module_active)
         
@@ -717,9 +760,9 @@ def test_set_simulation_title(qtbot, mocker):
     assert shell.project.get_simulation_title() == "bob"
 
 
-def test_simulation_clone_select(qtbot, mocker):
+def test_simulation_clone_select(qtbot, mocker, core):
     
-    shell = Shell()
+    shell = Shell(core)
     
     # Add mock module
     socket = shell.core.control._sequencer.get_socket("ModuleInterface")
@@ -742,15 +785,18 @@ def test_simulation_clone_select(qtbot, mocker):
     qtbot.mouseClick(new_project_button, QtCore.Qt.LeftButton)
         
     # Pick up the available pipeline item
-    test_var = window._pipeline_dock._find_item("Device Technology Type",
-                                                InputVarItem)
+    test_var = window._pipeline_dock._find_controller(
+                                    controller_title="Device Technology Type",
+                                    controller_class=InputVarControl)
     
     # obtain the rectangular coordinates of the child item
-    tree_widget = window._pipeline_dock.treeWidget
-    rect = tree_widget.visualItemRect(test_var)
+    tree_view = window._pipeline_dock.treeView
+    index = test_var._get_index_from_address()
+    proxy_index = test_var._proxy.mapFromSource(index)
+    rect = tree_view.visualRect(proxy_index)
     
-    # simulate the mouse click within the button coordinates    
-    qtbot.mouseClick(tree_widget.viewport(),
+    # simulate the mouse click within the button coordinates
+    qtbot.mouseClick(tree_view.viewport(),
                      QtCore.Qt.LeftButton,
                      pos=rect.topLeft())
                                   
@@ -768,8 +814,9 @@ def test_simulation_clone_select(qtbot, mocker):
     def check_status():
         
         # Pick up pipeline item again as it's been rebuilt
-        test_var = window._pipeline_dock._find_item("Device Technology Type",
-                                                    InputVarItem)
+        test_var = window._pipeline_dock._find_controller(
+                                    controller_title="Device Technology Type",
+                                    controller_class=InputVarControl)
         
         assert test_var._status == "satisfied"
     
@@ -840,9 +887,10 @@ def test_simulation_clone_select(qtbot, mocker):
     def check_module_active():
         
         # Pick up pipeline item again as it's been rebuilt
-        test_item = window._pipeline_dock._find_item("Mock Module")
+        test_control = window._pipeline_dock._find_controller(
+                                            controller_title="Mock Module")
         
-        assert test_item is not None
+        assert test_control is not None
     
     qtbot.waitUntil(check_module_active)
     
@@ -879,7 +927,7 @@ def test_simulation_clone_select(qtbot, mocker):
     qtbot.waitUntil(is_active_simulation)
 
 
-def test_credentials_add_delete(qtbot, mocker, tmpdir):
+def test_credentials_add_delete(qtbot, mocker, tmpdir, core):
     
     # Make a source directory with some files
     config_tmpdir = tmpdir.mkdir("config")
@@ -894,7 +942,7 @@ def test_credentials_add_delete(qtbot, mocker, tmpdir):
                         return_value=QtGui.QMessageBox.Yes)
                       
     
-    shell = Shell()
+    shell = Shell(core)
     window = DTOceanWindow(shell)
     window.show()
     qtbot.addWidget(window)
@@ -906,8 +954,9 @@ def test_credentials_add_delete(qtbot, mocker, tmpdir):
     assert window.windowTitle() == "DTOcean: Untitled project*"
     
     # Pick up the available pipeline item
-    test_var = window._pipeline_dock._find_item("Device Technology Type",
-                                                InputVarItem)
+    test_var = window._pipeline_dock._find_controller(
+                                    controller_title="Device Technology Type",
+                                    controller_class=InputVarControl)
     
     assert test_var._id == "device.system_type"
     
@@ -967,7 +1016,7 @@ def test_credentials_add_delete(qtbot, mocker, tmpdir):
     db_selector.close()
 
 
-def test_select_database(qtbot, mocker, tmpdir):
+def test_select_database(qtbot, mocker, tmpdir, core):
 
     # Make a source directory with some files
     config_tmpdir = tmpdir.mkdir("config")
@@ -985,7 +1034,7 @@ def test_select_database(qtbot, mocker, tmpdir):
                         return_value=QtGui.QMessageBox.Yes)
     
     
-    shell = Shell()
+    shell = Shell(core)
     window = DTOceanWindow(shell)
     window.show()
     qtbot.addWidget(window)
@@ -997,8 +1046,9 @@ def test_select_database(qtbot, mocker, tmpdir):
     assert window.windowTitle() == "DTOcean: Untitled project*"
     
     # Pick up the available pipeline item
-    test_var = window._pipeline_dock._find_item("Device Technology Type",
-                                                InputVarItem)
+    test_var = window._pipeline_dock._find_controller(
+                                    controller_title="Device Technology Type",
+                                    controller_class=InputVarControl)
     
     assert test_var._id == "device.system_type"
     
@@ -1045,7 +1095,7 @@ def test_select_database(qtbot, mocker, tmpdir):
     db_selector.close()
 
 
-def test_deselect_database(qtbot, mocker, tmpdir):
+def test_deselect_database(qtbot, mocker, tmpdir, core):
     
     # Make a source directory with some files
     config_tmpdir = tmpdir.mkdir("config")
@@ -1062,7 +1112,7 @@ def test_deselect_database(qtbot, mocker, tmpdir):
                         'question',
                         return_value=QtGui.QMessageBox.Yes)
     
-    shell = Shell()
+    shell = Shell(core)
     window = DTOceanWindow(shell)
     window.show()
     qtbot.addWidget(window)
@@ -1074,8 +1124,9 @@ def test_deselect_database(qtbot, mocker, tmpdir):
     assert window.windowTitle() == "DTOcean: Untitled project*"
     
     # Pick up the available pipeline item
-    test_var = window._pipeline_dock._find_item("Device Technology Type",
-                                                InputVarItem)
+    test_var = window._pipeline_dock._find_controller(
+                                    controller_title="Device Technology Type",
+                                    controller_class=InputVarControl)
     
     assert test_var._id == "device.system_type"
     
@@ -1133,7 +1184,7 @@ def test_deselect_database(qtbot, mocker, tmpdir):
     db_selector.close()
 
 
-def test_credentials_rename(qtbot, mocker, tmpdir):
+def test_credentials_rename(qtbot, mocker, tmpdir, core):
     
     # Make a source directory with some files
     config_tmpdir = tmpdir.mkdir("config")
@@ -1148,7 +1199,7 @@ def test_credentials_rename(qtbot, mocker, tmpdir):
                         return_value=QtGui.QMessageBox.Yes)
                       
     
-    shell = Shell()
+    shell = Shell(core)
     window = DTOceanWindow(shell)
     window.show()
     qtbot.addWidget(window)
@@ -1160,8 +1211,9 @@ def test_credentials_rename(qtbot, mocker, tmpdir):
     assert window.windowTitle() == "DTOcean: Untitled project*"
     
     # Pick up the available pipeline item
-    test_var = window._pipeline_dock._find_item("Device Technology Type",
-                                                InputVarItem)
+    test_var = window._pipeline_dock._find_controller(
+                                    controller_title="Device Technology Type",
+                                    controller_class=InputVarControl)
     
     assert test_var._id == "device.system_type"
     
@@ -1226,7 +1278,7 @@ def test_credentials_rename(qtbot, mocker, tmpdir):
     db_selector.close()
 
 
-def test_credentials_save(qtbot, mocker, tmpdir):
+def test_credentials_save(qtbot, mocker, tmpdir, core):
     
     # Make a source directory with some files
     config_tmpdir = tmpdir.mkdir("config")
@@ -1241,7 +1293,7 @@ def test_credentials_save(qtbot, mocker, tmpdir):
                         return_value=QtGui.QMessageBox.Yes)
                       
     
-    shell = Shell()
+    shell = Shell(core)
     window = DTOceanWindow(shell)
     window.show()
     qtbot.addWidget(window)
@@ -1253,8 +1305,9 @@ def test_credentials_save(qtbot, mocker, tmpdir):
     assert window.windowTitle() == "DTOcean: Untitled project*"
     
     # Pick up the available pipeline item
-    test_var = window._pipeline_dock._find_item("Device Technology Type",
-                                                InputVarItem)
+    test_var = window._pipeline_dock._find_controller(
+                                    controller_title="Device Technology Type",
+                                    controller_class=InputVarControl)
     
     assert test_var._id == "device.system_type"
     
@@ -1312,7 +1365,7 @@ def test_credentials_save(qtbot, mocker, tmpdir):
     db_selector.close()
 
 
-def test_dump_load_database(qtbot, mocker, tmpdir):
+def test_dump_load_database(qtbot, mocker, tmpdir, core):
     
     # Make a source directory with some files
     config_tmpdir = tmpdir.mkdir("config")
@@ -1339,7 +1392,7 @@ def test_dump_load_database(qtbot, mocker, tmpdir):
                         'warning',
                         return_value=QtGui.QMessageBox.Yes)
     
-    shell = Shell()
+    shell = Shell(core)
     window = DTOceanWindow(shell)
     window.show()
     qtbot.addWidget(window)
@@ -1351,8 +1404,9 @@ def test_dump_load_database(qtbot, mocker, tmpdir):
     assert window.windowTitle() == "DTOcean: Untitled project*"
     
     # Pick up the available pipeline item
-    test_var = window._pipeline_dock._find_item("Device Technology Type",
-                                                InputVarItem)
+    test_var = window._pipeline_dock._find_controller(
+                                    controller_title="Device Technology Type",
+                                    controller_class=InputVarControl)
     
     assert test_var._id == "device.system_type"
     
@@ -1409,9 +1463,9 @@ def test_dump_load_database(qtbot, mocker, tmpdir):
     db_selector.close()
 
 
-def test_save_modify_close(qtbot, mocker, tmpdir):
+def test_save_modify_close(qtbot, mocker, tmpdir, core):
     
-    shell = Shell()
+    shell = Shell(core)
     
     # Add mock module
     socket = shell.core.control._sequencer.get_socket("ModuleInterface")
@@ -1440,15 +1494,18 @@ def test_save_modify_close(qtbot, mocker, tmpdir):
     qtbot.mouseClick(new_project_button, QtCore.Qt.LeftButton)
         
     # Pick up the available pipeline item
-    test_var = window._pipeline_dock._find_item("Device Technology Type",
-                                                InputVarItem)
+    test_var = window._pipeline_dock._find_controller(
+                                    controller_title="Device Technology Type",
+                                    controller_class=InputVarControl)
     
     # obtain the rectangular coordinates of the child item
-    tree_widget = window._pipeline_dock.treeWidget
-    rect = tree_widget.visualItemRect(test_var)
+    tree_view = window._pipeline_dock.treeView
+    index = test_var._get_index_from_address()
+    proxy_index = test_var._proxy.mapFromSource(index)
+    rect = tree_view.visualRect(proxy_index)
     
     # simulate the mouse click within the button coordinates
-    qtbot.mouseClick(tree_widget.viewport(),
+    qtbot.mouseClick(tree_view.viewport(),
                      QtCore.Qt.LeftButton,
                      pos=rect.topLeft())
                                   
@@ -1466,8 +1523,9 @@ def test_save_modify_close(qtbot, mocker, tmpdir):
     def check_status():
         
         # Pick up pipeline item again as it's been rebuilt
-        test_var = window._pipeline_dock._find_item("Device Technology Type",
-                                                    InputVarItem)
+        test_var = window._pipeline_dock._find_controller(
+                                    controller_title="Device Technology Type",
+                                    controller_class=InputVarControl)
         
         assert test_var._status == "satisfied"
     
@@ -1538,35 +1596,40 @@ def test_save_modify_close(qtbot, mocker, tmpdir):
     def check_module_active():
         
         # Pick up pipeline item again as it's been rebuilt
-        test_item = window._pipeline_dock._find_item("Mock Module")
+        test_control = window._pipeline_dock._find_controller(
+                                            controller_title="Mock Module")
         
-        assert test_item is not None
+        assert test_control is not None
     
     qtbot.waitUntil(check_module_active)
     
     # Save the simulation
     save_button = window.fileToolBar.widgetForAction(window.actionSave)
     qtbot.mouseClick(save_button, QtCore.Qt.LeftButton)
-    
-    def dto_file_saved(): assert os.listdir(str(tmpdir))[0] == "test.dto"
+
+    def dto_file_saved():
+        assert (len(os.listdir(str(tmpdir))) > 0 and
+                os.listdir(str(tmpdir))[0] == "test.dto")
     
     qtbot.waitUntil(dto_file_saved)
     
     # Modify a variable
-    test_var = window._pipeline_dock._find_item("Device Rated Power",
-                                                InputVarItem)
+    test_var = window._pipeline_dock._find_controller(
+                                    controller_title="Device Rated Power",
+                                    controller_class=InputVarControl)
     
     # obtain the rectangular coordinates of the child item
-    tree_widget = window._pipeline_dock.treeWidget
-    rect = tree_widget.visualItemRect(test_var)
+    tree_view = window._pipeline_dock.treeView
+    index = test_var._get_index_from_address()
+    proxy_index = test_var._proxy.mapFromSource(index)
+    rect = tree_view.visualRect(proxy_index)
     
     # simulate the mouse click within the button coordinates
-    qtbot.mouseClick(tree_widget.viewport(),
+    qtbot.mouseClick(tree_view.viewport(),
                      QtCore.Qt.LeftButton,
                      pos=rect.topLeft())
     
     # Let the system catch up
-    # TODO: This is indicative of the occasion segfault that happens
     qtbot.wait(200)
     
     float_select = window._data_context._bottom_contents
@@ -1581,8 +1644,9 @@ def test_save_modify_close(qtbot, mocker, tmpdir):
     def check_status_two():
         
         # Pick up pipeline item again as it's been rebuilt
-        test_var = window._pipeline_dock._find_item("Device Rated Power",
-                                                    InputVarItem)
+        test_var = window._pipeline_dock._find_controller(
+                                    controller_title="Device Rated Power",
+                                    controller_class=InputVarControl)
         
         assert test_var._status == "satisfied"
     
@@ -1601,9 +1665,9 @@ def test_save_modify_close(qtbot, mocker, tmpdir):
     qtbot.waitUntil(close_button_not_enabled)
 
 
-def test_save_project(qtbot, mocker, tmpdir):
+def test_save_project(qtbot, mocker, tmpdir, core):
     
-    shell = Shell()
+    shell = Shell(core)
     
     # Add mock module
     socket = shell.core.control._sequencer.get_socket("ModuleInterface")
@@ -1632,15 +1696,18 @@ def test_save_project(qtbot, mocker, tmpdir):
     qtbot.mouseClick(new_project_button, QtCore.Qt.LeftButton)
         
     # Pick up the available pipeline item
-    test_var = window._pipeline_dock._find_item("Device Technology Type",
-                                                InputVarItem)
+    test_var = window._pipeline_dock._find_controller(
+                                    controller_title="Device Technology Type",
+                                    controller_class=InputVarControl)
     
     # obtain the rectangular coordinates of the child item
-    tree_widget = window._pipeline_dock.treeWidget
-    rect = tree_widget.visualItemRect(test_var)
+    tree_view = window._pipeline_dock.treeView
+    index = test_var._get_index_from_address()
+    proxy_index = test_var._proxy.mapFromSource(index)
+    rect = tree_view.visualRect(proxy_index)
     
     # simulate the mouse click within the button coordinates
-    qtbot.mouseClick(tree_widget.viewport(),
+    qtbot.mouseClick(tree_view.viewport(),
                      QtCore.Qt.LeftButton,
                      pos=rect.topLeft())
                                   
@@ -1658,8 +1725,9 @@ def test_save_project(qtbot, mocker, tmpdir):
     def check_status():
         
         # Pick up pipeline item again as it's been rebuilt
-        test_var = window._pipeline_dock._find_item("Device Technology Type",
-                                                    InputVarItem)
+        test_var = window._pipeline_dock._find_controller(
+                                    controller_title="Device Technology Type",
+                                    controller_class=InputVarControl)
         
         assert test_var._status == "satisfied"
     
@@ -1730,9 +1798,10 @@ def test_save_project(qtbot, mocker, tmpdir):
     def check_module_active():
         
         # Pick up pipeline item again as it's been rebuilt
-        test_item = window._pipeline_dock._find_item("Mock Module")
+        test_control = window._pipeline_dock._find_controller(
+                                            controller_title="Mock Module")
         
-        assert test_item is not None
+        assert test_control is not None
     
     qtbot.waitUntil(check_module_active)
     
@@ -1740,14 +1809,16 @@ def test_save_project(qtbot, mocker, tmpdir):
     save_button = window.fileToolBar.widgetForAction(window.actionSave)
     qtbot.mouseClick(save_button, QtCore.Qt.LeftButton)
     
-    def dto_file_saved(): assert os.listdir(str(tmpdir))[0] == "test.prj"
+    def dto_file_saved():
+         assert (len(os.listdir(str(tmpdir))) > 0 and
+                 os.listdir(str(tmpdir))[0] == "test.prj")
     
     qtbot.waitUntil(dto_file_saved)
 
 
-def test_select_strategy(qtbot, mocker, tmpdir):
+def test_select_strategy(qtbot, mocker, tmpdir, core):
     
-    shell = Shell()
+    shell = Shell(core)
     
     # Add mock module
     socket = shell.core.control._sequencer.get_socket("ModuleInterface")
@@ -1776,15 +1847,18 @@ def test_select_strategy(qtbot, mocker, tmpdir):
     qtbot.mouseClick(new_project_button, QtCore.Qt.LeftButton)
         
     # Pick up the available pipeline item
-    test_var = window._pipeline_dock._find_item("Device Technology Type",
-                                                InputVarItem)
+    test_var = window._pipeline_dock._find_controller(
+                                    controller_title="Device Technology Type",
+                                    controller_class=InputVarControl)
     
     # obtain the rectangular coordinates of the child item
-    tree_widget = window._pipeline_dock.treeWidget
-    rect = tree_widget.visualItemRect(test_var)
+    tree_view = window._pipeline_dock.treeView
+    index = test_var._get_index_from_address()
+    proxy_index = test_var._proxy.mapFromSource(index)
+    rect = tree_view.visualRect(proxy_index)
     
     # simulate the mouse click within the button coordinates
-    qtbot.mouseClick(tree_widget.viewport(),
+    qtbot.mouseClick(tree_view.viewport(),
                      QtCore.Qt.LeftButton,
                      pos=rect.topLeft())
                                   
@@ -1802,8 +1876,9 @@ def test_select_strategy(qtbot, mocker, tmpdir):
     def check_status():
         
         # Pick up pipeline item again as it's been rebuilt
-        test_var = window._pipeline_dock._find_item("Device Technology Type",
-                                                    InputVarItem)
+        test_var = window._pipeline_dock._find_controller(
+                                    controller_title="Device Technology Type",
+                                    controller_class=InputVarControl)
         
         assert test_var._status == "satisfied"
     
@@ -1874,9 +1949,10 @@ def test_select_strategy(qtbot, mocker, tmpdir):
     def check_module_active():
         
         # Pick up pipeline item again as it's been rebuilt
-        test_item = window._pipeline_dock._find_item("Mock Module")
+        test_control = window._pipeline_dock._find_controller(
+                                            controller_title="Mock Module")
         
-        assert test_item is not None
+        assert test_control is not None
     
     qtbot.waitUntil(check_module_active)
     
@@ -1909,9 +1985,9 @@ def test_select_strategy(qtbot, mocker, tmpdir):
     assert str(strategy_manager.topDynamicLabel.text()) == str(item.text())
 
 
-def test_strategy_save_close_open(qtbot, mocker, tmpdir):
+def test_strategy_save_close_open(qtbot, mocker, tmpdir, core):
     
-    shell = Shell()
+    shell = Shell(core)
     
     # Add mock module
     socket = shell.core.control._sequencer.get_socket("ModuleInterface")
@@ -1944,15 +2020,18 @@ def test_strategy_save_close_open(qtbot, mocker, tmpdir):
     qtbot.mouseClick(new_project_button, QtCore.Qt.LeftButton)
         
     # Pick up the available pipeline item
-    test_var = window._pipeline_dock._find_item("Device Technology Type",
-                                                InputVarItem)
+    test_var = window._pipeline_dock._find_controller(
+                                    controller_title="Device Technology Type",
+                                    controller_class=InputVarControl)
     
     # obtain the rectangular coordinates of the child item
-    tree_widget = window._pipeline_dock.treeWidget
-    rect = tree_widget.visualItemRect(test_var)
+    tree_view = window._pipeline_dock.treeView
+    index = test_var._get_index_from_address()
+    proxy_index = test_var._proxy.mapFromSource(index)
+    rect = tree_view.visualRect(proxy_index)
     
     # simulate the mouse click within the button coordinates
-    qtbot.mouseClick(tree_widget.viewport(),
+    qtbot.mouseClick(tree_view.viewport(),
                      QtCore.Qt.LeftButton,
                      pos=rect.topLeft())
                                   
@@ -1970,8 +2049,9 @@ def test_strategy_save_close_open(qtbot, mocker, tmpdir):
     def check_status():
         
         # Pick up pipeline item again as it's been rebuilt
-        test_var = window._pipeline_dock._find_item("Device Technology Type",
-                                                    InputVarItem)
+        test_var = window._pipeline_dock._find_controller(
+                                    controller_title="Device Technology Type",
+                                    controller_class=InputVarControl)
         
         assert test_var._status == "satisfied"
     
@@ -2042,9 +2122,10 @@ def test_strategy_save_close_open(qtbot, mocker, tmpdir):
     def check_module_active():
         
         # Pick up pipeline item again as it's been rebuilt
-        test_item = window._pipeline_dock._find_item("Mock Module")
+        test_control = window._pipeline_dock._find_controller(
+                                            controller_title="Mock Module")
         
-        assert test_item is not None
+        assert test_control is not None
     
     qtbot.waitUntil(check_module_active)
     
@@ -2084,7 +2165,9 @@ def test_strategy_save_close_open(qtbot, mocker, tmpdir):
     save_button = window.fileToolBar.widgetForAction(window.actionSave)
     qtbot.mouseClick(save_button, QtCore.Qt.LeftButton)
     
-    def dto_file_saved(): assert os.listdir(str(tmpdir))[0] == "test.dto"
+    def dto_file_saved():
+         assert (len(os.listdir(str(tmpdir))) > 0 and
+                 os.listdir(str(tmpdir))[0] == "test.dto")
     
     qtbot.waitUntil(dto_file_saved)
     

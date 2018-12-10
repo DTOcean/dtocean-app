@@ -294,6 +294,8 @@ class ThreadSave(QtCore.QThread):
                 shutil.move(prj_file_path, self._save_path)
                 shutil.rmtree(dto_dir_path)
                 
+                self.taskFinished.emit()
+                
                 return
             
             # Dump the output scope
