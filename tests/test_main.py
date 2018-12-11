@@ -25,6 +25,7 @@ from dtocean_core.interfaces import ModuleInterface
 from dtocean_app.core import GUICore
 from dtocean_app.main import DTOceanWindow, Shell
 from dtocean_app.pipeline import InputVarControl
+from dtocean_app.widgets.dialogs import Message
 from dtocean_app.widgets.input import ListSelect
 
 
@@ -565,12 +566,18 @@ def test_initiate_dataflow(qtbot, mocker, core):
     
     qtbot.waitUntil(module_on_right)
     
-    button = module_shuttle.buttonBox.button(QtGui.QDialogButtonBox.Ok)
-    qtbot.mouseClick(button,
-                     QtCore.Qt.LeftButton)
+    mod_ok_button = module_shuttle.buttonBox.button(QtGui.QDialogButtonBox.Ok)
+    qtbot.mouseClick(mod_ok_button, QtCore.Qt.LeftButton)
     
     def add_modules_not_visible(): assert not module_shuttle.isVisible()
     
+    qtbot.waitUntil(add_modules_not_visible)
+    
+    # Reopen module shuttle and check module is still selected
+    qtbot.mouseClick(add_modules_button, QtCore.Qt.LeftButton)
+    qtbot.waitUntil(add_modules_visible)
+    qtbot.waitUntil(module_on_right)
+    qtbot.mouseClick(mod_ok_button, QtCore.Qt.LeftButton)
     qtbot.waitUntil(add_modules_not_visible)
     
     # Initiate the dataflow
@@ -913,6 +920,18 @@ def test_simulation_clone_select(qtbot, mocker, core):
     test_sim = window._simulation_dock.listWidget.item(1)
     
     assert test_sim._title == "Default Clone 1"
+    
+    # Try (and fail) to set the new simulation title to Default
+    editor = mocker.Mock()
+    editor.text.return_value = "Default"
+    
+    window._simulation_dock.listWidget.setCurrentRow(1)
+    window._simulation_dock._catch_edit(editor, None)
+    
+    def check_name():
+        assert test_sim._title == "Default Clone 1"
+    
+    qtbot.waitUntil(check_name)
     
     # Select the default simulation
     item = window._simulation_dock.listWidget.item(0)
@@ -1968,21 +1987,35 @@ def test_select_strategy(qtbot, mocker, tmpdir, core):
     
     qtbot.waitUntil(strategy_manager_visible)
     
-    # Click on first strategy and apply
-    item = strategy_manager.listWidget.item(0)
-    rect = strategy_manager.listWidget.visualItemRect(item)
-    qtbot.mouseClick(strategy_manager.listWidget.viewport(),
-                     QtCore.Qt.LeftButton,
-                     pos=rect.center())
+    # Click on all strategies
+    for idx in xrange(strategy_manager.listWidget.count()):
+        
+        item = strategy_manager.listWidget.item(idx)
+        rect = strategy_manager.listWidget.visualItemRect(item)
+        qtbot.mouseClick(strategy_manager.listWidget.viewport(),
+                         QtCore.Qt.LeftButton,
+                         pos=rect.center())
+        
+        # Wait to register click
+        qtbot.wait(200)
+        
+        apply_button = strategy_manager.buttonBox.button(
+                                                QtGui.QDialogButtonBox.Apply)
+        
+        # Apply strategy if possible
+        if apply_button.isEnabled():
+        
+            qtbot.mouseClick(apply_button, QtCore.Qt.LeftButton)
+            top_label = str(strategy_manager.topDynamicLabel.text())
     
-    # Wait to register click
-    qtbot.wait(200)
+            assert top_label == str(item.text())
     
+    # Reset the strategy
     qtbot.mouseClick(
-            strategy_manager.buttonBox.button(QtGui.QDialogButtonBox.Apply),
+            strategy_manager.buttonBox.button(QtGui.QDialogButtonBox.Reset),
             QtCore.Qt.LeftButton)
     
-    assert str(strategy_manager.topDynamicLabel.text()) == str(item.text())
+    assert str(strategy_manager.topDynamicLabel.text()) == "None"
 
 
 def test_strategy_save_close_open(qtbot, mocker, tmpdir, core):
