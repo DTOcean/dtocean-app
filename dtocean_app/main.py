@@ -2569,7 +2569,8 @@ class DTOceanWindow(MainWindow):
             controller._id == self._last_data_controller._id and
             type(controller) == type(self._last_data_controller)):
 
-            if (controller._status != self._last_data_controller_status and
+            if (controller._status is not None and
+                controller._status != self._last_data_controller_status and
                 "unavailable" in controller._status):
                 
                 self._data_context._bottom_contents.setDisabled(True)
