@@ -418,6 +418,9 @@ class BaseControl(object):
     def _init_ui(self, item):
 
         item.setText(self._title)
+        item.setFlags(QtCore.Qt.ItemIsSelectable |
+                      QtCore.Qt.ItemIsUserCheckable |
+                      QtCore.Qt.ItemIsEnabled)
 
         return
     
@@ -491,6 +494,10 @@ class SectionControl(BaseControl):
         
         item.setText(section_title)
         item.setTextAlignment(QtCore.Qt.AlignCenter)
+        item.setFlags(QtCore.Qt.ItemIsSelectable |
+                      QtCore.Qt.ItemIsUserCheckable |
+                      QtCore.Qt.ItemIsEnabled)
+        
         bbrush = QtGui.QBrush(QtGui.QColor("lightgrey"))
         item.setBackground(bbrush)
         
@@ -689,12 +696,10 @@ class InputBranchControl(BaseControl):
                                           self._view,
                                           self._model,
                                           self._proxy,
-                                          new_var,
-                                          status,
-                                          name_item,
-                                          user_dict)
+                                          new_var)
             
             new_control._init_ui(name_item)
+            new_control._update_status(status, name_item, user_dict)
             
             self._controls.append(new_control)
             
@@ -867,12 +872,10 @@ class OutputBranchControl(BaseControl):
                                            self._view,
                                            self._model,
                                            self._proxy,
-                                           new_var,
-                                           status,
-                                           name_item,
-                                           user_dict)
+                                           new_var)
             
             new_control._init_ui(name_item)
+            new_control._update_status(status, name_item, user_dict)
             
             self._controls.append(new_control)
             
@@ -920,16 +923,11 @@ class VarControl(BaseControl):
                        view,
                        model,
                        proxy,
-                       variable,
-                       status,
-                       item=None,
-                       item_user_dict=None):
+                       variable):
                            
         super(VarControl, self).__init__(address, title, view, model, proxy)
         self._variable = variable
         self._id = variable._id
-        
-        self._update_status(status, item, item_user_dict)
         
         return
         
