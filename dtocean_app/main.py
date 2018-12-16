@@ -3628,6 +3628,7 @@ class DTOceanWindow(MainWindow):
                             QtGui.QMessageBox.No | QtGui.QMessageBox.Default)
             
             if reply == QtGui.QMessageBox.Yes:
+                sys.excepthook = sys.__excepthook__
                 event.accept()
             elif reply == QtGui.QMessageBox.No:
                 event.ignore()
