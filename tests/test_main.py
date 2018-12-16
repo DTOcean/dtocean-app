@@ -24,7 +24,7 @@ from polite.paths import Directory
 from dtocean_core.interfaces import ModuleInterface
 from dtocean_app.core import GUICore
 from dtocean_app.main import DTOceanWindow, Shell
-from dtocean_app.pipeline import InputVarControl
+from dtocean_app.pipeline import InputVarControl, SectionControl
 from dtocean_app.widgets.dialogs import Message
 from dtocean_app.widgets.input import ListSelect
 
@@ -166,6 +166,41 @@ def test_new_project(qtbot, mocker, core):
                                     controller_class=InputVarControl)
     
     assert test_var._id == "device.system_type"
+
+
+def test_click_section_twice(qtbot, mocker, core):
+    
+    shell = Shell(core)
+    window = DTOceanWindow(shell)
+    window.show()
+    qtbot.addWidget(window)
+
+    # Get the new project button and click it
+    new_project_button = window.fileToolBar.widgetForAction(window.actionNew)
+    qtbot.mouseClick(new_project_button, QtCore.Qt.LeftButton)
+        
+    # Pick up the available pipeline item
+    test_var = window._pipeline_dock._find_controller(
+                                    controller_title="Configuration",
+                                    controller_class=SectionControl)
+    
+    # obtain the rectangular coordinates of the child item
+    tree_view = window._pipeline_dock.treeView
+    index = test_var._get_index_from_address()
+    proxy_index = test_var._proxy.mapFromSource(index)
+    rect = tree_view.visualRect(proxy_index)
+    
+    # simulate the mouse click within the button coordinates
+    qtbot.mouseClick(tree_view.viewport(),
+                     QtCore.Qt.LeftButton,
+                     pos=rect.topLeft())
+    
+    # simulate the mouse click within the button coordinates
+    qtbot.mouseClick(tree_view.viewport(),
+                     QtCore.Qt.LeftButton,
+                     pos=rect.topLeft())
+    
+    assert True
 
 
 def test_set_device_type(qtbot, mocker, core):
