@@ -886,9 +886,11 @@ class SimpleData(GUIStructure, SimpleData):
             if self.meta.result.units is not None:
                 unit = self.meta.result.units[0]
     
-            input_widget = ListSelect(self.parent,
-                                      self.meta.result.valid_values,
-                                      unit)
+            input_widget = ListSelect(
+                                    self.parent,
+                                    self.meta.result.valid_values,
+                                    unit=unit,
+                                    experimental=self.meta.result.experimental)
             input_widget._set_value(self.data.result)
             
         elif self.meta.result.types is None:

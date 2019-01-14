@@ -111,19 +111,31 @@ class CancelWidget(QtGui.QWidget):
 
 class ListSelect(QtGui.QWidget, Ui_ListSelect):
 
-    def __init__(self, parent, data, unit=None, question=None):
+    def __init__(self, parent,
+                       data,
+                       unit=None,
+                       question=None,
+                       experimental=None):
 
         QtGui.QWidget.__init__(self, parent)
         Ui_ListSelect.__init__(self)
+        self._experimental = experimental
+        self._experimental_str =  " (Experimental)"
         
         self.setupUi(self)
-        self._init_ui(data, unit=unit, question=question)
+        self._init_ui(data,
+                      unit=unit,
+                      question=question)
 
         return
 
     def _init_ui(self, data, value=None, unit=None, question=None):
 
         for item in data:
+            
+            if self._experimental is not None and item in self._experimental:
+                item += self._experimental_str
+            
             self.comboBox.addItem(item)
 
         self.comboBox.setCurrentIndex(-1)
@@ -142,21 +154,32 @@ class ListSelect(QtGui.QWidget, Ui_ListSelect):
     def _set_value(self, value):
         
         valueStr = str(value)
+        
+        if self._experimental is not None and valueStr in self._experimental:
+            valueStr += self._experimental_str
+        
         self.valueLabel.setText(valueStr)
         
         return
 
     def _get_result(self):
-
+        
         current_index = self.comboBox.currentIndex()
-
+        
         if current_index < 0:
             result = None
         else:
-            result = self.comboBox.currentText()
-
+            result = str(self.comboBox.currentText())
+            
+        if self._experimental is not None:
+            
+            test_experimental = result.replace(self._experimental_str, "")
+            
+            if test_experimental in self._experimental:
+                result = test_experimental
+            
         return result
-        
+
     def _get_read_event(self):
 
         return self.buttonBox.button(QtGui.QDialogButtonBox.Ok).clicked

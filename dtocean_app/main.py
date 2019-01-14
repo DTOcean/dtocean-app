@@ -3587,7 +3587,7 @@ class DTOceanWindow(MainWindow):
         errMsg = "{} {} occurred: {:s}".format(article, sane_type_str, evalue)
 
         module_logger.critical(errMsg)
-        module_logger.critical(''.join(traceback.format_tb(etraceback)))        
+        module_logger.critical(''.join(traceback.format_tb(etraceback)))
         QtGui.QMessageBox.critical(self, "ERROR", errMsg)
             
         return
