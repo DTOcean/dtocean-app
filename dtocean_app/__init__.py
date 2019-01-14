@@ -231,7 +231,7 @@ def gui_interface():
             
     '''
     
-    epiStr = ('''Mathew Topper, Tecnalia (c) 2017.''')
+    epiStr = ('''Mathew Topper (c) 2018.''')
               
     desStr = "Run the DTOcean graphical application."
 
