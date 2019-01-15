@@ -1513,7 +1513,7 @@ class DTOceanWindow(MainWindow):
             lambda: self.stackedWidget.setCurrentIndex(self._last_stack_index))
         shell.update_scope.connect(self._current_scope_ui_switch)
 
-        # Collect all saved and unsaved signals        
+        # Collect all saved and unsaved signals
         shell.project_title_change.connect(self._set_project_unsaved)
         shell.project_activated.connect(self._set_project_unsaved)
         shell.reset_widgets.connect(self._set_project_unsaved)
@@ -2369,7 +2369,7 @@ class DTOceanWindow(MainWindow):
         controller = None
         force_plot = False
         
-        # Reset all the stored controllers
+        # reset all the stored controllers and update given controller
         if reset:
             
             self._last_tree_controller = None
@@ -2377,6 +2377,13 @@ class DTOceanWindow(MainWindow):
             self._last_data_controller_status = None
             force_plot = True
             
+            if proxy_index_or_controller is not None:
+                
+                model_index = \
+                    proxy_index_or_controller._get_index_from_address()
+                proxy_index_or_controller = \
+                    proxy_index_or_controller._proxy.mapFromSource(model_index)
+        
         # Return a controller class
         if proxy_index_or_controller is not None:
         
