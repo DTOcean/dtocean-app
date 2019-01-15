@@ -143,6 +143,7 @@ class LogDock(QtGui.QDockWidget, Ui_SystemDock):
         
         self._console = QtGui.QPlainTextEdit(self)
         self._console.setPalette(pal)
+        self._console.setReadOnly(True)
 
         self._layout = QtGui.QVBoxLayout()
         self._layout.setSpacing(2)
