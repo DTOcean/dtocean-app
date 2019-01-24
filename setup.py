@@ -36,7 +36,7 @@ class Bootstrap(Command):
             print "create ui file: {}".format(dst_path)
             os.system(sys_command)
 
-        # Convert shared UI files to py files			
+        # Convert shared UI files to py files
         ui_search_path = os.path.join("designer", "shared", "*.ui")
         dst_dir = os.path.join("dtocean_app", "designer", "low")
         
@@ -84,7 +84,7 @@ class Bootstrap(Command):
             print "create ui file: {}".format(dst_path)
             os.system(sys_command)
 			
-        # Convert shared UI files to py files			
+        # Convert shared UI files to py files
         ui_search_path = os.path.join("designer", "shared", "*.ui")
         dst_dir = os.path.join("dtocean_app", "designer", "high")
         
@@ -217,7 +217,7 @@ setup(name='dtocean-app',
            'pandas>=0.18',
            'dtocean-qt>=0.10.dev0',
            'pil',
-           'polite==0.10.dev1',
+           'polite>=0.10.dev1',
           # 'sip',
           # 'PyQt4',
       ],
