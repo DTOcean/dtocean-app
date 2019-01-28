@@ -643,28 +643,70 @@ class About(QtGui.QDialog, Ui_AboutDialog):
         
         with open(names_path, 'r') as stream:
             names = yaml.load(stream)
-            
-        names_str = ", ".join(names[:-1])
-        names_str += " and {}".format(names[-1])
         
-        self.peopleLabel.setText(names_str)
+        if names is None:
+            
+            self.verticalLayout_3.removeWidget(self.peopleIntroLabel)
+            self.peopleIntroLabel.deleteLater()
+            self.peopleIntroLabel = None
+            
+            self.verticalLayout_3.removeWidget(self.peopleLabel)
+            self.peopleLabel.deleteLater()
+            self.peopleLabel = None
+            
+            self.verticalLayout_3.removeWidget(self.line)
+            self.line.deleteLater()
+            self.line = None
+
+        else:
+            
+            names_str = ", ".join(names[:-1])
+            names_str += " and {}".format(names[-1])
+            
+            self.peopleLabel.setText(names_str)
         
         pix_search_str = os.path.join(resources_path, "beneficiary*.png")
-        self._image_files = cycle(glob.glob(pix_search_str))
+        pix_list = glob.glob(pix_search_str)
         
-        self._timer = QtCore.QTimer(self)
-        self._effect = QtGui.QGraphicsOpacityEffect()
-        self._fade_in = self._init_fade_in(fade_duration)
-        self._fade_out = self._init_fade_out(fade_duration)
-        self.institutionLabel.setGraphicsEffect(self._effect)
+        self._n_pix = len(pix_list)
         
-        self._fade_in.finished.connect(self._start_timer)
-        self._fade_out.finished.connect(self._start_image)
-        self.scrollArea.verticalScrollBar().valueChanged.connect(
-                                            self.institutionLabel.repaint)
+        if self._n_pix > 0:
+            
+            self._image_files = cycle(pix_list)
+        
+        else:
+            
+            self.verticalLayout_3.removeWidget(self.insitutionIntroLabel)
+            self.insitutionIntroLabel.deleteLater()
+            self.insitutionIntroLabel = None
+            
+            self.horizontalLayout.removeWidget(self.frame)
+            self.frame.deleteLater()
+            self.frame = None
+            
+            self.verticalLayout_4.removeWidget(self.insitutionIntroLabel)
+            self.institutionLabel.deleteLater()
+            self.institutionLabel = None
+            
+            self.verticalLayout_3.removeWidget(self.line_3)
+            self.line_3.deleteLater()
+            self.line_3 = None
+            
+        if self._n_pix > 1:
+            
+            self._timer = QtCore.QTimer(self)
+            self._effect = QtGui.QGraphicsOpacityEffect()
+            self._fade_in = self._init_fade_in(fade_duration)
+            self._fade_out = self._init_fade_out(fade_duration)
+            self.institutionLabel.setGraphicsEffect(self._effect)
+            
+            self._fade_in.finished.connect(self._start_timer)
+            self._fade_out.finished.connect(self._start_image)
+            self.scrollArea.verticalScrollBar().valueChanged.connect(
+                                                self.institutionLabel.repaint)
         
         return
-        
+    
     def _init_fade_in(self, duration):
         
         fade_in = QtCore.QPropertyAnimation(self._effect, "opacity")
@@ -672,9 +714,9 @@ class About(QtGui.QDialog, Ui_AboutDialog):
         fade_in.setStartValue(0.0)
         fade_in.setEndValue(1.0)
         fade_in.setEasingCurve(QtCore.QEasingCurve.OutQuad)
-    
-        return fade_in
         
+        return fade_in
+    
     def _init_fade_out(self, duration):
         
         fade_out = QtCore.QPropertyAnimation(self._effect, "opacity")
@@ -682,20 +724,21 @@ class About(QtGui.QDialog, Ui_AboutDialog):
         fade_out.setStartValue(1.0)
         fade_out.setEndValue(0.0)
         fade_out.setEasingCurve(QtCore.QEasingCurve.OutQuad)
-    
-        return fade_out
         
+        return fade_out
+    
     @QtCore.pyqtSlot()
     def _start_image(self):
-    
+        
         image_path = self._image_files.next()
         image = QtGui.QPixmap(image_path)
         self.institutionLabel.setPixmap(image)
         
-        self._fade_in.start()
-                        
-        return
+        if self._n_pix > 1:
+            self._fade_in.start()
         
+        return
+    
     @QtCore.pyqtSlot()
     def _start_timer(self):
     
@@ -716,9 +759,12 @@ class About(QtGui.QDialog, Ui_AboutDialog):
         
         super(About, self).show()
         
-        self._timer.timeout.connect(self._end_image)
-        self._effect.setOpacity(0.)
-        self._start_image()
+        if self._n_pix > 1:
+            self._timer.timeout.connect(self._end_image)
+            self._effect.setOpacity(0.)
+        
+        if self._n_pix > 0:
+            self._start_image()
         
         return
         
@@ -726,8 +772,9 @@ class About(QtGui.QDialog, Ui_AboutDialog):
         
         super(About, self).closeEvent(evnt)
         
-        self._timer.timeout.disconnect()
-        self._timer.stop()
+        if self._n_pix > 1:
+            self._timer.timeout.disconnect()
+            self._timer.stop()
         
         return
         
