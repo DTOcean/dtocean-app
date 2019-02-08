@@ -34,6 +34,7 @@ from collections import namedtuple
 import sip
 import pandas as pd
 import matplotlib.pyplot as plt
+from win32event import CreateMutex
 from PyQt4 import QtGui, QtCore
 
 from dtocean_core.menu import ProjectMenu, ModuleMenu, ThemeMenu, DataMenu
@@ -1418,13 +1419,17 @@ class Shell(QtCore.QObject):
         self.update_pipeline.emit(husk)
         
         return
-                    
-    
+
+
 class DTOceanWindow(MainWindow):
 
     def __init__(self, shell, debug=False):
         
         super(DTOceanWindow, self).__init__()
+        
+        # Create a windows mutex
+        self._mutexname = "mutex_{AEF365BF-44B8-41E8-9906-4D1BADEE42E0}"
+        self._mutex = CreateMutex(None, False, self._mutexname)
         
         # Context Area
         self._data_context = None
