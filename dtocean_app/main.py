@@ -1462,6 +1462,7 @@ class DTOceanWindow(MainWindow):
         self._last_data_controller_status = None
         self._last_plot_id = None
         self._last_plot_name = "auto"
+        self._force_plot = False
                 
         # Last used stack index
         self._last_stack_index = None
@@ -2372,7 +2373,6 @@ class DTOceanWindow(MainWindow):
                                   reset=False):
         
         controller = None
-        force_plot = False
         
         # reset all the stored controllers and update given controller
         if reset:
@@ -2380,7 +2380,7 @@ class DTOceanWindow(MainWindow):
             self._last_tree_controller = None
             self._last_data_controller = None
             self._last_data_controller_status = None
-            force_plot = True
+            self._force_plot = True
             
             if proxy_index_or_controller is not None:
                 
@@ -2404,7 +2404,7 @@ class DTOceanWindow(MainWindow):
             controller = self._pipeline_dock._controls[0]
         
         current_context_action = self.contextGroup.checkedAction()
-          
+        
         if current_context_action is None:
             pass
           
@@ -2415,8 +2415,9 @@ class DTOceanWindow(MainWindow):
             
         elif str(current_context_action.text()) == "Plots":
             
-            self._set_plot_widget(controller, force_plot=force_plot)
+            self._set_plot_widget(controller, force_plot=self._force_plot)
             self._set_plot_manager_widget(controller)
+            self._force_plot = False
             
         self._last_tree_controller = controller
         
