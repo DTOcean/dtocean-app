@@ -282,7 +282,7 @@ class GUICore(QtCore.QObject, Core):
                 
         super(GUICore, self).set_interface_status(project, simulation)
         self.status_updated.emit()
-
+        
         return
         
     def connect_interface(self, project, interface):
