@@ -21,7 +21,7 @@
   </property>
   <property name="windowIcon">
    <iconset resource="../resources_mainwindow.qrc">
-    <normaloff>:/icons/turbine.png</normaloff>:/icons/turbine.png</iconset>
+    <normaloff>:/icons/turbine.ico</normaloff>:/icons/turbine.ico</iconset>
   </property>
   <property name="iconSize">
    <size>

@@ -90,7 +90,7 @@
           <string/>
          </property>
          <property name="pixmap">
-          <pixmap resource="../resources_about.qrc">:/logos/splash_loading.png</pixmap>
+          <pixmap resource="../resources_about.qrc">:/logos/dtocean2plus._padded.png</pixmap>
          </property>
          <property name="alignment">
           <set>Qt::AlignCenter</set>
@@ -394,6 +394,50 @@ QMenu::item:selected{
         </widget>
        </item>
        <item>
+        <widget class="QLabel" name="DTOceanPlusLabel">
+         <property name="styleSheet">
+          <string notr="true">QMenu::item{
+  background-color: rgb(255, 255, 255);
+  color:  rgb(0, 0, 0);
+ }
+QMenu::item:selected{
+  background-color: rgb(252, 124, 1);
+  color:  rgb(0, 0, 0);
+}</string>
+         </property>
+         <property name="text">
+          <string>&lt;p&gt;The DTOceanPlus project aims to expand and improve the capabilities of DTOcean&lt;p&gt;
+&lt;p&gt; For further details and latest news see &lt;a href='https://www.dtoceanplus.eu'&gt;www.dtoceanplus.eu&lt;/a&gt;</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignCenter</set>
+         </property>
+         <property name="openExternalLinks">
+          <bool>true</bool>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <spacer name="verticalSpacer_9">
+         <property name="orientation">
+          <enum>Qt::Vertical</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>20</width>
+           <height>2</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+       <item>
+        <widget class="Line" name="line_4">
+         <property name="orientation">
+          <enum>Qt::Horizontal</enum>
+         </property>
+        </widget>
+       </item>
+       <item>
         <widget class="QLabel" name="freeSoftwareLabel">
          <property name="font">
           <font>
@@ -530,6 +574,9 @@ QMenu::item:selected{
       <zorder>verticalSpacer_7</zorder>
       <zorder>line_3</zorder>
       <zorder>verticalSpacer_8</zorder>
+      <zorder>line_4</zorder>
+      <zorder>DTOceanPlusLabel</zorder>
+      <zorder>verticalSpacer_9</zorder>
      </widget>
     </widget>
    </item>

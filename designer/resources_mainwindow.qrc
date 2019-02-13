@@ -25,7 +25,7 @@
     <file>icons/undo-128.png</file>
     <file>icons/calc.png</file>
     <file>icons/db_update.png</file>
-    <file>icons/turbine.png</file>
     <file>icons/button_cancel-128.png</file>
+    <file>icons/turbine.ico</file>
   </qresource>
 </RCC>

@@ -141,12 +141,12 @@ def main(debug=False, trace_warnings=False):
     app = QtGui.QApplication(sys.argv)
 
     # Create and display the splash screen
-    splash_path = os.path.join(module_path, '..', 'splash_loading.png')
+    splash_path = os.path.join(module_path, '..', 'dtocean2plus_splash.png')
     splash_pix = QtGui.QPixmap(splash_path)
     splash = QtGui.QSplashScreen(splash_pix, QtCore.Qt.WindowStaysOnTopHint)
     splash_font = QtGui.QFont()
     splash_font.setFamily("Verdana")
-    splash_font.setPointSize(7)
+    splash_font.setPointSize(8)
     splash.setMask(splash_pix.mask())
     splash.setFont(splash_font)
     splash.show()
