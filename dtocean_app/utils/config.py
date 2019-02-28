@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-#    Copyright (C) 2016-2018 Mathew Topper
+#    Copyright (C) 2016-2019 Mathew Topper
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -17,12 +17,15 @@
 
 import sys
 import argparse
+import datetime
 
 from polite.configuration import ReadINI
 from polite.paths import (DirectoryMap,
                           ObjDirectory,
                           SiteDataDirectory,
                           UserDataDirectory)
+
+from . import SmartFormatter
 
 
 def get_install_paths():
@@ -77,53 +80,54 @@ def init_config_parser(args):
     
         To get help::
         
-            $ dtocean-app-config -h
+            $ dtocean-core-config -h
             
     '''
     
-    epiStr = ('Mathew Topper (c) 2017.')
+    now = datetime.datetime.now()
+    epiStr = 'The DTOcean Developers (c) {}.'.format(now.year)
               
     desStr = ("Copy user modifiable configuration files to "
               "<UserName>\AppData\Roaming\DTOcean\dtocean-app\config")
 
     parser = argparse.ArgumentParser(description=desStr,
-                                     epilog=epiStr)
+                                     epilog=epiStr,
+                                     formatter_class=SmartFormatter)
     
-    parser.add_argument("--logging",
-                        help=("copy logging configuration"),
-                        action="store_true")
-    
-    parser.add_argument("--files",
-                        help=("copy log file location configuration"),
-                        action="store_true")
-    
-    parser.add_argument("--install",
-                        help=("copy manuals installation path configuration"),
-                        action="store_true")
-    
-    parser.add_argument("--overwrite",
-                        help=("overwrite existing configuration files"),
-                        action="store_true")
-                        
-    args = parser.parse_args(args)
+    parser.add_argument("action",
+                        choices=['logging', 'files', 'install'],
+                        help="R|Select an action, where\n"
+                             " logging = copy logging configuration\n"
+                             " files = copy file location configuration\n"
+                             " install = copy manuals installation path "
+                                         "configuration")
 
-    logging = args.logging
-    files = args.files
-    install = args.install
+    parser.add_argument("--overwrite",
+                        help=("overwrite any existing configuration files"),
+                        action="store_true")
+    
+    args = parser.parse_args(args)
+                        
+    action = args.action
     overwrite = args.overwrite
     
-    return logging, files, install, overwrite
+    return action, overwrite
 
 
 def init_config_interface():
     
     '''Command line interface for init_config.'''
     
-    logging, files, install, overwrite = init_config_parser(sys.argv[1:])
-    dir_path = init_config(logging=logging,
-                           files=files,
-                           install=install,
-                           overwrite=overwrite)
+    action, overwrite = init_config_parser(sys.argv[1:])
+    
+    kwargs = {"logging": False,
+              "files": False,
+              "install": False,
+              "overwrite": overwrite}
+    
+    kwargs[action] = True
+    
+    dir_path = init_config(**kwargs)
     
     if dir_path is not None:
         print "Copying configuration files to {}".format(dir_path)
