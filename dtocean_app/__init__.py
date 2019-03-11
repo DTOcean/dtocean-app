@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-#    Copyright (C) 2016-2018 Mathew Topper
+#    Copyright (C) 2016-2019 Mathew Topper
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -30,7 +30,11 @@ from polite.paths import (Directory,
                           UserDataDirectory)
 from polite.configuration import Logger
 
+from ._build import BUILD
 from .utils.qtlog import QtHandler
+
+# Define build number for packaging test
+__build__ = BUILD
 
 module_path = os.path.realpath(__file__)
 
