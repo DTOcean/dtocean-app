@@ -1,5 +1,5 @@
 pinned_packages:
-  - pyqt=4
+  - pyqt=4.11.4
   - python=2
   - netcdf4=1.4
 

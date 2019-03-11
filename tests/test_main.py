@@ -1428,7 +1428,10 @@ def test_dump_load_database(qtbot, mocker, tmpdir, core):
     mocker.patch('dtocean_core.utils.database.UserDataDirectory',
                  return_value=mock_dir,
                  autospec=True)
-
+    
+    mocker.patch("dtocean_core.menu.check_host_port",
+                 return_value=(True, "Mock connection returned"))
+    
     mocker.patch('dtocean_app.menu.QtGui.QFileDialog.getExistingDirectory',
                  return_value=str(tmpdir))
     
