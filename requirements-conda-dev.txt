@@ -3,4 +3,4 @@ matplotlib <2
 numpy
 pandas >=0.18
 pil
-pyqt <5
+pyqt ==4.11.4
