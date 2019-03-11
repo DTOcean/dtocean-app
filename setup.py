@@ -7,17 +7,17 @@ import glob
 from setuptools import Command, find_packages, setup
 from setuptools.command.test import test as TestCommand
 
-      
+
 class Bootstrap(Command):
     
     user_options = []
-
+    
     def initialize_options(self):
         """Abstract method that is required to be overwritten"""
-
+    
     def finalize_options(self):
         """Abstract method that is required to be overwritten"""
-
+    
     def run(self):
         
         # Convert low DPI UI files to py files
@@ -35,7 +35,7 @@ class Bootstrap(Command):
             # Convert the files
             print "create ui file: {}".format(dst_path)
             os.system(sys_command)
-
+        
         # Convert shared UI files to py files
         ui_search_path = os.path.join("designer", "shared", "*.ui")
         dst_dir = os.path.join("dtocean_app", "designer", "low")
@@ -83,7 +83,7 @@ class Bootstrap(Command):
             # Convert the files
             print "create ui file: {}".format(dst_path)
             os.system(sys_command)
-			
+        
         # Convert shared UI files to py files
         ui_search_path = os.path.join("designer", "shared", "*.ui")
         dst_dir = os.path.join("dtocean_app", "designer", "high")
@@ -118,11 +118,11 @@ class Bootstrap(Command):
 
         return
 
-        
+
 class PyTest(TestCommand):
-
+    
     user_options = [('pytest-args=', 'a', "Arguments to pass to py.test")]
-
+    
     def initialize_options(self):
         TestCommand.initialize_options(self)
         self.pytest_args = []
@@ -137,7 +137,7 @@ class PyTest(TestCommand):
         import pytest
         errno = pytest.main(self.pytest_args)
         sys.exit(errno)
-        
+
 
 class CleanTest(Command):
 
@@ -154,8 +154,8 @@ class CleanTest(Command):
         clean = Cleaner("test files",
                         ['.pyc', '.pkl'])
         clean()
- 
-        
+
+
 class Cleaner(object):
      
     def __init__(self, description='some files',
@@ -203,19 +203,18 @@ class Cleaner(object):
 
 
 setup(name='dtocean-app',
-      version='1.1.dev7',
-      description='Main application for the DTOcean tools',
-      author='Mathew Topper, Rui Duarte',
-      author_email=('damm_horse@yahoo.co.uk, '
-                    'Rui.Duarte@france-energies-marines.org'),
+      version='2.0.0',
+      description='Graphical application for the DTOcean tools',
+      maintainer='Mathew Topper',
+      maintainer_email='mathew.topper@dataonlygreater.com',
       license="GPLv3",
       packages=find_packages(),
       install_requires=[
-           'dtocean-core==1.1.dev13',
+           'dtocean-core==2.0.0',
            'matplotlib<2',
            'numpy',
            'pandas>=0.18',
-           'dtocean-qt>=0.10.dev0',
+           'dtocean-qt==0.10.0',
            'pil',
            'polite>=0.10.dev1',
           # 'sip',
@@ -240,4 +239,3 @@ setup(name='dtocean-app',
                 'cleantest': CleanTest
                 },
       )
-      

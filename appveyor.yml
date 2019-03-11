@@ -14,24 +14,24 @@ only_commits:
     - dtocean_app/
     - tests/
     - setup.py
-    
+
 skip_commits:
   files:
     - dtocean_app/config/
 
 # version format
-version: 1.1.dev0.build{build}
+version: 2.0.0.build{build}
 
 environment:
   matrix:
     - PYTHON_VERSION: 2.7
       MINICONDA: C:\Miniconda
       ARCH: "32"
-      
+    
     - PYTHON_VERSION: 2.7
       MINICONDA: C:\Miniconda-x64
       ARCH: "64"
-      
+
 init:
   - ps: iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1')) # RDP
   - "ECHO %PYTHON_VERSION% %MINICONDA%"
@@ -40,20 +40,35 @@ install:
   - "set PATH=%MINICONDA%;%MINICONDA%\\Scripts;%PATH%"
   - conda config --set always_yes yes --set changeps1 no
   - conda update --quiet conda
-  - conda config --append channels conda-forge
-  - conda config --append channels dataonlygreater
   - conda info --all
-  - "conda create --quiet --name conda-env-%PYTHON_VERSION%-%ARCH% python=%PYTHON_VERSION% --file requirements-conda.txt"
-  - activate conda-env-%PYTHON_VERSION%-%ARCH%
+  - conda create -n _dtocean_core python=%PYTHON_VERSION% pip
+  - activate _dtocean_core
+  - copy .condarc %CONDA_PREFIX%
+  - >
+    conda install polite=0.10.0
+    aneris=0.10.0
+    dtocean-core=2.0.0
+    dtocean-qt=0.10.0
+  - >
+    conda install dtocean-economics=2.0.0
+    dtocean-electrical=2.0.0
+    dtocean-environment=2.0.0
+    dtocean-hydrodynamics=2.0.0
+    dtocean-installation=2.0.0
+    dtocean-logistics=2.0.0
+    dtocean-maintenance=2.0.0
+    dtocean-moorings=2.0.0
+    dtocean-reliability=2.0.0
+  - conda install --file requirements-conda-dev.txt
   - python setup.py bootstrap
-  - python setup.py develop
-  
+  - pip install -e .
+  - conda install pytest pytest-cov pytest-mock pytest-qt
+
 build: off
-  
+
 test_script:
   - py.test --cov dtocean_app tests
-  
+
 after_test:
  - pip install codecov
  - codecov
-  
