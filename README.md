@@ -1,6 +1,6 @@
 [![appveyor](https://ci.appveyor.com/api/projects/status/github/DTOcean/dtocean-app?branch=master&svg=true)](https://ci.appveyor.com/project/DTOcean/dtocean-app)
 [![codecov](https://codecov.io/gh/DTOcean/dtocean-app/branch/master/graph/badge.svg)](https://codecov.io/gh/DTOcean/dtocean-app)
-[![Codacy Badge](https://api.codacy.com/project/badge/Grade/bb34506cc82f4df883178a6e64619eaf)](https://www.codacy.com/project/H0R5E/dtocean-app/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=DTOcean/dtocean-app&amp;utm_campaign=Badge_Grade_Dashboard&amp;branchId=8410911)
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/d288d321cad84b79932f354ff8fe335e)](https://www.codacy.com/project/H0R5E/dtocean-app/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=DTOcean/dtocean-app&amp;utm_campaign=Badge_Grade_Dashboard&amp;branchId=11776109)
 [![release](https://img.shields.io/github/release/DTOcean/dtocean-app.svg)](https://github.com/DTOcean/dtocean-app/releases/latest)
 
 ** For the DTOcean wizard based installer please see the [dtocean](
@@ -146,10 +146,12 @@ Notes:
    from source using pip.
  * Should you wish to develop any of the DTOcean modules, you should install 
    them from source, rather than using conda.
- * If using dtocean-hydrodynamics, you must also install the hydrodynamic data 
-   package. See the [dtocean-hydrodynamics](
-   https://github.com/DTOcean/dtocean-hydrodynamics) repository for 
-   installation instructions.
+ * If using dtocean-hydrodynamics, you must also install the latest version of 
+   the hydrodynamic data package (`dtocean-hydrodynamic-data-*.exe`). This can 
+   be downloaded from the dtocean-hydrodynamics' [Releases](
+   https://github.com/DTOcean/dtocean-hydrodynamics/releases) page. See the 
+   [dtocean-hydrodynamics](https://github.com/DTOcean/dtocean-hydrodynamics) 
+   repository for further information.
  * Inputs can be read from the DTOcean database, if installed. See the 
    [dtocean-database](https://github.com/DTOcean/dtocean-database) repository 
    for installation instructions.
@@ -165,7 +167,7 @@ A "bootstrapping" stage is required to convert the QtDesigner files (located
 in the `designer` directory) to Python code:
 
 ```
-% python setup.py bootstrap
+$ python setup.py bootstrap
 ``` 
 
 Finally, install dtocean-app using pip:
