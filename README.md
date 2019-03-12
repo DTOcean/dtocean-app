@@ -3,7 +3,7 @@
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/d288d321cad84b79932f354ff8fe335e)](https://www.codacy.com/project/H0R5E/dtocean-app/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=DTOcean/dtocean-app&amp;utm_campaign=Badge_Grade_Dashboard&amp;branchId=11776109)
 [![release](https://img.shields.io/github/release/DTOcean/dtocean-app.svg)](https://github.com/DTOcean/dtocean-app/releases/latest)
 
-** For the DTOcean wizard based installer please see the [dtocean](
+**For the DTOcean wizard based installer please see the [dtocean](
 https://github.com/DTOcean/dtocean) repository.**
 
 # DTOcean Graphical Application
