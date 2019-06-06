@@ -302,7 +302,7 @@ class FileManagerWidget(QtGui.QWidget, Ui_FileManagerWidget):
     @QtCore.pyqtSlot()    
     def _set_path(self):
         
-        valid_exts = self._load_ext_dict.keys()
+        valid_exts = self._get_valid_exts()
         valid_ext_strs = ["*{}".format(file_ext) for file_ext in valid_exts]
         file_ext_str = " ".join(valid_ext_strs)
         name_filter =  "Supported formats ({})".format(file_ext_str)
@@ -344,7 +344,7 @@ class FileManagerWidget(QtGui.QWidget, Ui_FileManagerWidget):
     @QtCore.pyqtSlot()    
     def _set_okay(self):
         
-        valid_exts = self._load_ext_dict.keys()
+        valid_exts = self._get_valid_exts()
         file_path = str(self.pathEdit.text())
         _, file_ext = os.path.splitext(str(file_path))
         
@@ -389,7 +389,18 @@ class FileManagerWidget(QtGui.QWidget, Ui_FileManagerWidget):
         self.pathEdit.clear()
         
         return
-
+    
+    def _get_valid_exts(self):
+        
+        if self._file_mode == "load":
+            valid_exts = self._load_ext_dict.keys()
+        elif self._file_mode == "save":
+            valid_exts = self._save_ext_dict.keys()
+        else:
+            errStr = "It must be on of those unidentified flying cupcakes"
+            raise SystemError(errStr)
+            
+        return valid_exts
         
 class PlotManagerWidget(QtGui.QWidget, Ui_PlotManagerWidget):
     
