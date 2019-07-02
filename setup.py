@@ -203,7 +203,7 @@ class Cleaner(object):
 
 
 setup(name='dtocean-app',
-      version='2.0.0',
+      version='2.0.1.dev0',
       description='Graphical application for the DTOcean tools',
       maintainer='Mathew Topper',
       maintainer_email='mathew.topper@dataonlygreater.com',
@@ -216,7 +216,7 @@ setup(name='dtocean-app',
            'pandas>=0.18',
            'dtocean-qt==0.10.0',
            'pil',
-           'polite>=0.10.dev1',
+           'polite>=0.10.0',
           # 'sip',
           # 'PyQt4',
       ],
