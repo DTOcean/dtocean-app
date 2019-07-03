@@ -42,8 +42,8 @@ install:
   - conda config --set always_yes yes --set changeps1 no
   - conda install --quiet conda=4.6.14
   - conda info --all
-  - conda create -n _dtocean_core python=%PYTHON_VERSION% pip
-  - activate _dtocean_core
+  - conda create -n _dtocean_app python=%PYTHON_VERSION% pip
+  - activate _dtocean_app
   - copy %CONDARC% %CONDA_PREFIX%\\.condarc
   - >
     conda install polite=0.10.1
@@ -72,3 +72,6 @@ test_script:
 after_test:
  - pip install codecov
  - codecov
+ 
+on_finish:
+ - ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
