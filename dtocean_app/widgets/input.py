@@ -793,8 +793,12 @@ class InputDataTable(QtGui.QWidget):
             if dtypes is not None:
                     
                 for column, dtype in zip(data.columns, dtypes):
-                    data[column] = data[column].astype(dtype)
                     
+                    try:
+                        data[column] = data[column].astype(dtype)
+                    except:
+                        pass
+        
         else:
             
             data = value

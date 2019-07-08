@@ -204,7 +204,7 @@ class TableData(GUIStructure, TableData):
         widget = InputDataTable(self.parent,
                                 self.meta.result.labels,
                                 self.meta.result.units)
-        widget._set_value(self.data.result)
+        widget._set_value(self.data.result, self.meta.result.types)
         
         self.data.result = widget
         
