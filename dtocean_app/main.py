@@ -1568,7 +1568,7 @@ class DTOceanWindow(MainWindow):
         return
         
     def _init_dialogs(self):
-
+        
         # Set up project properties dialog
         self._project_properties = ProjProperties(self)
         self._project_properties.buttonBox.button(
@@ -1582,7 +1582,11 @@ class DTOceanWindow(MainWindow):
         self._db_selector.database_deselected.connect(
                                     self._shell.deselect_database)
         self._db_selector.database_dump.connect(self._dump_database)
-        self._db_selector.database_load.connect( self._load_database)
+        self._db_selector.database_load.connect(self._load_database)
+        self._db_selector.buttonBox.button(
+                QtGui.QDialogButtonBox.Close).clicked.connect(
+                        self._unset_database_properties)
+        
         self._shell.database_updated.connect(
                                     self._db_selector._update_current)
         self._shell.database_convert_active.connect(
@@ -1602,7 +1606,7 @@ class DTOceanWindow(MainWindow):
                                     self._strategy_manager._load_strategy)
         self._shell.strategy_completed.connect(
                                     self._strategy_manager._complete_strategy)
-
+        
         # Set up the data check diaglog
         self._data_check = DataCheck(self)
         self._data_check.setModal(True)
@@ -1671,11 +1675,11 @@ class DTOceanWindow(MainWindow):
                     
         # Handle errors
         self._pipeline_dock.error_detected.connect(self._display_error)
-
+        
         return
-
+    
     def _init_simulation_dock(self):
-
+        
         # Simulation dock
         self._simulation_dock = SimulationDock(self)
         self._simulation_dock._showclose_filter._show.connect(
@@ -1897,11 +1901,19 @@ class DTOceanWindow(MainWindow):
         
     @QtCore.pyqtSlot()
     def _set_database_properties(self):
-
-        self._db_selector.show()
-
-        return
         
+        self.actionClose.setDisabled(True)
+        self._db_selector.show()
+        
+        return
+    
+    @QtCore.pyqtSlot()
+    def _unset_database_properties(self):
+        
+        self.actionClose.setEnabled(True)
+        
+        return
+    
     @QtCore.pyqtSlot()
     def _active_project_ui_switch(self):
         
@@ -2123,6 +2135,7 @@ class DTOceanWindow(MainWindow):
         
         # Close dialog
         self._db_selector.close()
+        self._unset_database_properties()
         
         # Disable Actions
         self.actionInitiate_Pipeline.setDisabled(True)
