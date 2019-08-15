@@ -2589,9 +2589,16 @@ class DTOceanWindow(MainWindow):
         return
     
     def _set_data_widget(self, controller):
-               
-        if controller is None: return
-
+        
+        if controller is None: 
+            
+            if self._data_context._bottom_contents is not None:
+                
+                self._clear_bottom_contents(self._data_context)
+                self._last_data_controller = None
+            
+            return
+        
         if (self._last_data_controller is not None and 
             controller._id == self._last_data_controller._id and
             type(controller) == type(self._last_data_controller)):
@@ -2639,8 +2646,16 @@ class DTOceanWindow(MainWindow):
                                plot_name=None,
                                force_plot=False):
         
-        if controller is None: return
-
+        if controller is None:
+            
+            if self._plot_context._bottom_contents is not None:
+                
+                self._clear_bottom_contents(self._plot_context)
+                self._last_plot_id = None
+                self._last_plot_name = "auto"
+            
+            return
+        
         if (controller._id == self._last_plot_id and
             plot_name == self._last_plot_name and
             not force_plot): return
