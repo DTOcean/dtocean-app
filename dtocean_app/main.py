@@ -743,6 +743,7 @@ class Shell(QtCore.QObject):
     dataflow_active = QtCore.pyqtSignal()
     module_executed = QtCore.pyqtSignal()
     themes_executed = QtCore.pyqtSignal()
+    strategy_selected = QtCore.pyqtSignal()
     strategy_executed = QtCore.pyqtSignal()
     strategy_completed = QtCore.pyqtSignal()
     database_convert_active = QtCore.pyqtSignal()
@@ -1158,6 +1159,8 @@ class Shell(QtCore.QObject):
             simulation.set_unavailable_variables(force_unavailable)
         
         self.core.set_interface_status(self.project)
+        
+        self.strategy_selected.emit()
         self.update_run_action.emit()
         
         return
@@ -1512,6 +1515,7 @@ class DTOceanWindow(MainWindow):
         shell.bathymetry_active.connect(self._active_bathymetry_ui_switch)
         shell.filter_active.connect(self._active_filter_ui_switch)
         shell.dataflow_active.connect(self._active_dataflow_ui_switch)
+        shell.strategy_selected.connect(self._strategy_box_ui_switch)
         shell.update_run_action.connect(self._run_action_ui_switch)
         shell.module_executed.connect(self._run_action_ui_switch)
         shell.themes_executed.connect(self._run_action_ui_switch)
@@ -2202,14 +2206,6 @@ class DTOceanWindow(MainWindow):
         self._level_comparison._set_interfaces(self._shell)
         self._sim_comparison._set_interfaces(self._shell, include_str=True)
         
-        if self._shell.strategy is not None:
-            
-            self._level_comparison.strategyBox.setChecked(False)
-            self._level_comparison.strategyBox.setEnabled(True)
-            
-            self._sim_comparison.strategyBox.setChecked(False)
-            self._sim_comparison.strategyBox.setEnabled(True)
-        
         self.actionComparison.setEnabled(True)
         
         # Enable Actions
@@ -2301,7 +2297,26 @@ class DTOceanWindow(MainWindow):
         self._pipeline_dock._set_title(pipeline_msg)
         
         return
+    
+    @QtCore.pyqtSlot()
+    def _strategy_box_ui_switch(self):
         
+        checked = True
+        enabled = False
+        
+        if self._shell.strategy is not None:
+            
+            checked = False
+            enabled = True
+        
+        self._level_comparison.strategyBox.setChecked(checked)
+        self._level_comparison.strategyBox.setEnabled(enabled)
+        
+        self._sim_comparison.strategyBox.setChecked(checked)
+        self._sim_comparison.strategyBox.setEnabled(enabled)
+        
+        return
+    
     @QtCore.pyqtSlot(int)
     def _sim_comparison_ui_switch(self, box_number):
         
@@ -3040,6 +3055,7 @@ class DTOceanWindow(MainWindow):
                     
         self._pipeline_dock._set_branch_map(new_branch_map)
         self._active_dataflow_ui_switch()
+        self._strategy_box_ui_switch()
         
         # Update the active project
         active_sim_title = self._shell.project.get_simulation_title()
