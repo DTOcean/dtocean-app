@@ -1330,7 +1330,7 @@ class Shell(QtCore.QObject):
         # Relay strategy change
         if self.strategy is not None:
             self.strategy_loaded.emit(self.strategy)
-            
+        
         # Update the scope widget
         self.update_scope.emit(self._current_scope)
 
@@ -2077,7 +2077,7 @@ class DTOceanWindow(MainWindow):
         self._data_file_manager.setParent(None)
         self._data_file_manager.deleteLater()
         self._data_file_manager = None
-
+        
         # Remove details widget from plot context
         self._plot_context._top_left_box.removeWidget(self._plot_details)
         self._plot_details.setParent(None)
@@ -2210,7 +2210,7 @@ class DTOceanWindow(MainWindow):
             self._sim_comparison.strategyBox.setEnabled(True)
         
         self.actionComparison.setEnabled(True)
-
+        
         # Enable Actions
         self.actionSave.setEnabled(True)
         self.actionSave_As.setEnabled(True)
@@ -2224,7 +2224,7 @@ class DTOceanWindow(MainWindow):
         self.actionInitiate_Bathymetry.setDisabled(True)
         
         return
-        
+    
     @QtCore.pyqtSlot(str)
     def _current_scope_ui_switch(self, scope):
         
@@ -2298,7 +2298,7 @@ class DTOceanWindow(MainWindow):
             raise SystemError(errStr)
         
         self._pipeline_dock._set_title(pipeline_msg)
-
+        
         return
         
     @QtCore.pyqtSlot(int)
@@ -2586,7 +2586,7 @@ class DTOceanWindow(MainWindow):
             self._plot_manager._plot_connected = True
             
         return
-        
+    
     def _set_data_widget(self, controller):
                
         if controller is None: return
@@ -2594,7 +2594,7 @@ class DTOceanWindow(MainWindow):
         if (self._last_data_controller is not None and 
             controller._id == self._last_data_controller._id and
             type(controller) == type(self._last_data_controller)):
-
+            
             if (controller._status is not None and
                 controller._status != self._last_data_controller_status and
                 "unavailable" in controller._status):
@@ -2632,7 +2632,7 @@ class DTOceanWindow(MainWindow):
                 widget.setDisabled(True)
                 
         return
-        
+    
     @QtCore.pyqtSlot(object, str)
     def _set_plot_widget(self, controller,
                                plot_name=None,
