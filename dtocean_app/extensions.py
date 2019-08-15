@@ -332,10 +332,11 @@ class GUIStrategyManager(ListFrameEditor, StrategyManager):
                     
         return stg_dict
         
-    def _set_load_dict(self, stg_dict):
+    def _set_load_dict(self, stg_dict, project=None):
         
         # Now build the strategy
-        new_strategy = StrategyManager._set_load_dict(self, stg_dict)
+        new_strategy = StrategyManager._set_load_dict(self, stg_dict,
+                                                            project=project)
         
         # Now deserialise the extra data
         new_strategy.strategy_run = stg_dict["strategy_run"]

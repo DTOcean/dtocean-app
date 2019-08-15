@@ -220,7 +220,8 @@ class ThreadOpen(QtCore.QThread):
             if stg_file_path is not None:
                 
                 strategy_manager = GUIStrategyManager()
-                self._strategy = strategy_manager.load_strategy(stg_file_path)
+                self._strategy = strategy_manager.load_strategy(stg_file_path,
+                                                                load_project)
                 
             else:
                 
