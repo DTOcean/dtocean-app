@@ -15,16 +15,14 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import pandas as pd
 from PyQt4 import QtCore, QtGui
 
-from aneris.utilities.misc import OrderedSet
-from dtocean_core.pipeline import Tree
 from dtocean_core.strategies.position import AdvancedPosition
+from dtocean_core.strategies.position_optimiser import (dump_config,
+                                                        load_config_template)
 
 from . import GUIStrategy, StrategyWidget, PyQtABCMeta
 from ..utils.display import is_high_dpi
-from ..widgets.extendedcombobox import ExtendedComboBox
 
 if is_high_dpi():
     
@@ -40,10 +38,21 @@ class GUIAdvancedPosition(GUIStrategy, AdvancedPosition):
     """
     """
     
+    __metaclass__ = PyQtABCMeta
+    
     def __init__(self):
         
         AdvancedPosition.__init__(self)
         GUIStrategy.__init__(self)
+        
+        self._init_config()
+        
+        return
+    
+    def _init_config(self):
+        
+        config = load_config_template()
+        self.configure(**config)
         
         return
     
@@ -64,7 +73,7 @@ class GUIAdvancedPosition(GUIStrategy, AdvancedPosition):
     
     def get_widget(self, parent, shell):
         
-        widget = AdvancedPositionWidget(parent)
+        widget = AdvancedPositionWidget(parent, self._config)
         
         return widget
 
@@ -78,11 +87,12 @@ class AdvancedPositionWidget(QtGui.QWidget,
     config_set = QtCore.pyqtSignal()
     config_null = QtCore.pyqtSignal()
     
-    def __init__(self, parent):
+    def __init__(self, parent, config):
         
         QtGui.QWidget.__init__(self, parent)
         Ui_AdvancedPositionWidget.__init__(self)
         StrategyWidget.__init__(self)
+        self._config = config
         
         self._init_ui()
         
@@ -91,6 +101,71 @@ class AdvancedPositionWidget(QtGui.QWidget,
     def _init_ui(self):
         
         self.setupUi(self)
+        self._update_status()
+        
+        self.importButton.clicked.connect(self._import_config)
+        self.exportButton.clicked.connect(self._export_config)
+        
+        return
+    
+    def _update_status(self):
+        
+        (status_str,
+         status_code) = GUIAdvancedPosition.get_config_status(self._config)
+        
+        if status_code == 0:
+            str_color = "#aa0000"
+        elif status_code == 1:
+            str_color = "#00aa00"
+        
+        status_str_rich = ('<html><head/><body><p><span '
+                           'style=" font-size:11pt; color:{};">'
+                           '{}</span></p></body></html>').format(str_color,
+                                                                 status_str)
+        
+        self.statusLabel.setText(status_str_rich)
+        
+        if status_code > 0:
+            self.config_set.emit()
+        else:
+            self.config_null.emit()
+        
+        return
+    
+    @QtCore.pyqtSlot()
+    def _import_config(self):
+        
+        msg = "Import Configuration"
+        valid_exts = "Configuration files (*.yaml *.yml)"
+        
+        file_path = QtGui.QFileDialog.getOpenFileName(self,
+                                                      msg,
+                                                      '.',
+                                                      valid_exts)
+        
+        if not file_path: return
+        
+        self._config = GUIAdvancedPosition.load_config(file_path)
+        self._update_status()
+        
+        return
+    
+    @QtCore.pyqtSlot()
+    def _export_config(self):
+        
+        msg = "Export Configuration"
+        valid_exts = "Configuration files (*.yaml *.yml)"
+        
+        file_path = QtGui.QFileDialog.getSaveFileName(self,
+                                                      msg,
+                                                      '.',
+                                                      valid_exts)
+        
+        if not file_path: return
+        
+        config = load_config_template()
+        config.update(self._config)
+        dump_config(config, file_path)
         
         return
     
@@ -102,7 +177,7 @@ class AdvancedPositionWidget(QtGui.QWidget,
           dict
         '''
         
-        return {}
+        return self._config
     
     def set_configuration(self, config_dict=None):
         
@@ -111,5 +186,9 @@ class AdvancedPositionWidget(QtGui.QWidget,
         Arguments:
           config_dict (dict, optional)
         '''
+        
+        if config_dict is not None: self._config = config_dict
+        
+        self._update_status()
         
         return
