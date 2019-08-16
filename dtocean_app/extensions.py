@@ -61,13 +61,10 @@ class GUIStrategyManager(ListFrameEditor, StrategyManager):
         self._init_list()
         
         self.listWidget.itemClicked.connect(self._update_configuration)
-        self.buttonBox.button(
-            QtGui.QDialogButtonBox.Reset).clicked.connect(self._reset_strategy)
-        self.buttonBox.button(
-            QtGui.QDialogButtonBox.Apply).clicked.connect(
-                                                    self._configure_strategy)
+        self.resetButton.clicked.connect(self._reset_strategy)
+        self.applyButton.clicked.connect(self._configure_strategy)
         
-        self.buttonBox.button(QtGui.QDialogButtonBox.Apply).setDisabled(True)
+        self.applyButton.setDisabled(True)
         
         return
         
@@ -81,16 +78,14 @@ class GUIStrategyManager(ListFrameEditor, StrategyManager):
     @QtCore.pyqtSlot()
     def _config_set_ui_switch(self):
         
-        self.buttonBox.button(QtGui.QDialogButtonBox.Apply).setEnabled(True)
-        self.buttonBox.button(QtGui.QDialogButtonBox.Apply).setDefault(True)
+        self.applyButton.setEnabled(True)
         
         return
         
     @QtCore.pyqtSlot()
     def _config_null_ui_switch(self):
         
-        self.buttonBox.button(QtGui.QDialogButtonBox.Apply).setDisabled(True)
-        self.buttonBox.button(QtGui.QDialogButtonBox.Reset).setDefault(True)
+        self.applyButton.setDisabled(True)
         
         return
     
@@ -267,11 +262,8 @@ class GUIStrategyManager(ListFrameEditor, StrategyManager):
             
         self._last_selected = selected
         
-        self.buttonBox.button(
-                          QtGui.QDialogButtonBox.Apply).setDisabled(True)
-        self.buttonBox.button(
-                          QtGui.QDialogButtonBox.Reset).setDefault(True)
-                
+        self.applyButton.setDisabled(True)
+        
         if selected is None:
             
             self._strategy_widget = Message(self,
