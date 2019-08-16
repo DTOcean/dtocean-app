@@ -15,6 +15,8 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import multiprocessing
+
 from PyQt4 import QtCore, QtGui
 
 from dtocean_core.strategies.position import AdvancedPosition
@@ -92,19 +94,45 @@ class AdvancedPositionWidget(QtGui.QWidget,
         QtGui.QWidget.__init__(self, parent)
         Ui_AdvancedPositionWidget.__init__(self)
         StrategyWidget.__init__(self)
-        self._config = config
         
+        self._config = self._init_config(config)
+        self._max_threads = multiprocessing.cpu_count()
         self._init_ui()
         
         return
+    
+    def _init_config(cls, config):
         
+        config["threads_auto"] = False
+        
+        return config
+    
+    
     def _init_ui(self):
         
         self.setupUi(self)
-        self._update_status()
+        
+        self.nThreadSpinBox.setMaximum(self._max_threads)
+        self.set_manual_thread_message()
         
         self.importButton.clicked.connect(self._import_config)
         self.exportButton.clicked.connect(self._export_config)
+        
+        self.workdirLineEdit.returnPressed.connect(self._update_worker_dir)
+        self.workdirToolButton.clicked.connect(self._select_worker_dir)
+        
+        self.nThreadSpinBox.valueChanged.connect(self._update_n_threads)
+        
+        self._update_status()
+        
+        
+        return
+    
+    def set_manual_thread_message(self):
+        
+        thread_msg = "(maximum of {} threads available)".format(
+                                                        self._max_threads)
+        self.threadInfoLabel.setText(thread_msg)
         
         return
     
@@ -130,6 +158,26 @@ class AdvancedPositionWidget(QtGui.QWidget,
         else:
             self.config_null.emit()
         
+        if self._config["worker_dir"] is not None:
+            self.workdirLineEdit.setText(self._config["worker_dir"])
+        
+        if self._config["n_threads"] is not None:
+            self.nThreadSpinBox.setValue(self._config["n_threads"])
+        
+        if self._config["threads_auto"]:
+            
+            if not self.autoThreadBox.isChecked():
+                
+                self.autoThreadBox.toggle()
+                self.threadInfoLabel.setText("Auto mode")
+        
+        else:
+            
+            if self.autoThreadBox.isChecked():
+                
+                self.autoThreadBox.toggle()
+                self.set_manual_thread_message()
+        
         return
     
     @QtCore.pyqtSlot()
@@ -145,7 +193,9 @@ class AdvancedPositionWidget(QtGui.QWidget,
         
         if not file_path: return
         
-        self._config = GUIAdvancedPosition.load_config(file_path)
+        config = GUIAdvancedPosition.load_config(file_path)
+        self._config = self._init_config(config)
+        
         self._update_status()
         
         return
@@ -166,6 +216,47 @@ class AdvancedPositionWidget(QtGui.QWidget,
         config = load_config_template()
         config.update(self._config)
         dump_config(config, file_path)
+        
+        return
+    
+    @QtCore.pyqtSlot()
+    def _update_worker_dir(self):
+        
+        self._config["worker_dir"] = str(self.workdirLineEdit.text())
+        self.workdirLineEdit.clearFocus()
+        self._update_status()
+        
+        return
+    
+    @QtCore.pyqtSlot()
+    def _select_worker_dir(self):
+        
+        title_str = 'Select Directory for Worker Files'
+        worker_dir = QtGui.QFileDialog.getExistingDirectory(
+                                                self,
+                                                title_str,
+                                                self._config["worker_dir"],
+                                                QtGui.QFileDialog.ShowDirsOnly)
+        
+        if worker_dir:
+            
+            self._config["worker_dir"] = str(worker_dir)
+            self.workdirLineEdit.setText(worker_dir)
+            self._update_status()
+        
+        return
+    
+    @QtCore.pyqtSlot(int)
+    def _update_n_threads(self, n_threads):
+        
+        if n_threads > 0:
+            self._config["n_threads"] = n_threads
+        else:
+            self._config["n_threads"] = None
+        
+        print self._config["n_threads"]
+        
+        self._update_status()
         
         return
     
