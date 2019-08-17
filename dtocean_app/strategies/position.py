@@ -396,9 +396,12 @@ class AdvancedPositionWidget(QtGui.QWidget,
         
         if not file_path: return
         
-        config = load_config_template()
-        config.update(self._config)
-        dump_config(config, file_path)
+        config_template = load_config_template()
+        config = deepcopy(self._config)
+        config.pop("threads_auto")
+        
+        config_template.update(config)
+        dump_config(config_template, file_path)
         
         return
     
