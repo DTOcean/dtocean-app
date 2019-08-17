@@ -24,9 +24,11 @@ from PyQt4 import QtCore, QtGui
 from dtocean_core.strategies.position import AdvancedPosition
 from dtocean_core.strategies.position_optimiser import (dump_config,
                                                         load_config_template)
+from dtocean_qt.models.DataFrameModel import DataFrameModel
 
 from . import GUIStrategy, StrategyWidget, PyQtABCMeta
 from ..utils.display import is_high_dpi
+from ..widgets.datatable import DataTableWidget
 
 if is_high_dpi():
     
@@ -160,7 +162,11 @@ class AdvancedPositionWidget(QtGui.QWidget,
     
     def _init_ui(self):
         
+        ## INIT
+        
         self.setupUi(self)
+        
+        ## CONTROL TAB
         
         self.nThreadSpinBox.setMaximum(self._max_threads)
         self.autoThreadBox.setDisabled(True)
@@ -178,6 +184,24 @@ class AdvancedPositionWidget(QtGui.QWidget,
         self.cleanDirCheckBox.stateChanged.connect(
                                             self._update_clean_existing_dir)
         self.abortSpinBox.valueChanged.connect(self._update_max_simulations)
+        
+        ## RESULTS TAB
+        
+        self.tabWidget.setTabEnabled(2, False)
+        
+        self.dataTableWidget = DataTableWidget(self,
+                                               edit_rows=False,
+                                               edit_cols=False,
+                                               edit_cells=False)
+        
+        sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Expanding,
+                                       QtGui.QSizePolicy.Expanding)
+        self.dataTableWidget.setSizePolicy(sizePolicy)
+        
+        self.dataTableLayout.addWidget(self.dataTableWidget)
+        
+        ## GLOBAL
+        
         self._shell.project.sims_updated.connect(self._update_status)
         
         self._update_status(init=True)
@@ -209,6 +233,12 @@ class AdvancedPositionWidget(QtGui.QWidget,
     
     @QtCore.pyqtSlot()
     def _update_status(self, init=False):
+        
+#        # Pick up the current tab to reload after update
+#        current_tab_idx = self.tabWidget.currentIndex()
+#        print current_tab_idx
+        
+        ## CONTROL TAB
         
         color_map = {0: "#aa0000",
                      1: "#00aa00"}
@@ -317,6 +347,19 @@ class AdvancedPositionWidget(QtGui.QWidget,
                     
                     self.autoThreadBox.toggle()
                     self.set_manual_thread_message()
+        
+        ## RESULTS TAB
+        if optimiser_status_str is None:
+            
+            self.tabWidget.setTabEnabled(2, False)
+        
+        else:
+            
+            self.tabWidget.setTabEnabled(2, True)
+           
+            df = GUIAdvancedPosition.get_results_table(self._config)
+            model = DataFrameModel(df)
+            self.dataTableWidget.setViewModel(model)
         
         return
     
