@@ -83,10 +83,10 @@ class DataTableWidget(QtGui.QWidget):
         self.gridLayout = QtGui.QGridLayout(self)
         self.gridLayout.setContentsMargins(0, 0, 0, 0)
 
-        self.buttonFrame = QtGui.QFrame(self)
+        buttonFrame = QtGui.QFrame(self)
         #self.buttonFrame.setMinimumSize(QtCore.QSize(250, 50))
         #self.buttonFrame.setMaximumSize(QtCore.QSize(250, 50))
-        self.buttonFrame.setFrameShape(QtGui.QFrame.NoFrame)
+        buttonFrame.setFrameShape(QtGui.QFrame.NoFrame)
         spacerItemButton = QtGui.QSpacerItem(40,
                                              20,
                                              QtGui.QSizePolicy.Expanding,
@@ -104,7 +104,7 @@ class DataTableWidget(QtGui.QWidget):
             self.addRowButton.setIcon(icon)
             self.addRowButton.toggled.connect(self.addRow)
             
-            self.removeRowButton = QtGui.QToolButton(self.buttonFrame)
+            self.removeRowButton = QtGui.QToolButton(buttonFrame)
             self.removeRowButton.setObjectName('removerowbutton')
             self.removeRowButton.setText(self.tr(u'-row'))
             self.removeRowButton.setToolTip(self.tr(u'remove selected rows'))
@@ -118,7 +118,7 @@ class DataTableWidget(QtGui.QWidget):
         
         if edit_cols:
             
-            self.addColumnButton = QtGui.QToolButton(self.buttonFrame)
+            self.addColumnButton = QtGui.QToolButton(buttonFrame)
             self.addColumnButton.setObjectName('addcolumnbutton')
             self.addColumnButton.setText(self.tr(u'+col'))
             self.addColumnButton.setToolTip(self.tr(u'add new column'))
@@ -128,7 +128,7 @@ class DataTableWidget(QtGui.QWidget):
             self.addColumnButton.setIcon(icon)
             self.addColumnButton.toggled.connect(self.showAddColumnDialog)
 
-            self.removeColumnButton = QtGui.QToolButton(self.buttonFrame)
+            self.removeColumnButton = QtGui.QToolButton(buttonFrame)
             self.removeColumnButton.setObjectName('removecolumnbutton')
             self.removeColumnButton.setText(self.tr(u'-col'))
             self.removeColumnButton.setToolTip(self.tr(u'remove a column'))
@@ -142,10 +142,10 @@ class DataTableWidget(QtGui.QWidget):
         
         if edit_rows or edit_cols or edit_cells:
 
-            self.buttonFrameLayout = QtGui.QGridLayout(self.buttonFrame)
+            self.buttonFrameLayout = QtGui.QGridLayout(buttonFrame)
             self.buttonFrameLayout.setContentsMargins(0, 0, 0, 0)
     
-            self.editButton = QtGui.QToolButton(self.buttonFrame)
+            self.editButton = QtGui.QToolButton(buttonFrame)
             self.editButton.setObjectName('editbutton')
             self.editButton.setText(self.tr(u'edit'))
             self.editButton.setToolTip(self.tr(u'toggle editing mode'))
@@ -187,10 +187,16 @@ class DataTableWidget(QtGui.QWidget):
     
             for button in self.buttons[1:]:
                 button.setEnabled(False)
-                
+            
+            self.buttonFrame = buttonFrame
+            self.gridLayout.addWidget(self.buttonFrame, 0, 0, 1, 1)
+            tab_layout_idx = 1
+            
         else:
             
+            self.buttonFrame = None
             self.buttons = None
+            tab_layout_idx = 0
 
         #self.tableView = QtGui.QTableView(self)
         self.tableView = DragTable(self)
@@ -201,8 +207,7 @@ class DataTableWidget(QtGui.QWidget):
         self.tableView.setSizePolicy(sizePolicy)
         self.tableView.installEventFilter(self)
         
-        self.gridLayout.addWidget(self.buttonFrame, 0, 0, 1, 1)
-        self.gridLayout.addWidget(self.tableView, 1, 0, 1, 1)
+        self.gridLayout.addWidget(self.tableView, tab_layout_idx, 0, 1, 1)
         
         return
 
