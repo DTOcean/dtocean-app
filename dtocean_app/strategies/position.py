@@ -77,11 +77,10 @@ class GUIAdvancedPosition(GUIStrategy, AdvancedPosition):
     @classmethod
     def get_worker_directory_status(cls, config):
         
-        root_project_path = config['root_project_path']
         worker_directory = config["worker_dir"]
         
-        status_strs = []
-        status_codes = []
+        status_str = None
+        status_code = None
         
         if os.path.isdir(worker_directory):
             
@@ -89,17 +88,29 @@ class GUIAdvancedPosition(GUIStrategy, AdvancedPosition):
                 
                 status_str = "Worker directory empty"
                 status_code = 1
-                
-                status_strs.append(status_str)
-                status_codes.append(status_code)
             
             elif not config['clean_existing_dir']:
                 
                 status_str = "Worker directory contains files"
                 status_code = 0
-                
-                status_strs.append(status_str)
-                status_codes.append(status_code)
+        
+        else:
+            
+            status_str = "Worker directory does not yet exist"
+            status_code = 1
+        
+        return status_str, status_code
+    
+    @classmethod
+    def get_optimiser_status(cls, config):
+        
+        root_project_path = config['root_project_path']
+        worker_directory = config["worker_dir"]
+        
+        status_str = None
+        status_code = None
+        
+        if os.path.isdir(worker_directory):
             
             _, root_project_name = os.path.split(root_project_path)
             root_project_base_name, _ = os.path.splitext(root_project_name)
@@ -111,19 +122,8 @@ class GUIAdvancedPosition(GUIStrategy, AdvancedPosition):
                 
                 status_str = "Optimisation complete"
                 status_code = 1
-                
-                status_strs.append(status_str)
-                status_codes.append(status_code)
         
-        else:
-            
-            status_str = "Worker directory does not yet exist"
-            status_code = 1
-            
-            status_strs.append(status_str)
-            status_codes.append(status_code)
-        
-        return status_strs, status_codes
+        return status_str, status_code
 
 
 class AdvancedPositionWidget(QtGui.QWidget,
@@ -224,6 +224,7 @@ class AdvancedPositionWidget(QtGui.QWidget,
         
         status_template = '<li style="color: {};">{}</li>'
         status_str = ""
+        optimiser_status_str = None
         
         for project_status_str in project_status_strs:
             status_str += \
@@ -235,22 +236,28 @@ class AdvancedPositionWidget(QtGui.QWidget,
         
         if self._config["worker_dir"] is not None:
             
-            (worker_dir_status_strs,
-             worker_dir_status_codes) = \
+            (worker_dir_status_str,
+             worker_dir_status_code) = \
                  GUIAdvancedPosition.get_worker_directory_status(self._config)
             
-            for (worker_dir_status_str,
-                 worker_dir_status_code) in zip(worker_dir_status_strs,
-                                                worker_dir_status_codes):
-                
+            if worker_dir_status_str is not None:
                 status_str += \
                     status_template.format(color_map[worker_dir_status_code],
                                            worker_dir_status_str)
+            
+            (optimiser_status_str,
+             optimiser_status_code) = \
+                     GUIAdvancedPosition.get_optimiser_status(self._config)
+            
+            if optimiser_status_str is not None:
+                status_str += \
+                    status_template.format(color_map[optimiser_status_code],
+                                           optimiser_status_str)
         
         # Define a global status
         if (config_status_code == 0 or
             project_status_code == 0 or
-            0 in worker_dir_status_codes):
+            worker_dir_status_code == 0):
             
             status_code = 0
             
