@@ -47,14 +47,6 @@ class GUIAdvancedPosition(GUIStrategy, AdvancedPosition):
         AdvancedPosition.__init__(self)
         GUIStrategy.__init__(self)
         
-        self._init_config()
-        
-        return
-    
-    def _init_config(self):
-        
-        config = load_config_template()
-        self.configure(**config)
         
         return
     
