@@ -67,7 +67,8 @@ class GUIAdvancedPosition(GUIStrategy, AdvancedPosition):
     
     def get_widget(self, parent, shell):
         
-        widget = AdvancedPositionWidget(parent, self._config)
+        config = load_config_template()
+        widget = AdvancedPositionWidget(parent, shell, config)
         
         return widget
 
@@ -96,6 +97,9 @@ class AdvancedPositionWidget(QtGui.QWidget,
     def _init_config(cls, config):
         
         config["threads_auto"] = False
+        
+        if config["root_project_path"] is None:
+            config["root_project_path"] = "worker.prj"
         
         return config
     
@@ -259,6 +263,9 @@ class AdvancedPositionWidget(QtGui.QWidget,
         Returns:
           dict
         '''
+        
+        # Update any other value that might have been imported.
+        self._config["root_project_path"] = "worker.prj"
         
         return self._config
     
