@@ -517,6 +517,8 @@ class ListFrameEditor(QtGui.QDialog, Ui_ListFrameEditor):
         self.mainFrame.setLayout(self.mainLayout)
         self.mainWidget = None
         
+        self.closeButton.clicked.connect(self.close)
+        
         return
         
     def _init_labels(self, top_label=None,
