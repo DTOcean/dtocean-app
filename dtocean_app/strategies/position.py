@@ -204,6 +204,8 @@ class AdvancedPositionWidget(QtGui.QWidget,
         
         self.dataTableLayout.addWidget(self.dataTableWidget)
         
+        self.dataExportButton.clicked.connect(self._export_data_table)
+        
         ## GLOBAL
         
         self._shell.project.sims_updated.connect(self._update_status)
@@ -536,6 +538,25 @@ class AdvancedPositionWidget(QtGui.QWidget,
             self._config["max_simulations"] = max_simulations
         else:
             self._config["max_simulations"] = None
+        
+        return
+    
+    @QtCore.pyqtSlot()
+    def _export_data_table(self):
+        
+        extlist = ["comma-separated values (*.csv)"]
+        extStr = ";;".join(extlist)
+        
+        fdialog_msg = "Save data"
+            
+        save_path = QtGui.QFileDialog.getSaveFileName(self,
+                                                      fdialog_msg,
+                                                      HOME,
+                                                      extStr)
+        
+        if not save_path:return
+        
+        self._results_df.to_csv(str(save_path), index=False)
         
         return
     
