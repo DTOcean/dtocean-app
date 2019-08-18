@@ -49,6 +49,9 @@ else:
     from ..designer.low.levelcomparison import Ui_LevelComparisonWidget
     from ..designer.low.simcomparison import Ui_SimComparisonWidget
 
+# User home directory
+HOME = os.path.expanduser("~")
+
 
 class SelectForSaveFileDialog(QtGui.QFileDialog):
     
@@ -311,7 +314,7 @@ class FileManagerWidget(QtGui.QWidget, Ui_FileManagerWidget):
         if self._file_mode == "load":
             
             msg = "Select path to load"
-            dialog = QtGui.QFileDialog(self, msg)
+            dialog = QtGui.QFileDialog(self, msg, HOME)
             dialog.setFileMode(QtGui.QFileDialog.ExistingFile)
             dialog.setOption(QtGui.QFileDialog.DontConfirmOverwrite, True)
             dialog.setNameFilter(name_filter)
@@ -325,7 +328,7 @@ class FileManagerWidget(QtGui.QWidget, Ui_FileManagerWidget):
         elif self._file_mode == "save":
             
             msg = "Select path for save"
-            dialog = SelectForSaveFileDialog(self, msg)
+            dialog = SelectForSaveFileDialog(self, msg, HOME)
             dialog.setNameFilter(name_filter)
             dialog.selectFile(self.pathEdit.text())
             
@@ -511,7 +514,7 @@ class PlotManagerWidget(QtGui.QWidget, Ui_PlotManagerWidget):
         file_path = ""
         
         msg = "Select path for save"
-        dialog = SelectForSaveFileDialog(self, msg)
+        dialog = SelectForSaveFileDialog(self, msg, HOME)
         dialog.setNameFilter(name_filter)
         dialog.selectFile(self.pathEdit.text())
         

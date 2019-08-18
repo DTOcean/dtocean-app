@@ -21,6 +21,8 @@ Created on Thu Apr 23 12:51:14 2015
 .. moduleauthor:: Mathew Topper <mathew.topper@dataonlygreater.com>
 """
 
+import os
+
 import pandas as pd
 import numpy as np
 
@@ -58,6 +60,9 @@ else:
     from ..designer.low.boolselect import Ui_BoolSelect
     from ..designer.low.pathselect import Ui_PathSelect
     from ..designer.low.dateselect import Ui_DateSelect
+
+# User home directory
+HOME = os.path.expanduser("~")
 
 # DOCK WINDOW INPUT WIDGETS
 
@@ -433,8 +438,9 @@ class DirectorySelect(QtGui.QWidget, Ui_PathSelect):
     def _set_path(self):
         
         msg = "Select directory"
-        file_path = QtGui.QFileDialog.getExistingDirectory(None,
-                                                           msg)
+        file_path = QtGui.QFileDialog.getExistingDirectory(self,
+                                                           msg,
+                                                           HOME)
         
         self.lineEdit.setText(file_path)
         

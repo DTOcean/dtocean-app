@@ -38,6 +38,9 @@ else:
     
     from ..designer.low.advancedposition import Ui_AdvancedPositionWidget
 
+# User home directory
+HOME = os.path.expanduser("~")
+
 
 class GUIAdvancedPosition(GUIStrategy, AdvancedPosition):
     
@@ -371,7 +374,7 @@ class AdvancedPositionWidget(QtGui.QWidget,
         
         file_path = QtGui.QFileDialog.getOpenFileName(self,
                                                       msg,
-                                                      '.',
+                                                      HOME,
                                                       valid_exts)
         
         if not file_path: return
@@ -391,7 +394,7 @@ class AdvancedPositionWidget(QtGui.QWidget,
         
         file_path = QtGui.QFileDialog.getSaveFileName(self,
                                                       msg,
-                                                      '.',
+                                                      HOME,
                                                       valid_exts)
         
         if not file_path: return
@@ -417,11 +420,16 @@ class AdvancedPositionWidget(QtGui.QWidget,
     @QtCore.pyqtSlot()
     def _select_worker_dir(self):
         
+        if self._config["worker_dir"]:
+            start_dir = self._config["worker_dir"]
+        else:
+            start_dir = HOME
+        
         title_str = 'Select Directory for Worker Files'
         worker_dir = QtGui.QFileDialog.getExistingDirectory(
                                                 self,
                                                 title_str,
-                                                self._config["worker_dir"],
+                                                start_dir,
                                                 QtGui.QFileDialog.ShowDirsOnly)
         
         if worker_dir:

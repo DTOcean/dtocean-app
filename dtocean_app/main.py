@@ -78,6 +78,9 @@ from .widgets.docks import LogDock
 # Set up logging
 module_logger = logging.getLogger(__name__)
 
+# User home directory
+HOME = os.path.expanduser("~")
+
 
 class ThreadReadRaw(QtCore.QThread):
     
@@ -2948,9 +2951,9 @@ class DTOceanWindow(MainWindow):
 
         fdialog_msg = "Save plot"
             
-        save_path = QtGui.QFileDialog.getSaveFileName(None,
+        save_path = QtGui.QFileDialog.getSaveFileName(self,
                                                       fdialog_msg,
-                                                      '.',
+                                                      HOME,
                                                       extStr)
         
         if save_path:
@@ -2966,9 +2969,9 @@ class DTOceanWindow(MainWindow):
 
         fdialog_msg = "Save data"
             
-        save_path = QtGui.QFileDialog.getSaveFileName(None,
+        save_path = QtGui.QFileDialog.getSaveFileName(self,
                                                       fdialog_msg,
-                                                      '.',
+                                                      HOME,
                                                       extStr)
         
         if save_path:
@@ -2998,9 +3001,9 @@ class DTOceanWindow(MainWindow):
         msg = "Open Project"
         valid_exts = "DTOcean Files (*.dto *.prj)"
         
-        file_path = QtGui.QFileDialog.getOpenFileName(None,
+        file_path = QtGui.QFileDialog.getOpenFileName(self,
                                                       msg,
-                                                      '.',
+                                                      HOME,
                                                       valid_exts)
         
         if not file_path: return
@@ -3085,9 +3088,9 @@ class DTOceanWindow(MainWindow):
         valid_exts = ("DTOcean Application File (*.dto);;"
                       "DTOcean Project File (*.prj)")
         
-        file_path = QtGui.QFileDialog.getSaveFileName(None,
+        file_path = QtGui.QFileDialog.getSaveFileName(self,
                                                       msg,
-                                                      '.',
+                                                      HOME,
                                                       valid_exts)
         
         result = False
@@ -3130,9 +3133,9 @@ class DTOceanWindow(MainWindow):
         msg = "Export Data"
         valid_exts = "Datastate Files (*.dts)"
         
-        file_path = QtGui.QFileDialog.getSaveFileName(None,
+        file_path = QtGui.QFileDialog.getSaveFileName(self,
                                                       msg,
-                                                      '.',
+                                                      HOME,
                                                       valid_exts)
                 
         if file_path:
@@ -3146,9 +3149,9 @@ class DTOceanWindow(MainWindow):
         msg = "Export Data (Mask Outputs)"
         valid_exts = "Datastate Files (*.dts)"
         
-        file_path = QtGui.QFileDialog.getSaveFileName(None,
+        file_path = QtGui.QFileDialog.getSaveFileName(self,
                                                       msg,
-                                                      '.',
+                                                      HOME,
                                                       valid_exts)
                 
         if file_path:
@@ -3162,9 +3165,9 @@ class DTOceanWindow(MainWindow):
         msg = "Import Data"
         valid_exts = "Datastate Files (*.dts)"
         
-        file_path = QtGui.QFileDialog.getOpenFileName(None,
+        file_path = QtGui.QFileDialog.getOpenFileName(self,
                                                       msg,
-                                                      '.',
+                                                      HOME,
                                                       valid_exts)
         
         if file_path:
@@ -3178,9 +3181,9 @@ class DTOceanWindow(MainWindow):
         msg = "Import Data (Skip Satisfied)"
         valid_exts = "Datastate Files (*.dts)"
         
-        file_path = QtGui.QFileDialog.getOpenFileName(None,
+        file_path = QtGui.QFileDialog.getOpenFileName(self,
                                                       msg,
-                                                      '.',
+                                                      HOME,
                                                       valid_exts)
         
         if file_path:

@@ -70,6 +70,7 @@ else:
     from ..designer.low.listframeeditor import  Ui_ListFrameEditor
     from ..designer.low.about import  Ui_AboutDialog
 
+HOME = os.path.expanduser("~")
 DIR_PATH = os.path.dirname(__file__)
 
 
@@ -409,7 +410,8 @@ class TestDataPicker(QtGui.QDialog, Ui_TestDataPicker):
     @QtCore.pyqtSlot()    
     def _write_path(self):
         
-        test_file_path = QtGui.QFileDialog.getOpenFileName()
+        test_file_path = QtGui.QFileDialog.getOpenFileName(self,
+                                                           directory=HOME)
         self.pathLineEdit.setText(test_file_path)
         
         return
