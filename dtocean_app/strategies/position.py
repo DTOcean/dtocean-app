@@ -150,6 +150,7 @@ class AdvancedPositionWidget(QtGui.QWidget,
         self._config = self._init_config(config)
         self._max_threads = multiprocessing.cpu_count()
         self._results_df = None
+        self._protect_default = True
         self._init_ui()
         
         return
@@ -204,6 +205,8 @@ class AdvancedPositionWidget(QtGui.QWidget,
         
         self.dataTableLayout.addWidget(self.dataTableWidget)
         
+        self.protectDefaultBox.stateChanged.connect(
+                                                self._update_protect_default)
         self.dataExportButton.clicked.connect(self._export_data_table)
         
         ## GLOBAL
@@ -363,6 +366,9 @@ class AdvancedPositionWidget(QtGui.QWidget,
         else:
             
             self.tabWidget.setTabEnabled(2, True)
+            
+            if "Default" not in self._shell.project.get_simulation_titles():
+                self.protectDefaultBox.setEnabled(False)
             
             if self._results_df is None:
             
@@ -538,6 +544,16 @@ class AdvancedPositionWidget(QtGui.QWidget,
             self._config["max_simulations"] = max_simulations
         else:
             self._config["max_simulations"] = None
+        
+        return
+    
+    @QtCore.pyqtSlot(object)
+    def _update_protect_default(self, checked_state):
+        
+        if checked_state == QtCore.Qt.Checked:
+            self._protect_default = True
+        else:
+            self._protect_default = False
         
         return
     
