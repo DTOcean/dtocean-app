@@ -94,7 +94,7 @@ class DataTableWidget(QtGui.QWidget):
         
         if edit_rows:
         
-            self.addRowButton = QtGui.QToolButton(self.buttonFrame)
+            self.addRowButton = QtGui.QToolButton(buttonFrame)
             self.addRowButton.setObjectName('addrowbutton')
             self.addRowButton.setText(self.tr(u'+row'))
             self.addRowButton.setToolTip(self.tr(u'add new row'))
