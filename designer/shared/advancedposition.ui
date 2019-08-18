@@ -517,7 +517,7 @@
              </widget>
             </item>
             <item>
-             <widget class="QLineEdit" name="lineEdit">
+             <widget class="QLineEdit" name="simSelectEdit">
               <property name="enabled">
                <bool>false</bool>
               </property>

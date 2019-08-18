@@ -151,6 +151,8 @@ class AdvancedPositionWidget(QtGui.QWidget,
         self._max_threads = multiprocessing.cpu_count()
         self._results_df = None
         self._protect_default = True
+        self._sims_to_load = None
+        
         self._init_ui()
         
         return
@@ -194,6 +196,12 @@ class AdvancedPositionWidget(QtGui.QWidget,
         
         self.tabWidget.setTabEnabled(2, False)
         
+        self.simButtonGroup.setId(self.bestSimButton, 1)
+        self.simButtonGroup.setId(self.worstSimButton, 2)
+        self.simButtonGroup.setId(self.top5SimButton, 3)
+        self.simButtonGroup.setId(self.bottom5SimButton, 4)
+        self.simButtonGroup.setId(self.customSimButton, 5)
+        
         self.dataTableWidget = DataTableWidget(self,
                                                edit_rows=False,
                                                edit_cols=False,
@@ -207,6 +215,9 @@ class AdvancedPositionWidget(QtGui.QWidget,
         
         self.protectDefaultBox.stateChanged.connect(
                                                 self._update_protect_default)
+        self.simButtonGroup.buttonClicked['int'].connect(
+                                                    self._select_sims_to_load)
+        self.simSelectEdit.textEdited.connect(self._update_custom_sims)
         self.dataExportButton.clicked.connect(self._export_data_table)
         
         ## GLOBAL
@@ -358,6 +369,7 @@ class AdvancedPositionWidget(QtGui.QWidget,
                     self.set_manual_thread_message()
         
         ## RESULTS TAB
+        
         if optimiser_status_str is None:
             
             self.tabWidget.setTabEnabled(2, False)
@@ -369,6 +381,11 @@ class AdvancedPositionWidget(QtGui.QWidget,
             
             if "Default" not in self._shell.project.get_simulation_titles():
                 self.protectDefaultBox.setEnabled(False)
+            
+            if self._sims_to_load is None:
+                self.simLoadButton.setDisabled(True)
+            else:
+                self.simLoadButton.setEnabled(True)
             
             if self._results_df is None:
             
@@ -554,6 +571,75 @@ class AdvancedPositionWidget(QtGui.QWidget,
             self._protect_default = True
         else:
             self._protect_default = False
+        
+        return
+    
+    @QtCore.pyqtSlot(int)
+    def _select_sims_to_load(self, button_id):
+        
+        lcoe_column = self._results_df.columns[1]
+        print lcoe_column
+        
+        if button_id == 1:
+            
+            check_df = self._results_df.sort_values(by=[lcoe_column])
+            self._sims_to_load = check_df["Simulation #"][:1].tolist()
+        
+        elif button_id == 2:
+            
+            check_df = self._results_df.sort_values(by=[lcoe_column],
+                                                    ascending=False)
+            self._sims_to_load = check_df["Simulation #"][:1].tolist()
+        
+        elif button_id == 3:
+            
+            check_df = self._results_df.sort_values(by=[lcoe_column])
+            self._sims_to_load = check_df["Simulation #"][:5].tolist()
+        
+        elif button_id == 4:
+            
+            check_df = self._results_df.sort_values(by=[lcoe_column],
+                                                    ascending=False)
+            self._sims_to_load = check_df["Simulation #"][:5].tolist()
+        
+        else:
+            
+            self._update_custom_sims(update_status=False)
+        
+        print self._sims_to_load
+        
+        if button_id == 5:
+            custom_enabled = True
+        else:
+            custom_enabled = False
+        
+        self.simsLabel.setEnabled(custom_enabled)
+        self.simSelectEdit.setEnabled(custom_enabled)
+        self.simHelpLabel.setEnabled(custom_enabled)
+        
+        self._update_status()
+        
+        return
+    
+    @QtCore.pyqtSlot()
+    def _update_custom_sims(self, update_status=True):
+        
+        sims_to_load_str = str(self.simSelectEdit.text())
+        sims_to_load = None
+            
+        if sims_to_load_str:
+            
+            sims_to_load_strs = sims_to_load_str.split(",")
+            
+            try:
+                sims_to_load = [int(x) for x in sims_to_load_strs]
+            except:
+                pass
+        
+        self._sims_to_load = sims_to_load
+        
+        if update_status:
+            self._update_status()
         
         return
     
