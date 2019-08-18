@@ -149,6 +149,7 @@ class AdvancedPositionWidget(QtGui.QWidget,
         self._shell = shell
         self._config = self._init_config(config)
         self._max_threads = multiprocessing.cpu_count()
+        self._results_df = None
         self._init_ui()
         
         return
@@ -355,14 +356,71 @@ class AdvancedPositionWidget(QtGui.QWidget,
         if optimiser_status_str is None:
             
             self.tabWidget.setTabEnabled(2, False)
+            self._results_df = None
         
         else:
             
             self.tabWidget.setTabEnabled(2, True)
-           
-            df = GUIAdvancedPosition.get_results_table(self._config)
-            model = DataFrameModel(df)
+            
+            if self._results_df is None:
+            
+                # TODO: This needs automating.
+                # Consider adding names and units to config file and using
+                # meta data for variables.
+                name_map = {"sim_number": "Simulation #",
+                            "project.lcoe_mode": "LCOE Mode",
+                            "array_orientation": "Grid Orientation",
+                            "delta_row": "Row Spacing",
+                            "delta_col": "Column Spacing",
+                            "n_nodes": "No. of Devices Requested",
+                            "project.number_of_devices":
+                                "No. of Devices Simulated",
+                            "project.annual_energy":
+                                "Annual Mechanical Energy",
+                            "project.q_factor": "q-factor",
+                            "project.capex_total": "CAPEX",
+                            "project.capex_breakdown": "CAPEX",
+                            "project.lifetime_opex_mode": "OPEX Mode",
+                            "project.lifetime_energy_mode":
+                                "Lifetime Energy Mode"}
+                
+                unit_map = {"project.lcoe_mode": "Euro/kWh",
+                            "array_orientation": "Rad",
+                            "delta_row": "m",
+                            "delta_col": "m",
+                            "project.annual_energy": "MWh",
+                            "project.capex_total": "Euro",
+                            "project.capex_breakdown": "Euro",
+                            "project.lifetime_opex_mode": "Euro",
+                            "project.lifetime_energy_mode": "MWh"}
+                
+                df = GUIAdvancedPosition.get_results_table(self._config)
+                
+                new_columns = []
+                
+                for column in df.columns:
+                    
+                    for key in name_map.keys():
+                        
+                        if key in column:
+                            
+                            column = column.replace(key, name_map[key])
+                            
+                            if key in unit_map:
+                                column += " ({})".format(unit_map[key])
+                            
+                            break
+                    
+                    new_columns.append(column)
+                
+                df.columns = new_columns
+                
+                self._results_df = df
+            
+            model = DataFrameModel(self._results_df)
             self.dataTableWidget.setViewModel(model)
+            
+            
         
         return
     
