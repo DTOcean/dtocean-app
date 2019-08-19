@@ -16,6 +16,9 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
+import sys
+import logging
+import traceback
 import multiprocessing
 from copy import deepcopy
 
@@ -29,6 +32,7 @@ from dtocean_qt.models.DataFrameModel import DataFrameModel
 from . import GUIStrategy, StrategyWidget, PyQtABCMeta
 from ..utils.display import is_high_dpi
 from ..widgets.datatable import DataTableWidget
+from ..widgets.dialogs import ProgressBar
 
 if is_high_dpi():
     
@@ -38,13 +42,64 @@ else:
     
     from ..designer.low.advancedposition import Ui_AdvancedPositionWidget
 
+# Set up logging
+module_logger = logging.getLogger(__name__)
+
 # User home directory
 HOME = os.path.expanduser("~")
 
 
+class ThreadLoadSimulations(QtCore.QThread):
+    
+    """QThread for loading simulations"""
+    
+    taskFinished = QtCore.pyqtSignal()
+    error_detected =  QtCore.pyqtSignal(object, object, object)
+    
+    def __init__(self, shell, sim_numbers, exclude_default):
+        
+        super(ThreadLoadSimulations, self).__init__()
+        self._shell = shell
+        self._sim_numbers = sim_numbers
+        self._exclude_default = exclude_default
+        
+        return
+    
+    def run(self):
+        
+        try:
+            
+            # Block signals
+            self._shell.core.blockSignals(True)
+            self._shell.project.blockSignals(True)
+            
+            self._shell.strategy.remove_simulations(
+                                        self._shell.core,
+                                        self._shell.project,
+                                        exclude_default=self._exclude_default)
+            
+            self._shell.strategy.load_simulations(self._shell.core,
+                                                  self._shell.project,
+                                                  self._sim_numbers)
+        
+        except: 
+            
+            etype, evalue, etraceback = sys.exc_info()
+            self.error_detected.emit(etype, evalue, etraceback)
+        
+        finally:
+            
+            # Reinstate signals and emit
+            self._shell.core.blockSignals(False)
+            self._shell.project.blockSignals(False)
+            self.taskFinished.emit()
+        
+        return
+
+
 class GUIAdvancedPosition(GUIStrategy, AdvancedPosition):
     
-    """
+    """GUI for AdvancedPosition strategy.
     """
     
     __metaclass__ = PyQtABCMeta
@@ -149,11 +204,13 @@ class AdvancedPositionWidget(QtGui.QWidget,
         self._shell = shell
         self._config = self._init_config(config)
         self._max_threads = multiprocessing.cpu_count()
+        self._progress = None
         self._results_df = None
         self._protect_default = True
         self._sims_to_load = None
+        self._load_sims_thread = None
         
-        self._init_ui()
+        self._init_ui(parent)
         
         return
     
@@ -167,7 +224,7 @@ class AdvancedPositionWidget(QtGui.QWidget,
         return config
     
     
-    def _init_ui(self):
+    def _init_ui(self, parent):
         
         ## INIT
         
@@ -218,11 +275,17 @@ class AdvancedPositionWidget(QtGui.QWidget,
         self.simButtonGroup.buttonClicked['int'].connect(
                                                     self._select_sims_to_load)
         self.simSelectEdit.textEdited.connect(self._update_custom_sims)
+        self.simLoadButton.clicked.connect(self._progress_load_sims)
         self.dataExportButton.clicked.connect(self._export_data_table)
         
         ## GLOBAL
         
+        # Set up progress bar
+        self._progress = ProgressBar(parent)
+        self._progress.setModal(True)
+        
         self._shell.project.sims_updated.connect(self._update_status)
+        self._shell.strategy_selected.connect(self._update_status)
         
         self._update_status(init=True)
         
@@ -665,6 +728,45 @@ class AdvancedPositionWidget(QtGui.QWidget,
         return
     
     @QtCore.pyqtSlot()
+    def _progress_load_sims(self):
+        
+        self._progress.allow_close = False
+        self._progress.set_pulsing()
+        
+        if self._load_sims_thread is not None: return
+        
+        self._load_sims_thread = ThreadLoadSimulations(self._shell,
+                                                       self._sims_to_load,
+                                                       self._protect_default)
+        
+        self._load_sims_thread.start()
+        self._load_sims_thread.error_detected.connect(self._display_error)
+        self._load_sims_thread.taskFinished.connect(self._finish_load_sims)
+        
+        self._progress.show()
+        
+        return
+    
+    @QtCore.pyqtSlot()
+    def _finish_load_sims(self):
+        
+        self._load_sims_thread.error_detected.disconnect()
+        self._load_sims_thread.taskFinished.disconnect()
+        self._load_sims_thread = None
+        
+        # Emit signals on project
+        self._shell.project.sims_updated.emit()
+        self._shell.project.set_active_index(index=0)
+        
+        # Update the interface status
+        self._shell.core.set_interface_status(self._shell.project)
+        
+        self._progress.allow_close = True
+        self._progress.close()
+        
+        return
+    
+    @QtCore.pyqtSlot()
     def _export_data_table(self):
         
         extlist = ["comma-separated values (*.csv)"]
@@ -680,6 +782,26 @@ class AdvancedPositionWidget(QtGui.QWidget,
         if not save_path:return
         
         self._results_df.to_csv(str(save_path), index=False)
+        
+        return
+    
+    @QtCore.pyqtSlot(object, object, object)  
+    def _display_error(self, etype, evalue, etraceback):
+        
+        type_str = str(etype)
+        type_strs = type_str.split(".")
+        sane_type_str = type_strs[-1].replace("'>", "")
+        
+        if sane_type_str[0].lower() in "aeiou":
+            article = "An"
+        else:
+            article = "A"
+        
+        errMsg = "{} {} occurred: {:s}".format(article, sane_type_str, evalue)
+        
+        module_logger.critical(errMsg)
+        module_logger.critical(''.join(traceback.format_tb(etraceback)))
+        QtGui.QMessageBox.critical(self, "ERROR", errMsg)
         
         return
     
