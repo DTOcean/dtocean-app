@@ -291,18 +291,18 @@ class GUIStrategyManager(ListFrameEditor, StrategyManager):
     def _reset_strategy(self):
         
         self.listWidget.clearSelection()
-    
+        
         self._last_selected = None
         self._strategy = None
         self._strategy_widget = None
-
+        
         self._update_configuration()
         self._set_dynamic_label("None")
         
         self.strategy_selected.emit(self._strategy)
         
         return
-        
+    
     @QtCore.pyqtSlot(object)
     def _configure_strategy(self):
         

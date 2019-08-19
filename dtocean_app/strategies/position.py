@@ -109,7 +109,6 @@ class GUIAdvancedPosition(GUIStrategy, AdvancedPosition):
         AdvancedPosition.__init__(self)
         GUIStrategy.__init__(self)
         
-        
         return
     
     @property
@@ -525,8 +524,6 @@ class AdvancedPositionWidget(QtGui.QWidget,
             
             model = DataFrameModel(self._results_df)
             self.dataTableWidget.setViewModel(model)
-            
-            
         
         return
     
