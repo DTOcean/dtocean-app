@@ -380,7 +380,10 @@ class AdvancedPositionWidget(QtGui.QWidget,
         
         ## RESULTS TAB
         
-        if optimiser_status_str is None:
+        results_open = (optimiser_status_str is not None and
+                        self._config == self._shell.strategy._config)
+        
+        if not results_open:
             
             self.tabWidget.setTabEnabled(2, False)
             self._results_df = None
