@@ -114,7 +114,7 @@ class GUIAdvancedPosition(GUIStrategy, AdvancedPosition):
     @property
     def allow_rerun(self):
         
-        return False
+        return True
     
     def get_weight(self):
         
@@ -362,23 +362,23 @@ class AdvancedPositionWidget(QtGui.QWidget,
                      GUIAdvancedPosition.get_optimiser_status(self._config)
             
             if optimiser_status_str is not None:
-                optimiser_status_str = \
+                status_str += \
                     status_template.format(color_map[optimiser_status_code],
                                            optimiser_status_str)
         
         # Define a global status
-        if optimiser_status_str is not None:
-            
-            status_str = optimiser_status_str
-            status_code = 1
-            
-            self._config["force_strategy_run"] = False
-        
-        elif (config_status_code == 0 or
+        if (config_status_code == 0 or
               project_status_code == 0 or
               worker_dir_status_code == 0):
             
-            status_code = 0
+            if optimiser_status_str is not None:
+            
+                status_code = 1
+                self._config["force_strategy_run"] = False
+            
+            else:
+                
+                status_code = 0
             
         else:
             
