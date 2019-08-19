@@ -300,20 +300,30 @@ class AdvancedPositionWidget(QtGui.QWidget,
                      GUIAdvancedPosition.get_optimiser_status(self._config)
             
             if optimiser_status_str is not None:
-                status_str += \
+                optimiser_status_str = \
                     status_template.format(color_map[optimiser_status_code],
                                            optimiser_status_str)
         
         # Define a global status
-        if (config_status_code == 0 or
-            project_status_code == 0 or
-            worker_dir_status_code == 0):
+        if optimiser_status_str is not None:
+            
+            status_str = optimiser_status_str
+            status_code = 1
+            
+            self._config["force_strategy_run"] = False
+        
+        elif (config_status_code == 0 or
+              project_status_code == 0 or
+              worker_dir_status_code == 0):
             
             status_code = 0
             
         else:
             
             status_code = 1
+            
+            if "force_strategy_run" in self._config:
+                self._config.pop("force_strategy_run")
         
         status_str_rich = ('<html><head/><body><p><span '
                            'style="font-size: 10pt;">'
@@ -485,6 +495,9 @@ class AdvancedPositionWidget(QtGui.QWidget,
         config_template = load_config_template()
         config = deepcopy(self._config)
         config.pop("threads_auto")
+        
+        if "force_strategy_run" in self.config:
+            config.pop("force_strategy_run")
         
         config_template.update(config)
         dump_config(config_template, file_path)
@@ -669,9 +682,6 @@ class AdvancedPositionWidget(QtGui.QWidget,
         Returns:
           dict
         '''
-        
-        # Update any other value that might have been imported.
-        self._config["root_project_path"] = "worker.prj"
         
         return self._config
     
