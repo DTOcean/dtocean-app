@@ -32,7 +32,7 @@ from .widgets.output import OutputDataTable
 
 class GUIStrategyManager(ListFrameEditor, StrategyManager):
     
-    strategy_selected = QtCore.pyqtSignal(object)
+    strategy_selected = QtCore.pyqtSignal(object, object)
     
     """Strategy discovery"""
     
@@ -310,12 +310,19 @@ class GUIStrategyManager(ListFrameEditor, StrategyManager):
         
         config = self.mainWidget.get_configuration()
         self._strategy.configure(**config)
-        self._set_dynamic_label(self._strategy.get_name())
         
-        self.strategy_selected.emit(self._strategy)
+        force_strategy_run = None
+        
+        if "force_strategy_run" in config:
+            force_strategy_run = config["force_strategy_run"]
+            self._complete_strategy()
+        else:
+            self._set_dynamic_label(self._strategy.get_name())
+        
+        self.strategy_selected.emit(self._strategy, force_strategy_run)
         
         return
-        
+    
     def _get_dump_dict(self, strategy):
         
         # Store the additional strategy information

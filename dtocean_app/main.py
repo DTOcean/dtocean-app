@@ -1136,8 +1136,11 @@ class Shell(QtCore.QObject):
 
         return
         
-    @QtCore.pyqtSlot(object)
-    def select_strategy(self, strategy):
+    @QtCore.pyqtSlot(object, object)
+    def select_strategy(self, strategy, strategy_run=None):
+        
+        if strategy_run is None:
+            strategy_run = True
         
         if self._active_thread is not None: self._active_thread.wait()
         
@@ -1157,7 +1160,7 @@ class Shell(QtCore.QObject):
         
         else:
         
-            self.strategy.strategy_run = True
+            self.strategy.strategy_run = strategy_run
             force_unavailable = self.strategy.get_variables()
             simulation.set_unavailable_variables(force_unavailable)
         
