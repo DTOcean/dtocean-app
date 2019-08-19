@@ -166,6 +166,7 @@ class ThreadOpen(QtCore.QThread):
         self._file_path = file_path
         self._project = None
         self._current_scope = None
+        self._activated_interfaces = None
         self._strategy = None
         self._project_path = None
         
@@ -191,8 +192,10 @@ class ThreadOpen(QtCore.QThread):
                 prj_file_path = os.path.join(dto_dir_path, "project.prj")
                 sco_file_path = os.path.join(dto_dir_path, "scope.json")
                 stg_file_path = os.path.join(dto_dir_path, "strategy.pkl")
+                int_file_path = os.path.join(dto_dir_path, "interfaces.json")
                 
                 if not os.path.isfile(stg_file_path): stg_file_path = None
+                if not os.path.isfile(int_file_path): int_file_path = None
                 
             elif os.path.splitext(load_path)[1] == ".prj":
                 
@@ -218,7 +221,18 @@ class ThreadOpen(QtCore.QThread):
             else:
                 
                 self._current_scope = "global"
+            
+            # Load up the activated interfaces if found
+            if int_file_path is not None:
+            
+                with open(int_file_path, 'rb') as json_file:
+                    self._activated_interfaces = json.load(json_file)
+                    
+            else:
                 
+                self._activated_interfaces = {}
+            
+            
             # Load up the strategy if one was found
             if stg_file_path is not None:
                 
@@ -259,6 +273,7 @@ class ThreadSave(QtCore.QThread):
                        project,
                        save_path,
                        current_scope,
+                       activated_interfaces,
                        strategy):
         
         super(ThreadSave, self).__init__()
@@ -266,6 +281,7 @@ class ThreadSave(QtCore.QThread):
         self._project = project
         self._save_path = save_path
         self._current_scope = current_scope
+        self._activated_interfaces = activated_interfaces
         self._strategy = strategy
         
         return
@@ -311,7 +327,19 @@ class ThreadSave(QtCore.QThread):
             
             # Set the standard archive contents
             arch_files = [prj_file_path, sco_file_path]
-            arch_paths = ["project.prj", "scope.json"]
+            arch_paths = ["project.prj", "scope.json", "interfaces.json"]
+            
+            # Dump the activated interfaces
+            if self._activated_interfaces:
+            
+                int_file_path = os.path.join(dto_dir_path, "interfaces.json")
+                
+                with open(int_file_path, 'wb') as json_file:
+                    json.dump(self._activated_interfaces, json_file)
+            
+                # Set the standard archive contents
+                arch_files.append(int_file_path)
+                arch_paths.append("interfaces.json")
             
             # Dump the strategy (if there is one)
             if self._strategy is not None:
@@ -767,6 +795,7 @@ class Shell(QtCore.QObject):
         self.strategy = None
         self.queued_interfaces = {"modules": None,
                                   "themes": None}
+        self.activated_interfaces = {}
         self._active_thread = None
         self._current_scope = None
         
@@ -894,6 +923,7 @@ class Shell(QtCore.QObject):
         
         # Relay active simulation change
         self.project.active_index_changed.connect(self._emit_update_pipeline)
+        self.project.active_index_changed.connect(self.check_active_simulation)
         self.project.active_index_changed.connect(
             lambda: self.reset_widgets.emit())
         self.project.active_index_changed.connect(
@@ -939,6 +969,7 @@ class Shell(QtCore.QObject):
                                          self.project,
                                          save_path,
                                          self._current_scope,
+                                         self.activated_interfaces,
                                          self.strategy)
         self._active_thread.taskFinished.connect(self._finalize_save_project)
         self._active_thread.start()
@@ -999,11 +1030,49 @@ class Shell(QtCore.QObject):
         
         msg = "Setting simulation '{}' as active".format(title)
         module_logger.debug(msg)
-
+        
         self.project.set_active_index(title=title)
         
         return
+    
+    @QtCore.pyqtSlot()
+    def check_active_simulation(self):
         
+        if not self.activated_interfaces: return
+        
+        if ("modules" not in self.activated_interfaces or
+         self.activated_interfaces["modules"] is None):
+            activated_modules = []
+        else:
+            activated_modules = self.activated_interfaces["modules"]
+        
+        if ("themes" not in self.activated_interfaces or
+            self.activated_interfaces["themes"] is None):
+            activated_themes = []
+        else:
+            activated_themes = self.activated_interfaces["themes"]
+        
+        # Check modules and themes of the simulation
+        active_mods = self.module_menu.get_active(self.core, self.project)
+        active_themes = self.theme_menu.get_active(self.core, self.project)
+        
+        warn = False
+        
+        if set(activated_modules) != set(active_mods):
+            warn = True
+        
+        if set(activated_themes) != set(active_themes):
+            warn = True
+        
+        if warn:
+            
+            msg_str = ("The modules or themes of the active simulation "
+                       "differ from those originally selected. Unexpected "
+                       "behaviour may occur!")
+            module_logger.warning(msg_str)
+        
+        return
+    
     @QtCore.pyqtSlot(str, dict)
     def select_database(self, identifier, credentials):
         
@@ -1114,6 +1183,8 @@ class Shell(QtCore.QObject):
                                           self.project,
                                           module_name)
         
+        self.activated_interfaces["modules"] = \
+                                        self.queued_interfaces["modules"]
         self.queued_interfaces["modules"] = None
 
         return
@@ -1132,6 +1203,7 @@ class Shell(QtCore.QObject):
                                          self.project,
                                          theme_name)
 
+        self.activated_interfaces["themes"] = self.queued_interfaces["themes"]
         self.queued_interfaces["themes"] = None
 
         return
@@ -1325,6 +1397,7 @@ class Shell(QtCore.QObject):
         
         self.project = self._active_thread._project
         self.project_path = self._active_thread._project_path
+        self.activated_interfaces = self._active_thread._activated_interfaces
         self.strategy = self._active_thread._strategy
         self._current_scope = self._active_thread._current_scope
         
@@ -1332,6 +1405,7 @@ class Shell(QtCore.QObject):
         
         # Relay active simulation change
         self.project.active_index_changed.connect(self._emit_update_pipeline)
+        self.project.active_index_changed.connect(self.check_active_simulation)
         self.project.active_index_changed.connect(
             lambda: self.reset_widgets.emit())
         self.project.active_index_changed.connect(
