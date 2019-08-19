@@ -394,6 +394,11 @@ class AdvancedPositionWidget(QtGui.QWidget,
             
             if "Default" not in self._shell.project.get_simulation_titles():
                 self.protectDefaultBox.setEnabled(False)
+                self._protect_default = False
+            else:
+                self.protectDefaultBox.setEnabled(True)
+                self.protectDefaultBox.stateChanged.emit(
+                                        self.protectDefaultBox.checkState())
             
             if self._sims_to_load is None:
                 self.simLoadButton.setDisabled(True)
