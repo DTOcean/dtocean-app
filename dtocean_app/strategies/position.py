@@ -285,6 +285,8 @@ class AdvancedPositionWidget(QtGui.QWidget,
         self.dataTableWidget.setMinimumSize(QtCore.QSize(0, 0))
         self.dataTableLayout.addWidget(self.dataTableWidget)
         
+        ## PLOTS TAB
+        
         # Add spin boxes
         
         self.xAxisMinSpinBox = _init_sci_spin_box(self, "xAxisMinSpinBox")
@@ -859,6 +861,30 @@ class AdvancedPositionWidget(QtGui.QWidget,
         color_axis_data = None
         cmap = None
         norm = None
+        xmin = None
+        xmax = None
+        ymin = None
+        ymax = None
+        vmin = None
+        vmax = None
+        
+        if self.xAxisMinBox.checkState() == QtCore.Qt.Checked:
+            xmin = float(self.xAxisMinSpinBox.value())
+        
+        if self.xAxisMaxBox.checkState() == QtCore.Qt.Checked:
+            xmax = float(self.xAxisMaxSpinBox.value())
+        
+        if self.yAxisMinBox.checkState() == QtCore.Qt.Checked:
+            ymin = float(self.yAxisMinSpinBox.value())
+        
+        if self.yAxisMaxBox.checkState() == QtCore.Qt.Checked:
+            ymax = float(self.yAxisMaxSpinBox.value())
+        
+        if self.colorAxisMinBox.checkState() == QtCore.Qt.Checked:
+            vmin = float(self.colorAxisMinSpinBox.value())
+        
+        if self.colorAxisMaxBox.checkState() == QtCore.Qt.Checked:
+            vmax = float(self.colorAxisMaxSpinBox.value())
         
         if color_axis_str:
             
@@ -869,11 +895,21 @@ class AdvancedPositionWidget(QtGui.QWidget,
                 # define the colormap
                 cmap = plt.cm.jet
                 
-                # define the bins and normalize
-                n_vals = color_axis_data.max() - color_axis_data.min() + 2
+                if vmin is None:
+                    color_axis_min = color_axis_data.min()
+                else:
+                    color_axis_min = int(vmin)
                 
-                bounds = np.linspace(color_axis_data.min(),
-                                     color_axis_data.max() + 1,
+                if vmax is None:
+                    color_axis_max = color_axis_data.max()
+                else:
+                    color_axis_max = int(vmax)
+                
+                # define the bins and normalize
+                n_vals = color_axis_max - color_axis_min + 2
+                
+                bounds = np.linspace(color_axis_min,
+                                     color_axis_max + 1,
                                      n_vals)
                 
                 norm = mpl.colors.BoundaryNorm(bounds, cmap.N)
@@ -884,7 +920,12 @@ class AdvancedPositionWidget(QtGui.QWidget,
                         y_axis_data,
                         c=color_axis_data,
                         cmap=cmap,
-                        norm=norm)
+                        norm=norm,
+                        vmin=vmin,
+                        vmax=vmax)
+        
+        ax.set_xlim([xmin, xmax])
+        ax.set_ylim([ymin, ymax])
         
         ax.set(xlabel=x_axis_str,
                ylabel=y_axis_str)
@@ -892,16 +933,27 @@ class AdvancedPositionWidget(QtGui.QWidget,
         # Add a colorbar
         if color_axis_str:
             
-            cb = fig.colorbar(im, ax=ax)
+            extend =  'neither'
+            
+            if vmin is not None and vmax is not None:
+                extend = 'both'
+            elif vmin is not None:
+                extend = 'min'
+            elif vmax is not None:
+                extend = 'max'
+            
+            cb = fig.colorbar(im, ax=ax, extend=extend)
             cb.set_label(color_axis_str)
             
-            # Relabel to centre of intervals
-            labels = np.arange(color_axis_data.min(),
-                               color_axis_data.max() + 1,
-                               1)
-            loc = labels + .5
-            cb.set_ticks(loc)
-            cb.set_ticklabels(labels)
+            if color_axis_data.dtype == np.int64:
+            
+                # Relabel to centre of intervals
+                labels = np.arange(color_axis_min,
+                                   color_axis_max + 1,
+                                   1)
+                loc = labels + .5
+                cb.set_ticks(loc)
+                cb.set_ticklabels(labels)
         
         fig.subplots_adjust(0.2, 0.2, 0.8, 0.8)
         
