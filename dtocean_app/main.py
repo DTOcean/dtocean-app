@@ -2782,7 +2782,7 @@ class DTOceanWindow(MainWindow):
         # Draw the widget
         widget.draw_idle()
         
-        if len(plt.get_fignums()) > 2:
+        if len(plt.get_fignums()) > 3:
             
             num_strs = ["{}".format(x) for x in plt.get_fignums()]
             num_str = ", ".join(num_strs)
@@ -2803,7 +2803,7 @@ class DTOceanWindow(MainWindow):
 
         controller._save_plot(self._shell, file_path, size, plot_name)
         
-        if len(plt.get_fignums()) > 2:
+        if len(plt.get_fignums()) > 3:
             
             num_strs = ["{}".format(x) for x in plt.get_fignums()]
             num_str = ", ".join(num_strs)
@@ -2855,7 +2855,7 @@ class DTOceanWindow(MainWindow):
         # Draw the widget
         widget.draw_idle()
         
-        if len(plt.get_fignums()) > 2:
+        if len(plt.get_fignums()) > 3:
             
             num_strs = ["{}".format(x) for x in plt.get_fignums()]
             num_str = ", ".join(num_strs)
@@ -2957,7 +2957,7 @@ class DTOceanWindow(MainWindow):
         # Draw the widget
         widget.draw_idle()
         
-        if len(plt.get_fignums()) > 2:
+        if len(plt.get_fignums()) > 3:
             
             num_strs = ["{}".format(x) for x in plt.get_fignums()]
             num_str = ", ".join(num_strs)

@@ -22,6 +22,10 @@ import traceback
 import multiprocessing
 from copy import deepcopy
 
+import sip
+import numpy as np
+import matplotlib as mpl
+import matplotlib.pyplot as plt
 from PyQt4 import QtCore, QtGui
 
 from dtocean_core.strategies.position import AdvancedPosition
@@ -33,6 +37,8 @@ from . import GUIStrategy, StrategyWidget, PyQtABCMeta
 from ..utils.display import is_high_dpi
 from ..widgets.datatable import DataTableWidget
 from ..widgets.dialogs import ProgressBar
+from ..widgets.display import MPLWidget
+from ..widgets.scientificselect import ScientificDoubleSpinBox
 
 if is_high_dpi():
     
@@ -41,6 +47,12 @@ if is_high_dpi():
 else:
     
     from ..designer.low.advancedposition import Ui_AdvancedPositionWidget
+
+try:
+    _fromUtf8 = QtCore.QString.fromUtf8
+except AttributeError:
+    def _fromUtf8(s):
+        return s
 
 # Set up logging
 module_logger = logging.getLogger(__name__)
@@ -237,6 +249,8 @@ class AdvancedPositionWidget(QtGui.QWidget,
         self.set_manual_thread_message()
         self._set_objective_variables()
         
+        # Signals
+        
         self.importButton.clicked.connect(self._import_config)
         self.exportButton.clicked.connect(self._export_config)
         self.workdirLineEdit.returnPressed.connect(self._update_worker_dir)
@@ -258,16 +272,42 @@ class AdvancedPositionWidget(QtGui.QWidget,
         self.simButtonGroup.setId(self.bottom5SimButton, 4)
         self.simButtonGroup.setId(self.customSimButton, 5)
         
+        # Data table
+        
         self.dataTableWidget = DataTableWidget(self,
                                                edit_rows=False,
                                                edit_cols=False,
                                                edit_cells=False)
         
         sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Expanding,
-                                       QtGui.QSizePolicy.Expanding)
+                                       QtGui.QSizePolicy.Preferred)
         self.dataTableWidget.setSizePolicy(sizePolicy)
-        
+        self.dataTableWidget.setMinimumSize(QtCore.QSize(0, 200))
         self.dataTableLayout.addWidget(self.dataTableWidget)
+        
+        # Add spin boxes
+        
+        self.xAxisMinSpinBox = _init_sci_spin_box(self, "xAxisMinSpinBox")
+        self.xAxisMinLayout.addWidget(self.xAxisMinSpinBox)
+        self.xAxisMaxSpinBox = _init_sci_spin_box(self, "xAxisMaxSpinBox")
+        self.xAxisMaxLayout.addWidget(self.xAxisMaxSpinBox)
+        
+        self.yAxisMinSpinBox = _init_sci_spin_box(self, "yAxisMinSpinBox")
+        self.yAxisMinLayout.addWidget(self.yAxisMinSpinBox)
+        self.yAxisMaxSpinBox = _init_sci_spin_box(self, "yAxisMaxSpinBox")
+        self.yAxisMaxLayout.addWidget(self.yAxisMaxSpinBox)
+        
+        self.colorAxisMinSpinBox = _init_sci_spin_box(self,
+                                                      "colorAxisMinSpinBox")
+        self.colorAxisMinLayout.addWidget(self.colorAxisMinSpinBox)
+        self.colorAxisMaxSpinBox = _init_sci_spin_box(self,
+                                                      "colorAxisMaxSpinBox")
+        self.colorAxisMaxLayout.addWidget(self.colorAxisMaxSpinBox)
+        
+        # Add plot widget holder
+        self.plotWidget = None
+        
+        # Signals
         
         self.protectDefaultBox.stateChanged.connect(
                                                 self._update_protect_default)
@@ -276,12 +316,15 @@ class AdvancedPositionWidget(QtGui.QWidget,
         self.simSelectEdit.textEdited.connect(self._update_custom_sims)
         self.simLoadButton.clicked.connect(self._progress_load_sims)
         self.dataExportButton.clicked.connect(self._export_data_table)
+        self.plotButton.clicked.connect(self._add_plot_widget)
         
         ## GLOBAL
         
         # Set up progress bar
         self._progress = ProgressBar(parent)
         self._progress.setModal(True)
+        
+        # Signals
         
         self._shell.project.sims_updated.connect(self._update_status)
         self._shell.strategy_selected.connect(self._update_status)
@@ -522,6 +565,12 @@ class AdvancedPositionWidget(QtGui.QWidget,
                 df.columns = new_columns
                 
                 self._results_df = df
+                
+                # Populate plot comboboxes
+                new_columns.insert(0, "")
+                self.xAxisVarBox.addItems(new_columns)
+                self.yAxisVarBox.addItems(new_columns)
+                self.colorAxisVarBox.addItems(new_columns)
             
             model = DataFrameModel(self._results_df)
             self.dataTableWidget.setViewModel(model)
@@ -783,6 +832,109 @@ class AdvancedPositionWidget(QtGui.QWidget,
         
         return
     
+    @QtCore.pyqtSlot()
+    def _add_plot_widget(self):
+        
+        self._clear_plot_widget()
+        
+        # Get data
+        x_axis_str = str(self.xAxisVarBox.currentText())
+        y_axis_str = str(self.yAxisVarBox.currentText())
+        color_axis_str = str(self.colorAxisVarBox.currentText())
+        
+        if not (x_axis_str and y_axis_str): return
+        
+        x_axis_data = self._results_df[x_axis_str]
+        y_axis_data = self._results_df[y_axis_str]
+        
+        color_axis_data = None
+        cmap = None
+        norm = None
+        
+        if color_axis_str:
+            
+            color_axis_data = self._results_df[color_axis_str]
+            
+            if color_axis_data.dtype == np.int64:
+                
+                # define the colormap
+                cmap = plt.cm.jet
+                
+                # define the bins and normalize
+                n_vals = color_axis_data.max() - color_axis_data.min() + 2
+                
+                bounds = np.linspace(color_axis_data.min(),
+                                     color_axis_data.max() + 1,
+                                     n_vals)
+                
+                norm = mpl.colors.BoundaryNorm(bounds, cmap.N)
+        
+        fig, ax = plt.subplots()
+        
+        im = ax.scatter(x_axis_data,
+                        y_axis_data,
+                        c=color_axis_data,
+                        cmap=cmap,
+                        norm=norm)
+        
+        ax.set(xlabel=x_axis_str,
+               ylabel=y_axis_str)
+        
+        # Add a colorbar
+        if color_axis_str:
+            
+            cb = fig.colorbar(im, ax=ax)
+            cb.set_label(color_axis_str)
+            
+            # Relabel to centre of intervals
+            labels = np.arange(color_axis_data.min(),
+                               color_axis_data.max() + 1,
+                               1)
+            loc = labels + .5
+            cb.set_ticks(loc)
+            cb.set_ticklabels(labels)
+        
+        fig_handle = plt.gcf()
+        
+        widget = MPLWidget(fig_handle, self)
+        widget.setMinimumSize(QtCore.QSize(0, 400))
+        
+        self.plotWidget = widget
+        self.plotLayout.addWidget(widget)
+        
+        # Draw the widget
+        widget.draw_idle()
+        
+        if len(plt.get_fignums()) > 3:
+            
+            num_strs = ["{}".format(x) for x in plt.get_fignums()]
+            num_str = ", ".join(num_strs)
+            err_msg = ("Too many matplotlib figures detected. "
+                       "Numbers: {}").format(num_str)
+            
+            raise RuntimeError(err_msg)
+        
+        return
+    
+    def _clear_plot_widget(self):
+        
+        if self.plotWidget is None: return
+        
+        self.plotLayout.removeWidget(self.plotWidget)
+        self.plotWidget.setParent(None)
+        
+        fignum = self.plotWidget.figure.number
+        
+        log_msg = "Closing figure {}".format(fignum)
+        module_logger.debug(log_msg)
+        
+        sip.delete(self.plotWidget)
+        plt.close(fignum)
+        
+        self.plotWidget = None
+        
+        return
+    
     @QtCore.pyqtSlot(object, object, object)  
     def _display_error(self, etype, evalue, etraceback):
         
@@ -826,3 +978,19 @@ class AdvancedPositionWidget(QtGui.QWidget,
         self._update_status()
         
         return
+
+
+def _init_sci_spin_box(parent, name):
+    
+    sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Expanding,
+                                   QtGui.QSizePolicy.Fixed)
+    sizePolicy.setHorizontalStretch(0)
+    sizePolicy.setVerticalStretch(0)
+    
+    sciSpinBox = ScientificDoubleSpinBox(parent)
+    sciSpinBox.setSizePolicy(sizePolicy)
+    sciSpinBox.setMinimumSize(QtCore.QSize(0, 0))
+    sciSpinBox.setKeyboardTracking(False)
+    sciSpinBox.setObjectName(_fromUtf8(name))
+    
+    return sciSpinBox
