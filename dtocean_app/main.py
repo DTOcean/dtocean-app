@@ -327,7 +327,7 @@ class ThreadSave(QtCore.QThread):
             
             # Set the standard archive contents
             arch_files = [prj_file_path, sco_file_path]
-            arch_paths = ["project.prj", "scope.json", "interfaces.json"]
+            arch_paths = ["project.prj", "scope.json"]
             
             # Dump the activated interfaces
             if self._activated_interfaces:
