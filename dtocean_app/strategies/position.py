@@ -282,7 +282,7 @@ class AdvancedPositionWidget(QtGui.QWidget,
         sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Expanding,
                                        QtGui.QSizePolicy.Preferred)
         self.dataTableWidget.setSizePolicy(sizePolicy)
-        self.dataTableWidget.setMinimumSize(QtCore.QSize(0, 200))
+        self.dataTableWidget.setMinimumSize(QtCore.QSize(0, 0))
         self.dataTableLayout.addWidget(self.dataTableWidget)
         
         # Add spin boxes
@@ -303,6 +303,13 @@ class AdvancedPositionWidget(QtGui.QWidget,
         self.colorAxisMaxSpinBox = _init_sci_spin_box(self,
                                                       "colorAxisMaxSpinBox")
         self.colorAxisMaxLayout.addWidget(self.colorAxisMaxSpinBox)
+        
+        self.filterVarMinSpinBox = _init_sci_spin_box(self,
+                                                      "filterVarMinSpinBox")
+        self.filterVarMinLayout.addWidget(self.filterVarMinSpinBox)
+        self.filterVarMaxSpinBox = _init_sci_spin_box(self,
+                                                      "filterVarMaxSpinBox")
+        self.filterVarMaxLayout.addWidget(self.filterVarMaxSpinBox)
         
         # Add plot widget holder
         self.plotWidget = None
@@ -492,11 +499,13 @@ class AdvancedPositionWidget(QtGui.QWidget,
         if not results_open:
             
             self.tabWidget.setTabEnabled(2, False)
+            self.tabWidget.setTabEnabled(3, False)
             self._results_df = None
         
         else:
             
             self.tabWidget.setTabEnabled(2, True)
+            self.tabWidget.setTabEnabled(3, True)
             
             if "Default" not in self._shell.project.get_simulation_titles():
                 self.protectDefaultBox.setEnabled(False)
@@ -894,10 +903,10 @@ class AdvancedPositionWidget(QtGui.QWidget,
             cb.set_ticks(loc)
             cb.set_ticklabels(labels)
         
-        fig_handle = plt.gcf()
+        fig.subplots_adjust(0.2, 0.2, 0.8, 0.8)
         
-        widget = MPLWidget(fig_handle, self)
-        widget.setMinimumSize(QtCore.QSize(0, 400))
+        widget = MPLWidget(fig, self)
+        widget.setMinimumSize(QtCore.QSize(0, 250))
         
         self.plotWidget = widget
         self.plotLayout.addWidget(widget)
