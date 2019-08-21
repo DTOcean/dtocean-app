@@ -582,6 +582,7 @@ class AdvancedPositionWidget(QtGui.QWidget,
                 self.xAxisVarBox.addItems(new_columns)
                 self.yAxisVarBox.addItems(new_columns)
                 self.colorAxisVarBox.addItems(new_columns)
+                self.filterVarBox.addItems(new_columns)
             
             model = DataFrameModel(self._results_df)
             self.dataTableWidget.setViewModel(model)
@@ -848,7 +849,6 @@ class AdvancedPositionWidget(QtGui.QWidget,
         
         self._clear_plot_widget()
         
-        # Get data
         x_axis_str = str(self.xAxisVarBox.currentText())
         y_axis_str = str(self.yAxisVarBox.currentText())
         color_axis_str = str(self.colorAxisVarBox.currentText())
@@ -858,15 +858,34 @@ class AdvancedPositionWidget(QtGui.QWidget,
         x_axis_data = self._results_df[x_axis_str]
         y_axis_data = self._results_df[y_axis_str]
         
+        data_filter = np.array([True] * len(self._results_df))
+        filter_str = str(self.filterVarBox.currentText())
+        
+        if filter_str:
+            
+            filter_data = self._results_df[filter_str]
+            
+            if self.filterVarMinBox.checkState() == QtCore.Qt.Checked:
+                filter_val = float(self.filterVarMinSpinBox.value())
+                data_filter = data_filter & (filter_data >= filter_val)
+            
+            if self.filterVarMaxBox.checkState() == QtCore.Qt.Checked:
+                filter_val = float(self.filterVarMaxSpinBox.value())
+                data_filter = data_filter & (filter_data <= filter_val)
+        
+        if not data_filter.all():
+            x_axis_data = x_axis_data[data_filter]
+            y_axis_data = y_axis_data[data_filter]
+        
         color_axis_data = None
         cmap = None
         norm = None
+        vmin = None
+        vmax = None
         xmin = None
         xmax = None
         ymin = None
         ymax = None
-        vmin = None
-        vmax = None
         
         if self.xAxisMinBox.checkState() == QtCore.Qt.Checked:
             xmin = float(self.xAxisMinSpinBox.value())
@@ -889,6 +908,9 @@ class AdvancedPositionWidget(QtGui.QWidget,
         if color_axis_str:
             
             color_axis_data = self._results_df[color_axis_str]
+            
+            if not data_filter.all():
+                color_axis_data = color_axis_data[data_filter]
             
             if color_axis_data.dtype == np.int64:
                 
