@@ -809,7 +809,7 @@ size (inches)</string>
                   <item row="1" column="1">
                    <widget class="QDoubleSpinBox" name="customHeightSpinBox">
                     <property name="enabled">
-                     <bool>false</bool>
+                     <bool>true</bool>
                     </property>
                    </widget>
                   </item>
@@ -823,7 +823,7 @@ size (inches)</string>
                   <item row="0" column="1">
                    <widget class="QDoubleSpinBox" name="customWidthSpinBox">
                     <property name="enabled">
-                     <bool>false</bool>
+                     <bool>true</bool>
                     </property>
                    </widget>
                   </item>
@@ -1143,10 +1143,8 @@ size (inches)</string>
         </widget>
        </item>
       </layout>
-      <zorder>plotControlBox</zorder>
       <zorder>frame_2</zorder>
       <zorder></zorder>
-      <zorder>horizontalSpacer_9</zorder>
      </widget>
     </widget>
    </item>
