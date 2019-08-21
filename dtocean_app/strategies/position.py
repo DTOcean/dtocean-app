@@ -285,7 +285,7 @@ class AdvancedPositionWidget(QtGui.QWidget,
         
         self._param_boxes[param_name] = var_box
         
-        line_name = "line {}".format(len(self._param_lines))
+        line_name = "{} Line".format(param_name)
         line = QtGui.QFrame(self.paramsFrame)
         line.setFrameShape(QtGui.QFrame.HLine)
         line.setFrameShadow(QtGui.QFrame.Sunken)
