@@ -26,6 +26,7 @@ import sip
 import numpy as np
 import matplotlib as mpl
 import matplotlib.pyplot as plt
+from PIL import Image
 from PyQt4 import QtCore, QtGui
 
 from dtocean_core.strategies.position import AdvancedPosition
@@ -37,7 +38,9 @@ from . import GUIStrategy, StrategyWidget, PyQtABCMeta
 from ..utils.display import is_high_dpi
 from ..widgets.datatable import DataTableWidget
 from ..widgets.dialogs import ProgressBar
-from ..widgets.display import MPLWidget
+from ..widgets.display import (MPLWidget,
+                               get_current_figure_size,
+                               get_current_filetypes)
 from ..widgets.scientificselect import ScientificDoubleSpinBox
 
 if is_high_dpi():
@@ -215,6 +218,7 @@ class AdvancedPositionWidget(QtGui.QWidget,
         self._shell = shell
         self._config = self._init_config(config)
         self._max_threads = multiprocessing.cpu_count()
+        self._plot_ext_types = get_current_filetypes()
         self._progress = None
         self._results_df = None
         self._protect_default = True
@@ -325,7 +329,8 @@ class AdvancedPositionWidget(QtGui.QWidget,
         self.simSelectEdit.textEdited.connect(self._update_custom_sims)
         self.simLoadButton.clicked.connect(self._progress_load_sims)
         self.dataExportButton.clicked.connect(self._export_data_table)
-        self.plotButton.clicked.connect(self._add_plot_widget)
+        self.plotButton.clicked.connect(self._set_plot)
+        self.plotExportButton.clicked.connect(self._get_export_details)
         
         ## GLOBAL
         
@@ -587,6 +592,15 @@ class AdvancedPositionWidget(QtGui.QWidget,
             model = DataFrameModel(self._results_df)
             self.dataTableWidget.setViewModel(model)
         
+        ## PLOTS TAB
+        
+        if self.plotWidget is None:
+            plot_export_enabled = False
+        else:
+            plot_export_enabled = True
+        
+        self.plotExportButton.setEnabled(plot_export_enabled)
+        
         return
     
     @QtCore.pyqtSlot()
@@ -845,9 +859,7 @@ class AdvancedPositionWidget(QtGui.QWidget,
         return
     
     @QtCore.pyqtSlot()
-    def _add_plot_widget(self):
-        
-        self._clear_plot_widget()
+    def _set_plot(self, set_widget=True):
         
         x_axis_str = str(self.xAxisVarBox.currentText())
         y_axis_str = str(self.yAxisVarBox.currentText())
@@ -979,6 +991,10 @@ class AdvancedPositionWidget(QtGui.QWidget,
         
         fig.subplots_adjust(0.2, 0.2, 0.8, 0.8)
         
+        if not set_widget: return
+        
+        self._clear_plot_widget()
+        
         widget = MPLWidget(fig, self)
         widget.setMinimumSize(QtCore.QSize(0, 250))
         
@@ -996,6 +1012,8 @@ class AdvancedPositionWidget(QtGui.QWidget,
                        "Numbers: {}").format(num_str)
             
             raise RuntimeError(err_msg)
+        
+        self._update_status()
         
         return
     
@@ -1015,6 +1033,60 @@ class AdvancedPositionWidget(QtGui.QWidget,
         plt.close(fignum)
         
         self.plotWidget = None
+        
+        return
+    
+    @QtCore.pyqtSlot()
+    def _get_export_details(self):
+        
+        if self.plotWidget is None: return
+        
+        msg = "Save plot"
+        extlist = ["{} (*.{})".format(v, k) for k, v in
+                                           self._plot_ext_types.iteritems()]
+        extStr = ";;".join(extlist)
+        
+        save_path = QtGui.QFileDialog.getSaveFileName(self,
+                                                      msg,
+                                                      HOME,
+                                                      extStr)
+        
+        if not save_path: return
+        
+        if self.customSizeBox.checkState() == QtCore.Qt.Checked:
+            size = (float(self.customWidthSpinBox.value()),
+                    float(self.customHeightSpinBox.value()))
+        else:
+            size = get_current_figure_size()
+        
+        self._export_plot(save_path, size)
+        
+        return
+    
+    def _export_plot(self, file_path, size, dpi=220):
+        
+        if self.plotWidget is None: return
+        
+        self._set_plot(set_widget=False)
+        fig_handle = plt.gcf()
+        
+        fig_handle.set_size_inches(*size)
+        
+        with plt.rc_context(rc={'font.size': 8,
+                                'font.sans-serif': 'Verdana'}):
+            
+            fig_handle.savefig(str(file_path),
+                               dpi=dpi,
+                               bbox_inches='tight')
+        
+        plt.close(fig_handle)
+        
+        # Ensure DPI is saved
+        try:
+            im = Image.open(str(file_path))
+            im.save(str(file_path), dpi=[dpi, dpi])
+        except IOError:
+            pass
         
         return
     
