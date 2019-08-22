@@ -235,6 +235,37 @@ class AdvancedPositionWidget(QtGui.QWidget,
         self._param_boxes = {}
         self._param_lines = []
         
+        self._name_map = {"sim_number": "Simulation #",
+                          "project.lcoe_mode": "LCOE Mode",
+                          "array_orientation": "Grid Orientation",
+                          "delta_row": "Row Spacing",
+                          "delta_col": "Column Spacing",
+                          "n_nodes": "No. of Devices Requested",
+                          "project.number_of_devices":
+                              "No. of Devices Simulated",
+                          "project.annual_energy":
+                              "Annual Mechanical Energy",
+                          "project.q_factor": "q-factor",
+                          "project.capex_total": "CAPEX",
+                          "project.capex_breakdown": "CAPEX",
+                          "project.lifetime_opex_mode": "OPEX Mode",
+                          "project.lifetime_energy_mode":
+                              "Lifetime Energy Mode",
+                          "device.minimum_distance_x":
+                              "Minimum device spacing in x-direction",
+                          "device.minimum_distance_y":
+                              "Minimum device spacing in y-direction"}
+        
+        self._unit_map = {"project.lcoe_mode": "Euro/kWh",
+                          "array_orientation": "Deg",
+                          "delta_row": "m",
+                          "delta_col": "m",
+                          "project.annual_energy": "MWh",
+                          "project.capex_total": "Euro",
+                          "project.capex_breakdown": "Euro",
+                          "project.lifetime_opex_mode": "Euro",
+                          "project.lifetime_energy_mode": "MWh"}
+        
         self._init_ui(parent)
         
         return
@@ -278,28 +309,97 @@ class AdvancedPositionWidget(QtGui.QWidget,
         
         ## PARAMS TAB
         
-        param_name = "Grid Orientation"
+        param_names = ["array_orientation",
+                       "delta_row",
+                       "delta_col",
+                       "n_nodes",
+                       "t1",
+                       "t2"]
         
-        var_box = make_var_box(self, self.paramsFrame, param_name)
-        self.paramsFrameLayout.addWidget(var_box["root"])
+        param_box_classes = {"array_orientation": QtGui.QDoubleSpinBox,
+                             "delta_row": QtGui.QDoubleSpinBox,
+                             "delta_col": QtGui.QDoubleSpinBox,
+                             "n_nodes": QtGui.QSpinBox,
+                             "t1": QtGui.QDoubleSpinBox,
+                             "t2": QtGui.QDoubleSpinBox}
         
-        self._param_boxes[param_name] = var_box
+        param_multipier_vars = {"delta_row": ["device.minimum_distance_x"],
+                                "delta_col": ["device.minimum_distance_y"]}
         
-        line_name = "{} Line".format(param_name)
-        line = QtGui.QFrame(self.paramsFrame)
-        line.setFrameShape(QtGui.QFrame.HLine)
-        line.setFrameShadow(QtGui.QFrame.Sunken)
-        line.setObjectName(_fromUtf8(line_name))
-        self.paramsFrameLayout.addWidget(line)
+        param_limits_dict = {"array_orientation": (-90, 90),
+                             "delta_row": (0, None),
+                             "delta_col": (0, None),
+                             "n_nodes": (0, None),
+                             "t1": (0, 1),
+                             "t2": (0, 1)}
         
-        self._param_lines.append(line)
-        
-        param_name = "Row Spacing"
-        
-        var_box = make_var_box(self, self.paramsFrame, param_name)
-        self.paramsFrameLayout.addWidget(var_box["root"])
-        
-        self._param_boxes[param_name] = var_box
+        for param_name in param_names:
+            
+            if param_name in self._name_map:
+                human_name = self._name_map[param_name]
+            else:
+                human_name = param_name
+            
+            if param_name in self._unit_map:
+                human_name += " ({})".format(self._unit_map[param_name])
+            
+            box_class = param_box_classes[param_name]
+            var_box = make_var_box(self,
+                                   self.paramsFrame,
+                                   human_name,
+                                   box_class)
+            self.paramsFrameLayout.addWidget(var_box["root"])
+            
+            box_minimum = -sys.maxint
+            box_maximum = sys.maxint
+            set_box_min = False
+            set_box_max = False
+            
+            if param_name in param_limits_dict:
+                
+                param_limits = param_limits_dict[param_name]
+                
+                if param_limits[0] is not None:
+                    box_minimum = param_limits[0]
+                    set_box_min = True
+                
+                if param_limits[1] is not None:
+                    box_maximum = param_limits[1]
+                    set_box_max = True
+            
+            var_box["fixed.box"].setMinimum(box_minimum)
+            var_box["fixed.box"].setMaximum(box_maximum)
+            
+            var_box["range.box.min"].setMinimum(box_minimum)
+            var_box["range.box.min"].setMaximum(box_maximum)
+            if set_box_min: var_box["range.box.min"].setValue(box_minimum)
+            
+            var_box["range.box.max"].setMinimum(box_minimum)
+            var_box["range.box.max"].setMaximum(box_maximum)
+            if set_box_max: var_box["range.box.max"].setValue(box_maximum)
+            
+            var_box["range.box.type"].addItem("Fixed")
+            var_box["range.box.var"].setEnabled(False)
+            
+            if param_name in param_multipier_vars:
+            
+                var_box["range.box.type"].addItem("Multiplier")
+                
+                for var in param_multipier_vars[param_name]:
+                    
+                    mapped_name = self._name_map[var]
+                    var_box["range.box.var"].addItem(mapped_name)
+            
+            self._param_boxes[param_name] = var_box
+            
+            line_name = "{} Line".format(param_name)
+            line = QtGui.QFrame(self.paramsFrame)
+            line.setFrameShape(QtGui.QFrame.HLine)
+            line.setFrameShadow(QtGui.QFrame.Sunken)
+            line.setObjectName(_fromUtf8(line_name))
+            self.paramsFrameLayout.addWidget(line)
+            
+            self._param_lines.append(line)
         
         final_spacer = QtGui.QSpacerItem(20,
                                          20,
@@ -538,6 +638,81 @@ class AdvancedPositionWidget(QtGui.QWidget,
                     self.autoThreadBox.toggle()
                     self.set_manual_thread_message()
         
+        ## PARAMS TAB
+        
+        # Read the config file
+        if init:
+            
+            parameters = self._config["parameters"]
+            
+            for param_name in parameters:
+                
+                param_settings = parameters[param_name]
+                var_box = self._param_boxes[param_name]
+                
+                if "fixed" in param_settings and param_settings["fixed"]:
+                    
+                    var_box["fixed.check"].toggle()
+                    var_box["fixed.box"].setValue(param_settings["fixed"])
+                    
+                    continue
+                
+                if "range" in param_settings and param_settings["range"]:
+                    
+                    range_settings = param_settings["range"]
+                    
+                    if range_settings["type"] == "multiplier":
+                        
+                        var_box["range.box.type"].setCurrentIndex(1)
+                        
+                        range_var_text = self._name_map[
+                                                    range_settings["variable"]]
+                        multi_var_idx = var_box["range.box.var"].findText(
+                                                                range_var_text)
+                        var_box["range.box.var"].setCurrentIndex(multi_var_idx)
+                        var_box["range.box.var"].setEnabled(True)
+                        
+                        min_range = range_settings["min_multiplier"]
+                        max_range = range_settings["max_multiplier"]
+                    
+                    elif range_settings["type"] == "fixed":
+                        
+                        min_range = range_settings["min"]
+                        max_range = range_settings["max"]
+                    
+                    else:
+                        
+                        err_str = ("Unrecognised range type "
+                                   "'{}'").format(range_settings["type"])
+                        raise ValueError(err_str)
+                    
+                    var_box["range.box.min"].setValue(min_range)
+                    var_box["range.box.max"].setValue(max_range)
+                
+                if "interp" in param_settings and param_settings["interp"]:
+                    
+                    interp_settings = param_settings["interp"]
+                    
+                    if interp_settings["type"] == "range":
+                        
+                        var_box["interp.button.range"].toggle()
+                        var_box["interp.box.step"].setValue(
+                                                interp_settings["delta"])
+                    
+                    elif interp_settings["type"] == "fixed":
+                        
+                        var_box["interp.button.fixed"].toggle()
+                        
+                        val_strs = [str(x) for x in interp_settings["values"]]
+                        val_str = ", ".join(val_strs)
+                        var_box["interp.edit.values"].setText(val_str)
+                    
+                    else:
+                        
+                        err_str = ("Unrecognised interpolation type "
+                                   "'{}'").format(interp_settings["type"])
+                        raise ValueError(err_str)
+
         ## RESULTS TAB
         
         results_open = (optimiser_status_str is not None and
@@ -573,32 +748,7 @@ class AdvancedPositionWidget(QtGui.QWidget,
                 # TODO: This needs automating.
                 # Consider adding names and units to config file and using
                 # meta data for variables.
-                name_map = {"sim_number": "Simulation #",
-                            "project.lcoe_mode": "LCOE Mode",
-                            "array_orientation": "Grid Orientation",
-                            "delta_row": "Row Spacing",
-                            "delta_col": "Column Spacing",
-                            "n_nodes": "No. of Devices Requested",
-                            "project.number_of_devices":
-                                "No. of Devices Simulated",
-                            "project.annual_energy":
-                                "Annual Mechanical Energy",
-                            "project.q_factor": "q-factor",
-                            "project.capex_total": "CAPEX",
-                            "project.capex_breakdown": "CAPEX",
-                            "project.lifetime_opex_mode": "OPEX Mode",
-                            "project.lifetime_energy_mode":
-                                "Lifetime Energy Mode"}
                 
-                unit_map = {"project.lcoe_mode": "Euro/kWh",
-                            "array_orientation": "Rad",
-                            "delta_row": "m",
-                            "delta_col": "m",
-                            "project.annual_energy": "MWh",
-                            "project.capex_total": "Euro",
-                            "project.capex_breakdown": "Euro",
-                            "project.lifetime_opex_mode": "Euro",
-                            "project.lifetime_energy_mode": "MWh"}
                 
                 df = GUIAdvancedPosition.get_results_table(self._config)
                 
@@ -606,14 +756,14 @@ class AdvancedPositionWidget(QtGui.QWidget,
                 
                 for column in df.columns:
                     
-                    for key in name_map.keys():
+                    for key in self._name_map.keys():
                         
                         if key in column:
                             
-                            column = column.replace(key, name_map[key])
+                            column = column.replace(key, self._name_map[key])
                             
-                            if key in unit_map:
-                                column += " ({})".format(unit_map[key])
+                            if key in self._unit_map:
+                                column += " ({})".format(self._unit_map[key])
                             
                             break
                     
@@ -1176,7 +1326,7 @@ class AdvancedPositionWidget(QtGui.QWidget,
         return
 
 
-def make_var_box(widget, parent, name):
+def make_var_box(widget, parent, name, box_class):
     
     var_box_dict = {}
     
@@ -1189,25 +1339,39 @@ def make_var_box(widget, parent, name):
     var_box_dict["root.layout"].setObjectName(get_obj_name(name,
                                                            "root.layout"))
     
-    var_box_dict["active.layout"] = QtGui.QHBoxLayout()
-    var_box_dict["active.layout"].setObjectName(get_obj_name(name,
-                                                             "active.layout"))
+    var_box_dict["fixed.layout"] = QtGui.QHBoxLayout()
+    var_box_dict["fixed.layout"].setObjectName(get_obj_name(name,
+                                                             "fixed.layout"))
     
-    var_box_dict["active.check"] = QtGui.QCheckBox(var_box_dict["root"])
-    var_box_dict["active.check"].setObjectName(get_obj_name(name,
-                                                            "active.check"))
-    var_box_dict["active.layout"].addWidget(var_box_dict["active.check"])
+    var_box_dict["fixed.check"] = QtGui.QCheckBox(var_box_dict["root"])
+    var_box_dict["fixed.check"].setObjectName(get_obj_name(name,
+                                                           "fixed.check"))
+    var_box_dict["fixed.layout"].addWidget(var_box_dict["fixed.check"])
+    
+    var_box_dict["fixed.box"] = box_class(var_box_dict["root"])
+    
+    sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Fixed,
+                                   QtGui.QSizePolicy.Preferred)
+    sizePolicy.setHorizontalStretch(0)
+    sizePolicy.setVerticalStretch(0)
+    sizePolicy.setHeightForWidth(
+            var_box_dict["fixed.box"].sizePolicy().hasHeightForWidth())
+    
+    var_box_dict["fixed.box"].setSizePolicy(sizePolicy)
+    var_box_dict["fixed.box"].setMinimumSize(QtCore.QSize(75, 0))
+    var_box_dict["fixed.box"].setObjectName(get_obj_name(name,
+                                                         "fixed.box"))
+    var_box_dict["fixed.layout"].addWidget(var_box_dict["fixed.box"])
     
     spacerItem6 = QtGui.QSpacerItem(40,
                                     20,
                                     QtGui.QSizePolicy.Expanding,
                                     QtGui.QSizePolicy.Minimum)
-    var_box_dict["active.layout"].addItem(spacerItem6)
+    var_box_dict["fixed.layout"].addItem(spacerItem6)
     
-    var_box_dict["root.layout"].addLayout(var_box_dict["active.layout"])
+    var_box_dict["root.layout"].addLayout(var_box_dict["fixed.layout"])
     
     var_box_dict["range.group"] = QtGui.QGroupBox(var_box_dict["root"])
-    var_box_dict["range.group"].setEnabled(False)
     var_box_dict["range.group"].setFlat(True)
     var_box_dict["range.group"].setObjectName(get_obj_name(name,
                                                            "range.group"))
@@ -1331,8 +1495,7 @@ def make_var_box(widget, parent, name):
                                          1,
                                          1)
     
-    var_box_dict["range.box.min"] = QtGui.QDoubleSpinBox(
-                                                var_box_dict["range.group"])
+    var_box_dict["range.box.min"] = box_class(var_box_dict["range.group"])
     
     sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Fixed,
                                    QtGui.QSizePolicy.Fixed)
@@ -1342,6 +1505,7 @@ def make_var_box(widget, parent, name):
             var_box_dict["range.box.min"].sizePolicy().hasHeightForWidth())
     
     var_box_dict["range.box.min"].setSizePolicy(sizePolicy)
+    var_box_dict["range.box.min"].setMinimumSize(QtCore.QSize(75, 0))
     var_box_dict["range.box.min"].setObjectName(
                                         get_obj_name(name, "range.box.min"))
     
@@ -1374,8 +1538,7 @@ def make_var_box(widget, parent, name):
                                          1,
                                          1)
     
-    var_box_dict["range.box.max"] = QtGui.QDoubleSpinBox(
-                                                var_box_dict["range.group"])
+    var_box_dict["range.box.max"] = box_class(var_box_dict["range.group"])
     
     sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Fixed,
                                    QtGui.QSizePolicy.Fixed)
@@ -1385,6 +1548,7 @@ def make_var_box(widget, parent, name):
             var_box_dict["range.box.max"].sizePolicy().hasHeightForWidth())
     
     var_box_dict["range.box.max"].setSizePolicy(sizePolicy)
+    var_box_dict["range.box.max"].setMinimumSize(QtCore.QSize(75, 0))
     var_box_dict["range.box.max"].setObjectName(
                                         get_obj_name(name, "range.box.max"))
     
@@ -1398,7 +1562,6 @@ def make_var_box(widget, parent, name):
     var_box_dict["root.layout"].addWidget(var_box_dict["range.group"])
     
     var_box_dict["interp.group"] = QtGui.QGroupBox(var_box_dict["root"])
-    var_box_dict["interp.group"].setEnabled(False)
     var_box_dict["interp.group"].setFlat(True)
     var_box_dict["interp.group"].setObjectName(
                                         get_obj_name(name, "interp.group"))
@@ -1439,8 +1602,8 @@ def make_var_box(widget, parent, name):
                                           1,
                                           1)
     
-    var_box_dict["interp.box.step"] = QtGui.QSpinBox(
-                                                var_box_dict["interp.group"])
+    var_box_dict["interp.box.step"] = box_class(var_box_dict["interp.group"])
+    var_box_dict["interp.box.step"].setMaximum(sys.maxint)
     
     sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Fixed,
                                    QtGui.QSizePolicy.Fixed)
@@ -1450,6 +1613,7 @@ def make_var_box(widget, parent, name):
             var_box_dict["interp.box.step"].sizePolicy().hasHeightForWidth())
     
     var_box_dict["interp.box.step"].setSizePolicy(sizePolicy)
+    var_box_dict["interp.box.step"].setMinimumSize(QtCore.QSize(75, 0))
     var_box_dict["interp.box.step"].setObjectName(
                                     get_obj_name(name, "interp.box.step"))
     
@@ -1518,8 +1682,8 @@ def make_var_box(widget, parent, name):
 
     var_box_dict["root"].setTitle(get_translation(widget_name,
                                                   name))
-    var_box_dict["active.check"].setText(get_translation(widget_name,
-                                                         "Active"))
+    var_box_dict["fixed.check"].setText(get_translation(widget_name,
+                                                        "Fixed Value:"))
     var_box_dict["range.group"].setTitle(get_translation(widget_name,
                                                          "Range"))
     var_box_dict["range.label.type"].setText(get_translation(widget_name,
