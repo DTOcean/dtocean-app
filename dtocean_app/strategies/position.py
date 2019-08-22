@@ -392,14 +392,16 @@ class AdvancedPositionWidget(QtGui.QWidget,
             
             self._param_boxes[param_name] = var_box
             
-            line_name = "{} Line".format(param_name)
-            line = QtGui.QFrame(self.paramsFrame)
-            line.setFrameShape(QtGui.QFrame.HLine)
-            line.setFrameShadow(QtGui.QFrame.Sunken)
-            line.setObjectName(_fromUtf8(line_name))
-            self.paramsFrameLayout.addWidget(line)
+            if i != len(param_names) - 1:
+                
+                line_name = "{} Line".format(param_name)
+                line = QtGui.QFrame(self.paramsFrame)
+                line.setFrameShape(QtGui.QFrame.HLine)
+                line.setFrameShadow(QtGui.QFrame.Sunken)
+                line.setObjectName(_fromUtf8(line_name))
+                self.paramsFrameLayout.addWidget(line)
             
-            self._param_lines.append(line)
+                self._param_lines.append(line)
         
         final_spacer = QtGui.QSpacerItem(20,
                                          20,
