@@ -17,6 +17,7 @@
 
 import os
 import sys
+import types
 import logging
 import traceback
 import multiprocessing
@@ -333,7 +334,7 @@ class AdvancedPositionWidget(QtGui.QWidget,
                              "t1": (0, 1),
                              "t2": (0, 1)}
         
-        for param_name in param_names:
+        for i, param_name in enumerate(param_names):
             
             if param_name in self._name_map:
                 human_name = self._name_map[param_name]
@@ -370,6 +371,14 @@ class AdvancedPositionWidget(QtGui.QWidget,
             var_box["fixed.box"].setMinimum(box_minimum)
             var_box["fixed.box"].setMaximum(box_maximum)
             
+            fixed_combo_slot = _make_fixed_combo_slot(self, param_name)
+            
+            attr_name = "fixed_combo_slot_{}".format(i)
+            setattr(self, attr_name, fixed_combo_slot)
+            
+            var_box["fixed.check"].stateChanged.connect(getattr(self,
+                                                                attr_name))
+            
             var_box["range.box.min"].setMinimum(box_minimum)
             var_box["range.box.min"].setMaximum(box_maximum)
             if set_box_min: var_box["range.box.min"].setValue(box_minimum)
@@ -380,6 +389,14 @@ class AdvancedPositionWidget(QtGui.QWidget,
             
             var_box["range.box.type"].addItem("Fixed")
             var_box["range.box.var"].setEnabled(False)
+            
+            range_type_slot = _make_range_type_slot(self, param_name)
+            
+            attr_name = "range_type_slot_{}".format(i)
+            setattr(self, attr_name, range_type_slot)
+            
+            var_box["range.box.type"].currentIndexChanged[str].connect(
+                                                    getattr(self, attr_name))
             
             if param_name in param_multipier_vars:
             
@@ -656,6 +673,9 @@ class AdvancedPositionWidget(QtGui.QWidget,
                     
                     var_box["fixed.check"].toggle()
                     var_box["fixed.box"].setValue(param_settings["fixed"])
+                    
+                    var_box["range.group"].setEnabled(False)
+                    var_box["interp.group"].setEnabled(False)
                     
                     continue
                 
@@ -1725,7 +1745,6 @@ def get_translation(widget_name, text):
     return _translate(widget_name, text, None)
 
 
-
 def _init_sci_spin_box(parent, name):
     
     sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Expanding,
@@ -1740,3 +1759,44 @@ def _init_sci_spin_box(parent, name):
     sciSpinBox.setObjectName(_fromUtf8(name))
     
     return sciSpinBox
+
+
+def _make_fixed_combo_slot(that, param_name):
+    
+    @QtCore.pyqtSlot(object)
+    def slot_function(that, checked_state):
+        
+        range_group = that._param_boxes[param_name]["range.group"]
+        interp_group = that._param_boxes[param_name]["interp.group"]
+        
+        if checked_state == QtCore.Qt.Checked:
+            enabled = False
+        else:
+            enabled = True
+        
+        range_group.setEnabled(enabled)
+        interp_group.setEnabled(enabled)
+        
+        return
+    
+    return types.MethodType(slot_function, that)
+
+
+def _make_range_type_slot(that, param_name):
+    
+    @QtCore.pyqtSlot(object)
+    def slot_function(that, current_str):
+        
+        current_str = str(current_str)
+        range_var_box = that._param_boxes[param_name]["range.box.var"]
+        
+        if current_str == "Fixed":
+            enabled = False
+        else:
+            enabled = True
+        
+        range_var_box.setEnabled(enabled)
+        
+        return
+    
+    return types.MethodType(slot_function, that)
