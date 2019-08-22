@@ -181,6 +181,7 @@ class ThreadOpen(QtCore.QThread):
             prj_file_path = None
             sco_file_path = None
             stg_file_path = None
+            int_file_path = None
             
             # Check the extension
             if os.path.splitext(load_path)[1] == ".dto":
