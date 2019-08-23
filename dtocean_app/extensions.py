@@ -299,7 +299,7 @@ class GUIStrategyManager(ListFrameEditor, StrategyManager):
         self._update_configuration()
         self._set_dynamic_label("None")
         
-        self.strategy_selected.emit(self._strategy)
+        self.strategy_selected.emit(self._strategy, None)
         
         return
     
