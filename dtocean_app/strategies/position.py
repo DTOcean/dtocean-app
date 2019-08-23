@@ -501,6 +501,7 @@ class AdvancedPositionWidget(QtGui.QWidget,
         
         self._shell.project.sims_updated.connect(self._update_status)
         self._shell.strategy_selected.connect(self._update_status)
+        self.destroyed.connect(lambda: _close_plot(self.plotWidget))
         
         self._update_status(init=True)
         
@@ -947,7 +948,6 @@ class AdvancedPositionWidget(QtGui.QWidget,
     def _select_sims_to_load(self, button_id):
         
         lcoe_column = self._results_df.columns[1]
-        print lcoe_column
         
         if button_id == 1:
             
@@ -974,8 +974,6 @@ class AdvancedPositionWidget(QtGui.QWidget,
         else:
             
             self._update_custom_sims(update_status=False)
-        
-        print self._sims_to_load
         
         if button_id == 5:
             custom_enabled = True
@@ -1240,13 +1238,8 @@ class AdvancedPositionWidget(QtGui.QWidget,
         self.plotLayout.removeWidget(self.plotWidget)
         self.plotWidget.setParent(None)
         
-        fignum = self.plotWidget.figure.number
-        
-        log_msg = "Closing figure {}".format(fignum)
-        module_logger.debug(log_msg)
-        
+        _close_plot(self.plotWidget)
         sip.delete(self.plotWidget)
-        plt.close(fignum)
         
         self.plotWidget = None
         
@@ -1805,3 +1798,18 @@ def _make_range_type_slot(that, param_name):
         return
     
     return types.MethodType(slot_function, that)
+
+
+def _close_plot(plot_widget):
+    
+    if plot_widget is None: return
+    
+    fignum = plot_widget.figure.number
+    n_figs = len(plt.get_fignums())
+    
+    log_msg = "Closing figure {} ({} open)".format(fignum, n_figs)
+    module_logger.debug(log_msg)
+    
+    plt.close(fignum)
+    
+    return
