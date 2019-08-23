@@ -1206,6 +1206,10 @@ class AdvancedPositionWidget(QtGui.QWidget,
         
         if not set_widget: return
         
+        n_figs = len(plt.get_fignums())
+        log_str = "Opening figure {} ({} open)".format(fig.number, n_figs)
+        module_logger.debug(log_str)
+        
         self._clear_plot_widget()
         
         widget = MPLWidget(fig, self)

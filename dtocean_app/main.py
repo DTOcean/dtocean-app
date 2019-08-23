@@ -3800,8 +3800,9 @@ class DTOceanWindow(MainWindow):
         if isinstance(context._bottom_contents, MPLWidget):
             
             fignum = context._bottom_contents.figure.number
+            n_figs = len(plt.get_fignums())
             
-            log_msg = "Closing figure {}".format(fignum)
+            log_msg = "Closing figure {} ({} open)".format(fignum, n_figs)
             module_logger.debug(log_msg)
             
             sip.delete(context._bottom_contents)
