@@ -140,31 +140,33 @@ class MPLWidget(FigureCanvas):
         FigureCanvas.updateGeometry(self)
 
         return
-        
-        
+
+
 def get_current_filetypes():
     
-    fig = plt.gcf()
+    if not plt.get_fignums(): return
     
-    if not fig: return []
-
-    return fig.canvas.get_supported_filetypes()
+    fig = plt.gcf()
+    filetypes = fig.canvas.get_supported_filetypes()
+    
+    return filetypes
 
 
 def save_current_figure(figure_path):
     
+    if not plt.get_fignums(): return
+    
     fig = plt.gcf()
-    
-    if not fig: return
-    
     fig.savefig(figure_path)
-
+    
     return
+
 
 def get_current_figure_size():
     
-    if not plt.get_figlabels(): return
+    if not plt.get_fignums(): return
     
     fig = plt.gcf()
+    size_inches = fig.get_size_inches()
     
-    return fig.get_size_inches()
+    return size_inches
