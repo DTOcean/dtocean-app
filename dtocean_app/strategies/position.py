@@ -227,7 +227,6 @@ class AdvancedPositionWidget(QtGui.QWidget,
         self._shell = shell
         self._config = self._init_config(config)
         self._max_threads = multiprocessing.cpu_count()
-        self._plot_ext_types = get_current_filetypes()
         self._progress = None
         self._results_df = None
         self._protect_default = True
@@ -1258,9 +1257,11 @@ class AdvancedPositionWidget(QtGui.QWidget,
         
         if self.plotWidget is None: return
         
+        plot_ext_types = get_current_filetypes()
+        
         msg = "Save plot"
         extlist = ["{} (*.{})".format(v, k) for k, v in
-                                           self._plot_ext_types.iteritems()]
+                                                   plot_ext_types.iteritems()]
         extStr = ";;".join(extlist)
         
         save_path = QtGui.QFileDialog.getSaveFileName(self,
