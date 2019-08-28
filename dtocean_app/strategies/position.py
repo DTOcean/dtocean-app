@@ -1340,9 +1340,10 @@ class AdvancedPositionWidget(QtGui.QWidget,
           config_dict (dict, optional)
         '''
         
-        if config_dict is not None: self._config = config_dict
+        if config_dict is None: return
         
-        self._update_status()
+        self._config = config_dict
+        self._update_status(init=True)
         
         return
 
