@@ -1737,7 +1737,8 @@ def make_var_box(widget, parent, object_name, group_title, box_class):
 
 def get_obj_name(name, key):
     
-    ext_key = "{}.{}".format(name, key)
+    ext_key = "{}.{}".format(key, name)
+    ext_key = ext_key.replace(".", "_")
     
     return _fromUtf8(ext_key)
 
