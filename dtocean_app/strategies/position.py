@@ -1135,17 +1135,31 @@ class AdvancedPositionWidget(QtGui.QWidget,
             if not data_filter.all():
                 color_axis_data = color_axis_data[data_filter]
             
-            if color_axis_data.dtype == np.int64:
+            if len(set(color_axis_data)) < 2:
+                color_axis_data = None
+        
+        if (color_axis_data is not None and
+            color_axis_data.dtype == np.int64): 
+            
+            cb_vals = list(set(color_axis_data))
+            
+            if vmin is None:
+                color_axis_min = color_axis_data.min()
+            else:
+                color_axis_min = int(vmin)
+                cb_vals = [x for x in cb_vals if x >= vmin]
+            
+            if vmax is None:
+                color_axis_max = color_axis_data.max()
+            else:
+                color_axis_max = int(vmax)
+                cb_vals = [x for x in cb_vals if x <= vmax]
+            
+            if len(cb_vals) < 2:
                 
-                if vmin is None:
-                    color_axis_min = color_axis_data.min()
-                else:
-                    color_axis_min = int(vmin)
-                
-                if vmax is None:
-                    color_axis_max = color_axis_data.max()
-                else:
-                    color_axis_max = int(vmax)
+                color_axis_data = None
+            
+            else:
                 
                 # define the bins and normalize
                 n_vals = color_axis_max - color_axis_min + 2
@@ -1173,7 +1187,7 @@ class AdvancedPositionWidget(QtGui.QWidget,
                ylabel=y_axis_str)
         
         # Add a colorbar
-        if color_axis_str:
+        if color_axis_data is not None:
             
             extend =  'neither'
             
