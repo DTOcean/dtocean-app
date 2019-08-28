@@ -1101,7 +1101,7 @@ class AdvancedPositionWidget(QtGui.QWidget,
             y_axis_data = y_axis_data[data_filter]
         
         color_axis_data = None
-        cmap = None
+        cmap = plt.cm.brg
         norm = None
         vmin = None
         vmax = None
@@ -1136,9 +1136,6 @@ class AdvancedPositionWidget(QtGui.QWidget,
                 color_axis_data = color_axis_data[data_filter]
             
             if color_axis_data.dtype == np.int64:
-                
-                # define the colormap
-                cmap = plt.cm.jet
                 
                 if vmin is None:
                     color_axis_min = color_axis_data.min()
