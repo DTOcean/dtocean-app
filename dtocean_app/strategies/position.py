@@ -1358,6 +1358,10 @@ def make_var_box(widget, parent, object_name, group_title, box_class):
     root_name = get_obj_name(object_name, "root")
     var_box_dict["root"].setObjectName(root_name)
     
+    root_style = "#{}".format(root_name) + " " + "{font-weight: bold;}" + "\n"
+    new_style_sheet = parent.styleSheet().append(root_style)
+    parent.setStyleSheet(new_style_sheet)
+    
     var_box_dict["root.layout"] = QtGui.QVBoxLayout(var_box_dict["root"])
     var_box_dict["root.layout"].setObjectName(
                                     get_obj_name(object_name, "root.layout"))
