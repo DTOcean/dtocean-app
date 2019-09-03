@@ -883,7 +883,7 @@ class AdvancedPositionWidget(QtGui.QWidget,
         config = deepcopy(self._config)
         config.pop("threads_auto")
         
-        if "force_strategy_run" in self.config:
+        if "force_strategy_run" in self._config:
             config.pop("force_strategy_run")
         
         config_template.update(config)
