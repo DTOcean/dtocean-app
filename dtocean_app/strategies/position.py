@@ -2007,7 +2007,7 @@ def _make_interp_type_slot(that, param_name, param_type, param_limits):
         
         else:
             
-            err_str = "Unexpected button id '{}' recieved".format(button_id)
+            err_str = "Unexpected button id '{}' received".format(button_id)
             raise RuntimeError(err_str)
         
         var_box_dict = that._param_boxes[param_name]
