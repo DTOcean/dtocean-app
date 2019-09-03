@@ -292,7 +292,7 @@ class AdvancedPositionWidget(QtGui.QWidget,
         self.nThreadSpinBox.setMaximum(self._max_threads)
         self.autoThreadBox.setDisabled(True)
         
-        self.set_manual_thread_message()
+        self._set_manual_thread_message()
         self._set_objective_variables()
         
         # Signals
@@ -345,11 +345,11 @@ class AdvancedPositionWidget(QtGui.QWidget,
                 group_title += " ({})".format(self._unit_map[param_name])
             
             box_class = param_box_classes[param_name]
-            var_box = make_var_box(self,
-                                   self.paramsFrame,
-                                   param_name,
-                                   group_title,
-                                   box_class)
+            var_box = _make_var_box(self,
+                                    self.paramsFrame,
+                                    param_name,
+                                    group_title,
+                                    box_class)
             self.paramsFrameLayout.addWidget(var_box["root"])
             
             box_minimum = -sys.maxint
@@ -525,7 +525,7 @@ class AdvancedPositionWidget(QtGui.QWidget,
         
         return
     
-    def set_manual_thread_message(self):
+    def _set_manual_thread_message(self):
         
         thread_msg = "({} threads available)".format(self._max_threads)
         self.threadInfoLabel.setText(thread_msg)
@@ -1388,7 +1388,7 @@ class AdvancedPositionWidget(QtGui.QWidget,
         return
 
 
-def make_var_box(widget, parent, object_name, group_title, box_class):
+def _make_var_box(widget, parent, object_name, group_title, box_class):
     
     var_box_dict = {}
     
@@ -1396,7 +1396,7 @@ def make_var_box(widget, parent, object_name, group_title, box_class):
     var_box_dict["root"].setFlat(False)
     var_box_dict["root"].setCheckable(False)
     
-    root_name = get_obj_name(object_name, "root")
+    root_name = _get_obj_name(object_name, "root")
     var_box_dict["root"].setObjectName(root_name)
     
     root_style = "#{}".format(root_name) + " " + "{font-weight: bold;}" + "\n"
@@ -1405,15 +1405,15 @@ def make_var_box(widget, parent, object_name, group_title, box_class):
     
     var_box_dict["root.layout"] = QtGui.QVBoxLayout(var_box_dict["root"])
     var_box_dict["root.layout"].setObjectName(
-                                    get_obj_name(object_name, "root.layout"))
+                                    _get_obj_name(object_name, "root.layout"))
     
     var_box_dict["fixed.layout"] = QtGui.QHBoxLayout()
     var_box_dict["fixed.layout"].setObjectName(
-                                    get_obj_name(object_name, "fixed.layout"))
+                                    _get_obj_name(object_name, "fixed.layout"))
     
     var_box_dict["fixed.check"] = QtGui.QCheckBox(var_box_dict["root"])
     var_box_dict["fixed.check"].setObjectName(
-                                    get_obj_name(object_name, "fixed.check"))
+                                    _get_obj_name(object_name, "fixed.check"))
     var_box_dict["fixed.layout"].addWidget(var_box_dict["fixed.check"])
     
     var_box_dict["fixed.box"] = box_class(var_box_dict["root"])
@@ -1428,7 +1428,7 @@ def make_var_box(widget, parent, object_name, group_title, box_class):
     var_box_dict["fixed.box"].setSizePolicy(sizePolicy)
     var_box_dict["fixed.box"].setMinimumSize(QtCore.QSize(75, 0))
     var_box_dict["fixed.box"].setObjectName(
-                                    get_obj_name(object_name, "fixed.box"))
+                                    _get_obj_name(object_name, "fixed.box"))
     var_box_dict["fixed.layout"].addWidget(var_box_dict["fixed.box"])
     
     spacerItem6 = QtGui.QSpacerItem(40,
@@ -1442,17 +1442,17 @@ def make_var_box(widget, parent, object_name, group_title, box_class):
     var_box_dict["range.group"] = QtGui.QGroupBox(var_box_dict["root"])
     var_box_dict["range.group"].setFlat(True)
     var_box_dict["range.group"].setObjectName(
-                                    get_obj_name(object_name, "range.group"))
+                                    _get_obj_name(object_name, "range.group"))
     
     var_box_dict["range.layout"] = QtGui.QVBoxLayout(
                                                 var_box_dict["range.group"])
     var_box_dict["range.layout"].setObjectName(
-                                    get_obj_name(object_name, "range.layout"))
+                                    _get_obj_name(object_name, "range.layout"))
     
     var_box_dict["range.grid"] = QtGui.QGridLayout()
     var_box_dict["range.grid"].setSpacing(10)
     var_box_dict["range.grid"].setObjectName(
-                                    get_obj_name(object_name, "range.grid"))
+                                    _get_obj_name(object_name, "range.grid"))
     
     var_box_dict["range.label.type"] = QtGui.QLabel(
                                                 var_box_dict["range.group"])
@@ -1470,7 +1470,7 @@ def make_var_box(widget, parent, object_name, group_title, box_class):
                                                   QtCore.Qt.AlignTrailing |
                                                   QtCore.Qt.AlignVCenter)
     var_box_dict["range.label.type"].setObjectName(
-                                get_obj_name(object_name, "range.label.type"))
+                                _get_obj_name(object_name, "range.label.type"))
     
     var_box_dict["range.grid"].addWidget(var_box_dict["range.label.type"],
                                          0,
@@ -1490,7 +1490,7 @@ def make_var_box(widget, parent, object_name, group_title, box_class):
     
     var_box_dict["range.box.type"].setSizePolicy(sizePolicy)
     var_box_dict["range.box.type"].setObjectName(
-                                get_obj_name(object_name, "range.box.type"))
+                                _get_obj_name(object_name, "range.box.type"))
     
     var_box_dict["range.grid"].addWidget(var_box_dict["range.box.type"],
                                          0,
@@ -1513,7 +1513,7 @@ def make_var_box(widget, parent, object_name, group_title, box_class):
                                                  QtCore.Qt.AlignTrailing |
                                                  QtCore.Qt.AlignVCenter)
     var_box_dict["range.label.var"].setObjectName(
-                                get_obj_name(object_name, "range.label.var"))
+                                _get_obj_name(object_name, "range.label.var"))
     
     var_box_dict["range.grid"].addWidget(var_box_dict["range.label.var"],
                                          0,
@@ -1533,7 +1533,7 @@ def make_var_box(widget, parent, object_name, group_title, box_class):
     
     var_box_dict["range.box.var"].setSizePolicy(sizePolicy)
     var_box_dict["range.box.var"].setObjectName(
-                                get_obj_name(object_name, "range.box.var"))
+                                _get_obj_name(object_name, "range.box.var"))
     
     var_box_dict["range.grid"].addWidget(var_box_dict["range.box.var"], 
                                          0,
@@ -1556,7 +1556,7 @@ def make_var_box(widget, parent, object_name, group_title, box_class):
                                                  QtCore.Qt.AlignTrailing |
                                                  QtCore.Qt.AlignVCenter)
     var_box_dict["range.label.min"].setObjectName(
-                                get_obj_name(object_name, "range.label.min"))
+                                _get_obj_name(object_name, "range.label.min"))
     
     var_box_dict["range.grid"].addWidget(var_box_dict["range.label.min"],
                                          1,
@@ -1576,7 +1576,7 @@ def make_var_box(widget, parent, object_name, group_title, box_class):
     var_box_dict["range.box.min"].setSizePolicy(sizePolicy)
     var_box_dict["range.box.min"].setMinimumSize(QtCore.QSize(75, 0))
     var_box_dict["range.box.min"].setObjectName(
-                                get_obj_name(object_name, "range.box.min"))
+                                _get_obj_name(object_name, "range.box.min"))
     
     var_box_dict["range.grid"].addWidget(var_box_dict["range.box.min"],
                                          1,
@@ -1599,7 +1599,7 @@ def make_var_box(widget, parent, object_name, group_title, box_class):
                                                  QtCore.Qt.AlignTrailing |
                                                  QtCore.Qt.AlignVCenter)
     var_box_dict["range.label.max"].setObjectName(
-                                get_obj_name(object_name, "range.label.max"))
+                                _get_obj_name(object_name, "range.label.max"))
     
     var_box_dict["range.grid"].addWidget(var_box_dict["range.label.max"],
                                          1,
@@ -1619,7 +1619,7 @@ def make_var_box(widget, parent, object_name, group_title, box_class):
     var_box_dict["range.box.max"].setSizePolicy(sizePolicy)
     var_box_dict["range.box.max"].setMinimumSize(QtCore.QSize(75, 0))
     var_box_dict["range.box.max"].setObjectName(
-                                get_obj_name(object_name, "range.box.max"))
+                                _get_obj_name(object_name, "range.box.max"))
     
     var_box_dict["range.grid"].addWidget(var_box_dict["range.box.max"],
                                          1,
@@ -1633,22 +1633,22 @@ def make_var_box(widget, parent, object_name, group_title, box_class):
     var_box_dict["interp.group"] = QtGui.QGroupBox(var_box_dict["root"])
     var_box_dict["interp.group"].setFlat(True)
     var_box_dict["interp.group"].setObjectName(
-                                get_obj_name(object_name, "interp.group"))
+                                _get_obj_name(object_name, "interp.group"))
     
     var_box_dict["interp.layout"] = QtGui.QHBoxLayout(
                                                 var_box_dict["interp.group"])
     var_box_dict["interp.layout"].setObjectName(
-                                get_obj_name(object_name, "interp.layout"))
+                                _get_obj_name(object_name, "interp.layout"))
     
     var_box_dict["interp.grid"] = QtGui.QGridLayout()
     var_box_dict["interp.grid"].setSpacing(10)
     var_box_dict["interp.grid"].setObjectName(
-                                get_obj_name(object_name, "interp.grid"))
+                                _get_obj_name(object_name, "interp.grid"))
     
     var_box_dict["interp.button.range"] = QtGui.QRadioButton(
                                                 var_box_dict["interp.group"])
     var_box_dict["interp.button.range"].setObjectName(
-                            get_obj_name(object_name, "interp.button.range"))
+                            _get_obj_name(object_name, "interp.button.range"))
     
     var_box_dict["interp.grid"].addWidget(var_box_dict["interp.button.range"],
                                           0,
@@ -1663,7 +1663,7 @@ def make_var_box(widget, parent, object_name, group_title, box_class):
                                                    QtCore.Qt.AlignTrailing|
                                                    QtCore.Qt.AlignVCenter)
     var_box_dict["interp.label.step"].setObjectName(
-                            get_obj_name(object_name, "interp.label.step"))
+                            _get_obj_name(object_name, "interp.label.step"))
     
     var_box_dict["interp.grid"].addWidget(var_box_dict["interp.label.step"],
                                           0,
@@ -1684,7 +1684,7 @@ def make_var_box(widget, parent, object_name, group_title, box_class):
     var_box_dict["interp.box.step"].setSizePolicy(sizePolicy)
     var_box_dict["interp.box.step"].setMinimumSize(QtCore.QSize(75, 0))
     var_box_dict["interp.box.step"].setObjectName(
-                            get_obj_name(object_name, "interp.box.step"))
+                            _get_obj_name(object_name, "interp.box.step"))
     
     var_box_dict["interp.grid"].addWidget(var_box_dict["interp.box.step"],
                                           0,
@@ -1695,7 +1695,7 @@ def make_var_box(widget, parent, object_name, group_title, box_class):
     var_box_dict["interp.button.fixed"] = QtGui.QRadioButton(
                                                 var_box_dict["interp.group"])
     var_box_dict["interp.button.fixed"].setObjectName(
-                            get_obj_name(object_name, "interp.button.fixed"))
+                            _get_obj_name(object_name, "interp.button.fixed"))
     
     var_box_dict["interp.grid"].addWidget(var_box_dict["interp.button.fixed"],
                                           1,
@@ -1709,7 +1709,7 @@ def make_var_box(widget, parent, object_name, group_title, box_class):
                                                      QtCore.Qt.AlignTrailing |
                                                      QtCore.Qt.AlignVCenter)
     var_box_dict["interp.label.values"].setObjectName(
-                            get_obj_name(object_name, "interp.label.values"))
+                            _get_obj_name(object_name, "interp.label.values"))
     
     var_box_dict["interp.grid"].addWidget(var_box_dict["interp.label.values"],
                                           1,
@@ -1720,7 +1720,7 @@ def make_var_box(widget, parent, object_name, group_title, box_class):
     var_box_dict["interp.edit.values"] = QtGui.QLineEdit(
                                                 var_box_dict["interp.group"])
     var_box_dict["interp.edit.values"].setObjectName(
-                            get_obj_name(object_name, "interp.edit.values"))
+                            _get_obj_name(object_name, "interp.edit.values"))
     
     var_box_dict["interp.grid"].addWidget(var_box_dict["interp.edit.values"],
                                           1,
@@ -1731,7 +1731,7 @@ def make_var_box(widget, parent, object_name, group_title, box_class):
     var_box_dict["interp.label.commas"] = QtGui.QLabel(
                                                 var_box_dict["interp.group"])
     var_box_dict["interp.label.commas"].setObjectName(
-                            get_obj_name(object_name, "interp.label.commas"))
+                            _get_obj_name(object_name, "interp.label.commas"))
     
     var_box_dict["interp.grid"].addWidget(var_box_dict["interp.label.commas"],
                                           1,
@@ -1749,38 +1749,38 @@ def make_var_box(widget, parent, object_name, group_title, box_class):
     
     widget_name = str(widget.objectName())
 
-    var_box_dict["root"].setTitle(get_translation(widget_name,
-                                                  group_title))
-    var_box_dict["fixed.check"].setText(get_translation(widget_name,
-                                                        "Fixed Value:"))
-    var_box_dict["range.group"].setTitle(get_translation(widget_name,
-                                                         "Range"))
-    var_box_dict["range.label.type"].setText(get_translation(widget_name,
-                                                             "Type:"))
-    var_box_dict["range.label.var"].setText(get_translation(widget_name,
-                                                            "Variable:"))
-    var_box_dict["range.label.min"].setText(get_translation(widget_name,
-                                                            "Min:"))
-    var_box_dict["range.label.max"].setText(get_translation(widget_name,
-                                                            "Max:"))
-    var_box_dict["interp.group"].setTitle(get_translation(widget_name,
-                                                          "Interpolation"))
-    var_box_dict["interp.button.range"].setText(get_translation(widget_name,
-                                                                "Range"))
-    var_box_dict["interp.label.step"].setText(get_translation(widget_name,
-                                                                "Step:"))
-    var_box_dict["interp.button.fixed"].setText(get_translation(widget_name,
-                                                                "Fixed"))
-    var_box_dict["interp.label.values"].setText(get_translation(widget_name,
-                                                                "Values:"))
-    var_box_dict["interp.label.commas"].setText(get_translation(
+    var_box_dict["root"].setTitle(_get_translation(widget_name,
+                                                   group_title))
+    var_box_dict["fixed.check"].setText(_get_translation(widget_name,
+                                                         "Fixed Value:"))
+    var_box_dict["range.group"].setTitle(_get_translation(widget_name,
+                                                          "Range"))
+    var_box_dict["range.label.type"].setText(_get_translation(widget_name,
+                                                              "Type:"))
+    var_box_dict["range.label.var"].setText(_get_translation(widget_name,
+                                                             "Variable:"))
+    var_box_dict["range.label.min"].setText(_get_translation(widget_name,
+                                                             "Min:"))
+    var_box_dict["range.label.max"].setText(_get_translation(widget_name,
+                                                             "Max:"))
+    var_box_dict["interp.group"].setTitle(_get_translation(widget_name,
+                                                           "Interpolation"))
+    var_box_dict["interp.button.range"].setText(_get_translation(widget_name,
+                                                                 "Range"))
+    var_box_dict["interp.label.step"].setText(_get_translation(widget_name,
+                                                                 "Step:"))
+    var_box_dict["interp.button.fixed"].setText(_get_translation(widget_name,
+                                                                 "Fixed"))
+    var_box_dict["interp.label.values"].setText(_get_translation(widget_name,
+                                                                 "Values:"))
+    var_box_dict["interp.label.commas"].setText(_get_translation(
                                                     widget_name,
                                                     "(seperated by commas)"))
     
     return var_box_dict
 
 
-def get_obj_name(name, key):
+def _get_obj_name(name, key):
     
     ext_key = "{}.{}".format(key, name)
     ext_key = ext_key.replace(".", "_")
@@ -1788,7 +1788,7 @@ def get_obj_name(name, key):
     return _fromUtf8(ext_key)
 
 
-def get_translation(widget_name, text):
+def _get_translation(widget_name, text):
     
     return _translate(widget_name, text, None)
 
