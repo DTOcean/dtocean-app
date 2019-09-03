@@ -299,7 +299,8 @@ class AdvancedPositionWidget(QtGui.QWidget,
         
         self.importButton.clicked.connect(self._import_config)
         self.exportButton.clicked.connect(self._export_config)
-        self.workdirLineEdit.returnPressed.connect(self._update_worker_dir)
+        self.workdirLineEdit.returnPressed.connect(self._record_worker_dir)
+        self.workdirLineEdit.editingFinished.connect(self._update_worker_dir)
         self.workdirToolButton.clicked.connect(self._select_worker_dir)
         self.nThreadSpinBox.valueChanged.connect(self._update_n_threads)
         self.penaltyDoubleSpinBox.valueChanged.connect(
@@ -323,6 +324,13 @@ class AdvancedPositionWidget(QtGui.QWidget,
                              "n_nodes": QtGui.QSpinBox,
                              "t1": QtGui.QDoubleSpinBox,
                              "t2": QtGui.QDoubleSpinBox}
+        
+        param_box_types = {"array_orientation": float,
+                           "delta_row": float,
+                           "delta_col": float,
+                           "n_nodes": int,
+                           "t1": float,
+                           "t2": float}
         
         param_multipier_vars = {"delta_row": ["device.minimum_distance_x"],
                                 "delta_col": ["device.minimum_distance_y"]}
@@ -356,6 +364,7 @@ class AdvancedPositionWidget(QtGui.QWidget,
             box_maximum = sys.maxint
             set_box_min = False
             set_box_max = False
+            param_limits = None
             
             if param_name in param_limits_dict:
                 
@@ -372,14 +381,6 @@ class AdvancedPositionWidget(QtGui.QWidget,
             var_box["fixed.box"].setMinimum(box_minimum)
             var_box["fixed.box"].setMaximum(box_maximum)
             
-            fixed_combo_slot = _make_fixed_combo_slot(self, param_name)
-            
-            attr_name = "fixed_combo_slot_{}".format(i)
-            setattr(self, attr_name, fixed_combo_slot)
-            
-            var_box["fixed.check"].stateChanged.connect(getattr(self,
-                                                                attr_name))
-            
             var_box["range.box.min"].setMinimum(box_minimum)
             var_box["range.box.min"].setMaximum(box_maximum)
             if set_box_min: var_box["range.box.min"].setValue(box_minimum)
@@ -391,14 +392,6 @@ class AdvancedPositionWidget(QtGui.QWidget,
             var_box["range.box.type"].addItem("Fixed")
             var_box["range.box.var"].setEnabled(False)
             
-            range_type_slot = _make_range_type_slot(self, param_name)
-            
-            attr_name = "range_type_slot_{}".format(i)
-            setattr(self, attr_name, range_type_slot)
-            
-            var_box["range.box.type"].currentIndexChanged[str].connect(
-                                                    getattr(self, attr_name))
-            
             if param_name in param_multipier_vars:
             
                 var_box["range.box.type"].addItem("Multiplier")
@@ -407,6 +400,89 @@ class AdvancedPositionWidget(QtGui.QWidget,
                     
                     mapped_name = self._name_map[var]
                     var_box["range.box.var"].addItem(mapped_name)
+            
+            # Slots
+            param_type = param_box_types[param_name]
+            
+            fixed_combo_slot = _make_fixed_combo_slot(self,
+                                                      param_name,
+                                                      param_type,
+                                                      param_limits)
+            
+            attr_name = "fixed_combo_slot_{}".format(i)
+            setattr(self, attr_name, fixed_combo_slot)
+            
+            var_box["fixed.check"].stateChanged.connect(getattr(self,
+                                                                attr_name))
+            
+            fixed_value_slot = _make_fixed_value_slot(self,
+                                                      param_name,
+                                                      param_type)
+            
+            attr_name = "fixed_value_slot_{}".format(i)
+            setattr(self, attr_name, fixed_value_slot)
+            
+            var_box["fixed.box"].valueChanged.connect(getattr(self,
+                                                              attr_name))
+            
+            range_type_slot = _make_range_type_slot(self,
+                                                    param_name,
+                                                    param_type)
+            
+            attr_name = "range_type_slot_{}".format(i)
+            setattr(self, attr_name, range_type_slot)
+            
+            var_box["range.box.type"].currentIndexChanged[str].connect(
+                                                    getattr(self, attr_name))
+            
+            generic_range_slot = _make_generic_range_slot(self,
+                                                          param_name,
+                                                          param_type)
+            
+            attr_name = "generic_range_slot_{}".format(i)
+            setattr(self, attr_name, generic_range_slot)
+            
+            var_box["range.box.var"].currentIndexChanged.connect(
+                                                    getattr(self, attr_name))
+            var_box["range.box.min"].valueChanged.connect(
+                                                    getattr(self, attr_name))
+            var_box["range.box.max"].valueChanged.connect(
+                                                    getattr(self, attr_name))
+            
+            interp_type_slot = _make_interp_type_slot(self,
+                                                      param_name,
+                                                      param_type,
+                                                      param_limits)
+            
+            attr_name = "interp_type_slot_{}".format(i)
+            setattr(self, attr_name, interp_type_slot)
+            
+            var_box["button.group"].buttonClicked['int'].connect(
+                                                    getattr(self, attr_name))
+            
+            generic_interp_slot = _make_generic_interp_slot(self,
+                                                            param_name,
+                                                            param_type,
+                                                            param_limits)
+            
+            attr_name = "generic_interp_slot_{}".format(i)
+            setattr(self, attr_name, generic_interp_slot)
+            
+            
+            var_box["interp.box.step"].valueChanged.connect(
+                                                    getattr(self, attr_name))
+            var_box["interp.edit.values"].returnPressed.connect(
+                                                    getattr(self, attr_name))
+            
+            interp_values_reset_slot = _make_interp_values_reset_slot(
+                                                                    self,
+                                                                    param_name)
+            
+            attr_name = "interp_values_reset_slot_{}".format(i)
+            setattr(self, attr_name, interp_values_reset_slot)
+            
+            var_box["interp.edit.values"].editingFinished.connect(
+                                                    getattr(self, attr_name))
             
             self._param_boxes[param_name] = var_box
             
@@ -892,11 +968,19 @@ class AdvancedPositionWidget(QtGui.QWidget,
         return
     
     @QtCore.pyqtSlot()
-    def _update_worker_dir(self):
+    def _record_worker_dir(self):
         
         self._config["worker_dir"] = str(self.workdirLineEdit.text())
         self.workdirLineEdit.clearFocus()
         self._update_status()
+        
+        return
+    
+    @QtCore.pyqtSlot()
+    def _update_worker_dir(self):
+        
+        worker_dir = self._config["worker_dir"]
+        self.workdirLineEdit.setText(worker_dir)
         
         return
     
@@ -1747,6 +1831,9 @@ def _make_var_box(widget, parent, object_name, group_title, box_class):
     var_box_dict["button.group"].addButton(var_box_dict["interp.button.range"])
     var_box_dict["button.group"].addButton(var_box_dict["interp.button.fixed"])
     
+    var_box_dict["button.group"].setId(var_box_dict["interp.button.range"], 1)
+    var_box_dict["button.group"].setId(var_box_dict["interp.button.fixed"], 2)
+    
     widget_name = str(widget.objectName())
 
     var_box_dict["root"].setTitle(_get_translation(widget_name,
@@ -1809,7 +1896,7 @@ def _init_sci_spin_box(parent, name):
     return sciSpinBox
 
 
-def _make_fixed_combo_slot(that, param_name):
+def _make_fixed_combo_slot(that, param_name, param_type, param_limits):
     
     @QtCore.pyqtSlot(object)
     def slot_function(that, checked_state):
@@ -1825,12 +1912,47 @@ def _make_fixed_combo_slot(that, param_name):
         range_group.setEnabled(enabled)
         interp_group.setEnabled(enabled)
         
+        param_dict = {}
+        var_box_dict = that._param_boxes[param_name]
+        
+        if checked_state == QtCore.Qt.Checked:
+            
+            value = param_type(var_box_dict["fixed.box"].value())
+            
+            param_dict["fixed"] = value
+        
+        else:
+            
+            var_box_values = _read_var_box_values(var_box_dict, param_type)
+            param_dict["range"] = _get_range_config(var_box_values)
+            param_dict["interp"] = _get_interp_config(var_box_values,
+                                                      param_limits)
+        
+        that._config["parameters"][param_name] = param_dict
+        
         return
     
     return types.MethodType(slot_function, that)
 
 
-def _make_range_type_slot(that, param_name):
+def _make_fixed_value_slot(that, param_name, param_type):
+    
+    @QtCore.pyqtSlot(object)
+    def slot_function(that, value):
+        
+        fixed_check_box = that._param_boxes[param_name]["fixed.check"]
+        use_fixed = bool(fixed_check_box.isChecked())
+        
+        if not use_fixed: return
+        
+        that._config["parameters"][param_name]["fixed"] = param_type(value)
+        
+        return
+    
+    return types.MethodType(slot_function, that)
+
+
+def _make_range_type_slot(that, param_name, param_type):
     
     @QtCore.pyqtSlot(object)
     def slot_function(that, current_str):
@@ -1845,9 +1967,204 @@ def _make_range_type_slot(that, param_name):
         
         range_var_box.setEnabled(enabled)
         
+        var_box_dict = that._param_boxes[param_name]
+        var_box_values = _read_var_box_values(var_box_dict, param_type)
+        range_config = _get_range_config(var_box_values)
+        that._config["parameters"][param_name]["range"] = range_config
+        
         return
     
     return types.MethodType(slot_function, that)
+
+
+def _make_generic_range_slot(that, param_name, param_type):
+    
+    @QtCore.pyqtSlot(object)
+    def slot_function(that, *args):
+        
+        var_box_dict = that._param_boxes[param_name]
+        var_box_values = _read_var_box_values(var_box_dict, param_type)
+        range_config = _get_range_config(var_box_values)
+        that._config["parameters"][param_name]["range"] = range_config
+        
+        return
+    
+    return types.MethodType(slot_function, that)
+
+
+def _make_interp_type_slot(that, param_name, param_type, param_limits):
+    
+    @QtCore.pyqtSlot(object)
+    def slot_function(that, button_id):
+        
+        if button_id == 1:
+            
+            use_range = True
+        
+        elif button_id == 2:
+            
+            use_range = False
+        
+        else:
+            
+            err_str = "Unexpected button id '{}' recieved".format(button_id)
+            raise RuntimeError(err_str)
+        
+        var_box_dict = that._param_boxes[param_name]
+        
+        var_box_dict["interp.box.step"].setEnabled(use_range)
+        var_box_dict["interp.edit.values"].setEnabled(not use_range)
+        
+        var_box_values = _read_var_box_values(var_box_dict, param_type)
+        interp_config = _get_interp_config(var_box_values, param_limits)
+        that._config["parameters"][param_name]["interp"] = interp_config
+        
+        return
+    
+    return types.MethodType(slot_function, that)
+
+
+def _make_generic_interp_slot(that, param_name, param_type, param_limits):
+    
+    @QtCore.pyqtSlot(object)
+    def slot_function(that, *args):
+        
+        var_box_dict = that._param_boxes[param_name]
+        var_box_values = _read_var_box_values(var_box_dict, param_type)
+        interp_config = _get_interp_config(var_box_values, param_limits)
+        that._config["parameters"][param_name]["interp"] = interp_config
+        var_box_dict["interp.edit.values"].clearFocus()
+        
+        return
+    
+    return types.MethodType(slot_function, that)
+
+
+def _make_interp_values_reset_slot(that, param_name):
+    
+    @QtCore.pyqtSlot(object)
+    def slot_function(that, *args):
+        
+        interp_settings = that._config["parameters"][param_name]["interp"]
+        
+        if ("values" not in interp_settings or
+            interp_settings["values"] is None):
+            
+            val_str = ""
+            
+        else:
+            
+            val_strs = [str(x) for x in interp_settings["values"]]
+            val_str = ", ".join(val_strs)
+        
+        var_box_dict = that._param_boxes[param_name]
+        var_box_dict["interp.edit.values"].setText(val_str)
+        
+        return
+    
+    return types.MethodType(slot_function, that)
+
+
+def _read_var_box_values(var_box_dict, var_type):
+    
+    var_box_values = {}
+    
+    var_name = "range.box.type"
+    var_value = str(var_box_dict[var_name].currentText())
+    var_box_values[var_name] = var_value
+    
+    var_name = "range.box.var"
+    var_value = str(var_box_dict[var_name].currentText())
+    if not var_value: var_value = None
+    var_box_values[var_name] = var_value
+    
+    var_name = "range.box.min"
+    var_value = var_type(var_box_dict[var_name].value())
+    var_box_values[var_name] = var_value
+    
+    var_name = "range.box.max"
+    var_value = var_type(var_box_dict[var_name].value())
+    var_box_values[var_name] = var_value
+    
+    if bool(var_box_dict["interp.button.range"].isChecked()):
+        use_interp_range = True
+    else:
+        use_interp_range = False
+    
+    var_box_values["interp.button.range"] = use_interp_range
+    var_box_values["interp.button.fixed"] = not use_interp_range
+    
+    var_name = "interp.box.step"
+    var_value = var_type(var_box_dict[var_name].value())
+    var_box_values[var_name] = var_value
+    
+    var_name = "interp.edit.values"
+    var_text = str(var_box_dict[var_name].text())
+    
+    if var_text:
+        var_value = [var_type(x) for x in var_text.split(",")]
+    else:
+        var_value = None
+    
+    var_box_values[var_name] = var_value
+    
+    return var_box_values
+
+
+def _get_range_config(var_box_values):
+    
+    range_config_dict = {}
+    
+    range_config_dict["type"] = var_box_values["range.box.type"].lower()
+    
+    if range_config_dict["type"] == "multiplier":
+        
+        range_config_dict["variable"] = var_box_values["range.box.var"]
+        min_key = "min_multiplier"
+        max_key = "max_multiplier"
+    
+    else:
+        
+        min_key = "min"
+        max_key = "max"
+    
+    range_config_dict[min_key] = var_box_values["range.box.min"]
+    range_config_dict[max_key] = var_box_values["range.box.max"]
+    
+    return range_config_dict
+
+
+def _get_interp_config(var_box_values, param_limits):
+    
+    interp_config_dict = {}
+    
+    if var_box_values["interp.button.range"]:
+        
+        interp_type = "range"
+        interp_config_dict["delta"] = var_box_values["interp.box.step"]
+    
+    else:
+        
+        interp_type = "fixed"
+        values = var_box_values["interp.edit.values"]
+        
+        if values is not None:
+            
+            values.sort()
+            
+            if param_limits is not None:
+            
+                if param_limits[0] is not None:
+                    values = [x for x in values if x >= param_limits[0]]
+                
+                if param_limits[1] is not None:
+                    values = [x for x in values if x <= param_limits[1]]
+            
+        interp_config_dict["values"] = values
+    
+    interp_config_dict["type"] = interp_type
+    
+    return interp_config_dict
 
 
 def _close_plot(plot_widget):
