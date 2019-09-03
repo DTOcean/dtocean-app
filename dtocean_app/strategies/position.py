@@ -234,6 +234,7 @@ class AdvancedPositionWidget(QtGui.QWidget,
         self._load_sims_thread = None
         self._param_boxes = {}
         self._param_lines = []
+        self._optimiser_status_str = None
         
         self._name_map = {"sim_number": "Simulation #",
                           "project.lcoe_mode": "LCOE Mode",
@@ -538,7 +539,158 @@ class AdvancedPositionWidget(QtGui.QWidget,
 #        current_tab_idx = self.tabWidget.currentIndex()
 #        print current_tab_idx
         
-        ## CONTROL TAB
+        if init:
+            
+            try:
+                self._init_tab_control()
+                self._init_tab_parameters()
+            except:
+                pass
+        
+        self._update_status_control()
+        
+        results_open = (self._optimiser_status_str is not None and
+                        self._shell.strategy is not None and
+                        self._config == self._shell.strategy._config)
+        
+        if not results_open:
+            
+            self.tabWidget.setTabEnabled(2, False)
+            self.tabWidget.setTabEnabled(3, False)
+        
+        else:
+            
+            self.tabWidget.setTabEnabled(2, True)
+            self.tabWidget.setTabEnabled(3, True)
+        
+            self._update_status_results()
+            self._update_status_plots()
+        
+        return
+    
+    def _init_tab_control(self):
+        
+        if self._config["worker_dir"] is not None:
+            self.workdirLineEdit.setText(self._config["worker_dir"])
+        
+        if self._config["n_threads"] is not None:
+            self.nThreadSpinBox.setValue(self._config["n_threads"])
+        
+        if self._config["base_penalty"] is not None:
+            self.penaltyDoubleSpinBox.setValue(
+                                            self._config["base_penalty"])
+        
+        if self._config["clean_existing_dir"] is not None:
+            
+            if self._config["clean_existing_dir"]:
+                
+                if not self.cleanDirCheckBox.isChecked():
+                    self.cleanDirCheckBox.toggle()
+            
+            else:
+                
+                if self.cleanDirCheckBox.isChecked():
+                    self.cleanDirCheckBox.toggle()
+        
+        if self._config["max_simulations"] is not None:
+            self.abortSpinBox.setValue(self._config["max_simulations"])
+        
+        if self._config["threads_auto"]:
+            
+            if not self.autoThreadBox.isChecked():
+                
+                self.autoThreadBox.toggle()
+                self.threadInfoLabel.setText("Auto mode")
+        
+        else:
+            
+            if self.autoThreadBox.isChecked():
+                
+                self.autoThreadBox.toggle()
+                self._set_manual_thread_message()
+        
+        return
+    
+    def _init_tab_parameters(self):
+        
+        parameters = self._config["parameters"]
+        
+        for param_name in parameters:
+            
+            param_settings = parameters[param_name]
+            var_box = self._param_boxes[param_name]
+            
+            if "fixed" in param_settings and param_settings["fixed"]:
+                
+                var_box["fixed.check"].toggle()
+                var_box["fixed.box"].setValue(param_settings["fixed"])
+                
+                var_box["range.group"].setEnabled(False)
+                var_box["interp.group"].setEnabled(False)
+                
+                continue
+            
+            if "range" in param_settings and param_settings["range"]:
+                
+                range_settings = param_settings["range"]
+                
+                if range_settings["type"] == "multiplier":
+                    
+                    var_box["range.box.type"].setCurrentIndex(1)
+                    
+                    range_var_text = self._name_map[
+                                                range_settings["variable"]]
+                    multi_var_idx = var_box["range.box.var"].findText(
+                                                            range_var_text)
+                    var_box["range.box.var"].setCurrentIndex(multi_var_idx)
+                    var_box["range.box.var"].setEnabled(True)
+                    
+                    min_range = range_settings["min_multiplier"]
+                    max_range = range_settings["max_multiplier"]
+                
+                elif range_settings["type"] == "fixed":
+                    
+                    min_range = range_settings["min"]
+                    max_range = range_settings["max"]
+                
+                else:
+                    
+                    err_str = ("Unrecognised range type "
+                               "'{}'").format(range_settings["type"])
+                    raise ValueError(err_str)
+                
+                var_box["range.box.min"].setValue(min_range)
+                var_box["range.box.max"].setValue(max_range)
+            
+            if "interp" in param_settings and param_settings["interp"]:
+                
+                interp_settings = param_settings["interp"]
+                
+                if interp_settings["type"] == "range":
+                    
+                    var_box["interp.button.range"].toggle()
+                    var_box["interp.box.step"].setValue(
+                                            interp_settings["delta"])
+                    var_box["interp.edit.values"].setDisabled(True)
+                
+                elif interp_settings["type"] == "fixed":
+                    
+                    var_box["interp.button.fixed"].toggle()
+                    
+                    val_strs = [str(x) for x in interp_settings["values"]]
+                    val_str = ", ".join(val_strs)
+                    var_box["interp.edit.values"].setText(val_str)
+                    var_box["interp.box.step"].setDisabled(True)
+                
+                else:
+                    
+                    err_str = ("Unrecognised interpolation type "
+                               "'{}'").format(interp_settings["type"])
+                    raise ValueError(err_str)
+        
+        return
+    
+    def _update_status_control(self):
         
         color_map = {0: "#aa0000",
                      1: "#00aa00"}
@@ -584,6 +736,8 @@ class AdvancedPositionWidget(QtGui.QWidget,
                     status_template.format(color_map[optimiser_status_code],
                                            optimiser_status_str)
         
+        self._optimiser_status_str = optimiser_status_str
+        
         # Define a global status
         if (config_status_code == 0 or
               project_status_code == 0 or
@@ -617,196 +771,62 @@ class AdvancedPositionWidget(QtGui.QWidget,
         else:
             self.config_null.emit()
         
-        if init:
-            
-            if self._config["worker_dir"] is not None:
-                self.workdirLineEdit.setText(self._config["worker_dir"])
-            
-            if self._config["n_threads"] is not None:
-                self.nThreadSpinBox.setValue(self._config["n_threads"])
-            
-            if self._config["base_penalty"] is not None:
-                self.penaltyDoubleSpinBox.setValue(
-                                                self._config["base_penalty"])
-            
-            if self._config["clean_existing_dir"] is not None:
-                
-                if self._config["clean_existing_dir"]:
-                    
-                    if not self.cleanDirCheckBox.isChecked():
-                        self.cleanDirCheckBox.toggle()
-                
-                else:
-                    
-                    if self.cleanDirCheckBox.isChecked():
-                        self.cleanDirCheckBox.toggle()
-            
-            if self._config["max_simulations"] is not None:
-                self.abortSpinBox.setValue(self._config["max_simulations"])
-            
-            if self._config["threads_auto"]:
-                
-                if not self.autoThreadBox.isChecked():
-                    
-                    self.autoThreadBox.toggle()
-                    self.threadInfoLabel.setText("Auto mode")
+        return
+    
+    def _update_status_results(self):
         
-            else:
-                
-                if self.autoThreadBox.isChecked():
-                    
-                    self.autoThreadBox.toggle()
-                    self.set_manual_thread_message()
-        
-        ## PARAMS TAB
-        
-        # Read the config file
-        if init:
-            
-            parameters = self._config["parameters"]
-            
-            for param_name in parameters:
-                
-                param_settings = parameters[param_name]
-                var_box = self._param_boxes[param_name]
-                
-                if "fixed" in param_settings and param_settings["fixed"]:
-                    
-                    var_box["fixed.check"].toggle()
-                    var_box["fixed.box"].setValue(param_settings["fixed"])
-                    
-                    var_box["range.group"].setEnabled(False)
-                    var_box["interp.group"].setEnabled(False)
-                    
-                    continue
-                
-                if "range" in param_settings and param_settings["range"]:
-                    
-                    range_settings = param_settings["range"]
-                    
-                    if range_settings["type"] == "multiplier":
-                        
-                        var_box["range.box.type"].setCurrentIndex(1)
-                        
-                        range_var_text = self._name_map[
-                                                    range_settings["variable"]]
-                        multi_var_idx = var_box["range.box.var"].findText(
-                                                                range_var_text)
-                        var_box["range.box.var"].setCurrentIndex(multi_var_idx)
-                        var_box["range.box.var"].setEnabled(True)
-                        
-                        min_range = range_settings["min_multiplier"]
-                        max_range = range_settings["max_multiplier"]
-                    
-                    elif range_settings["type"] == "fixed":
-                        
-                        min_range = range_settings["min"]
-                        max_range = range_settings["max"]
-                    
-                    else:
-                        
-                        err_str = ("Unrecognised range type "
-                                   "'{}'").format(range_settings["type"])
-                        raise ValueError(err_str)
-                    
-                    var_box["range.box.min"].setValue(min_range)
-                    var_box["range.box.max"].setValue(max_range)
-                
-                if "interp" in param_settings and param_settings["interp"]:
-                    
-                    interp_settings = param_settings["interp"]
-                    
-                    if interp_settings["type"] == "range":
-                        
-                        var_box["interp.button.range"].toggle()
-                        var_box["interp.box.step"].setValue(
-                                                interp_settings["delta"])
-                    
-                    elif interp_settings["type"] == "fixed":
-                        
-                        var_box["interp.button.fixed"].toggle()
-                        
-                        val_strs = [str(x) for x in interp_settings["values"]]
-                        val_str = ", ".join(val_strs)
-                        var_box["interp.edit.values"].setText(val_str)
-                    
-                    else:
-                        
-                        err_str = ("Unrecognised interpolation type "
-                                   "'{}'").format(interp_settings["type"])
-                        raise ValueError(err_str)
-        
-        ## RESULTS TAB
-        
-        results_open = (optimiser_status_str is not None and
-                        self._shell.strategy is not None and
-                        self._config == self._shell.strategy._config)
-        
-        if not results_open:
-            
-            self.tabWidget.setTabEnabled(2, False)
-            self.tabWidget.setTabEnabled(3, False)
-            self._results_df = None
-        
+        if "Default" not in self._shell.project.get_simulation_titles():
+            self.protectDefaultBox.setEnabled(False)
+            self._protect_default = False
         else:
-            
-            self.tabWidget.setTabEnabled(2, True)
-            self.tabWidget.setTabEnabled(3, True)
-            
-            if "Default" not in self._shell.project.get_simulation_titles():
-                self.protectDefaultBox.setEnabled(False)
-                self._protect_default = False
-            else:
-                self.protectDefaultBox.setEnabled(True)
-                self.protectDefaultBox.stateChanged.emit(
-                                        self.protectDefaultBox.checkState())
-            
-            if self._sims_to_load is None:
-                self.simLoadButton.setDisabled(True)
-            else:
-                self.simLoadButton.setEnabled(True)
-            
-            if self._results_df is None:
-            
-                # TODO: This needs automating.
-                # Consider adding names and units to config file and using
-                # meta data for variables.
-                
-                
-                df = GUIAdvancedPosition.get_results_table(self._config)
-                
-                new_columns = []
-                
-                for column in df.columns:
-                    
-                    for key in self._name_map.keys():
-                        
-                        if key in column:
-                            
-                            column = column.replace(key, self._name_map[key])
-                            
-                            if key in self._unit_map:
-                                column += " ({})".format(self._unit_map[key])
-                            
-                            break
-                    
-                    new_columns.append(column)
-                
-                df.columns = new_columns
-                
-                self._results_df = df
-                
-                # Populate plot comboboxes
-                new_columns.insert(0, "")
-                self.xAxisVarBox.addItems(new_columns)
-                self.yAxisVarBox.addItems(new_columns)
-                self.colorAxisVarBox.addItems(new_columns)
-                self.filterVarBox.addItems(new_columns)
-            
-            model = DataFrameModel(self._results_df)
-            self.dataTableWidget.setViewModel(model)
+            self.protectDefaultBox.setEnabled(True)
+            self.protectDefaultBox.stateChanged.emit(
+                                    self.protectDefaultBox.checkState())
         
-        ## PLOTS TAB
+        if self._sims_to_load is None:
+            self.simLoadButton.setDisabled(True)
+        else:
+            self.simLoadButton.setEnabled(True)
+        
+        # TODO: Consider adding names and units to config file and using
+        # meta data for variables.
+        
+        df = GUIAdvancedPosition.get_results_table(self._config)
+        
+        if (self._results_df is not None and
+            df.equals(self._results_df)): return
+        
+        new_columns = []
+        
+        for column in df.columns:
+            
+            for key in self._name_map.keys():
+                
+                if key in column:
+                    
+                    column = column.replace(key, self._name_map[key])
+                    
+                    if key in self._unit_map:
+                        column += " ({})".format(self._unit_map[key])
+                    
+                    break
+            
+            new_columns.append(column)
+        
+        df.columns = new_columns
+        
+        self._results_df = df
+        model = DataFrameModel(self._results_df)
+        self.dataTableWidget.setViewModel(model)
+        
+        # Update plots tab
+        new_columns.insert(0, "")
+        self._update_plot_comboboxes(new_columns)
+        self._clear_plot_widget()
+        
+        return
+    
+    def _update_status_plots(self):
         
         if self.plotWidget is None:
             plot_export_enabled = False
@@ -814,6 +834,15 @@ class AdvancedPositionWidget(QtGui.QWidget,
             plot_export_enabled = True
         
         self.plotExportButton.setEnabled(plot_export_enabled)
+        
+        return
+    
+    def _update_plot_comboboxes(self, plot_columns):
+        
+        self.xAxisVarBox.addItems(plot_columns)
+        self.yAxisVarBox.addItems(plot_columns)
+        self.colorAxisVarBox.addItems(plot_columns)
+        self.filterVarBox.addItems(plot_columns)
         
         return
     
