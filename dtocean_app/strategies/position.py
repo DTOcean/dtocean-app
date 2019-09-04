@@ -610,7 +610,7 @@ class AdvancedPositionWidget(QtGui.QWidget,
         return
     
     @QtCore.pyqtSlot()
-    def _update_status(self, init=False):
+    def _update_status(self, init=False, update_results=False):
         
 #        # Pick up the current tab to reload after update
 #        current_tab_idx = self.tabWidget.currentIndex()
@@ -625,6 +625,8 @@ class AdvancedPositionWidget(QtGui.QWidget,
                 pass
         
         self._update_status_control()
+        
+        if not update_results: return
         
         results_open = (self._optimiser_status_str is not None and
                         self._shell.strategy is not None and
@@ -1463,6 +1465,7 @@ class AdvancedPositionWidget(QtGui.QWidget,
         '''
         
         self._set_config = deepcopy(self._config)
+        self._update_status(update_results=True)
         
         return deepcopy(self._config)
     
@@ -1476,9 +1479,11 @@ class AdvancedPositionWidget(QtGui.QWidget,
         
         if config_dict is None: return
         
-        self._update_status(init=True)
+        module_logger.debug("Setting configuration")
+        
         self._config = deepcopy(config_dict)
         self._set_config = deepcopy(config_dict)
+        self._update_status(init=True, update_results=True)
         
         return
 
