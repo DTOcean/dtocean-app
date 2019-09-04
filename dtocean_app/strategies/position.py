@@ -226,6 +226,7 @@ class AdvancedPositionWidget(QtGui.QWidget,
         
         self._shell = shell
         self._config = self._init_config(config)
+        self._set_config = None
         self._max_threads = multiprocessing.cpu_count()
         self._progress = None
         self._results_df = None
@@ -769,7 +770,8 @@ class AdvancedPositionWidget(QtGui.QWidget,
     def _update_status_control(self):
         
         color_map = {0: "#aa0000",
-                     1: "#00aa00"}
+                     1: "#00aa00",
+                     2: "#ff8100"}
         
         (project_status_strs,
          project_status_code) = GUIAdvancedPosition.get_project_status(
@@ -820,7 +822,7 @@ class AdvancedPositionWidget(QtGui.QWidget,
               worker_dir_status_code == 0):
             
             if optimiser_status_str is not None:
-            
+                
                 status_code = 1
                 self._config["force_strategy_run"] = False
             
@@ -834,6 +836,12 @@ class AdvancedPositionWidget(QtGui.QWidget,
             
             if "force_strategy_run" in self._config:
                 self._config.pop("force_strategy_run")
+        
+        if (self._set_config is not None and
+            self._set_config != self._config):
+            
+            status_str += status_template.format(color_map[2],
+                                                 "Configuration modified")
         
         status_str_rich = ('<html><head/><body><p><span '
                            'style="font-size: 10pt;">'
@@ -1454,6 +1462,8 @@ class AdvancedPositionWidget(QtGui.QWidget,
           dict
         '''
         
+        self._set_config = deepcopy(self._config)
+        
         return deepcopy(self._config)
     
     def set_configuration(self, config_dict=None):
@@ -1468,6 +1478,7 @@ class AdvancedPositionWidget(QtGui.QWidget,
         
         self._update_status(init=True)
         self._config = deepcopy(config_dict)
+        self._set_config = deepcopy(config_dict)
         
         return
 
