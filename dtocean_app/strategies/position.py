@@ -1454,7 +1454,7 @@ class AdvancedPositionWidget(QtGui.QWidget,
           dict
         '''
         
-        return self._config
+        return deepcopy(self._config)
     
     def set_configuration(self, config_dict=None):
         
@@ -1466,8 +1466,8 @@ class AdvancedPositionWidget(QtGui.QWidget,
         
         if config_dict is None: return
         
-        self._config = config_dict
         self._update_status(init=True)
+        self._config = deepcopy(config_dict)
         
         return
 
