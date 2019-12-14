@@ -258,9 +258,8 @@ class PipeLine(PipeLineDock):
         return None
         
     def _make_menus(self, shell, position):
-                
-        proxy_indexes = self.treeView.selectedIndexes()
-        proxy_index = proxy_indexes[0]
+        
+        proxy_index = self.treeView.indexAt(position)
         controller = self._find_controller(proxy_index)
 
         if isinstance(controller, InputBranchControl):
