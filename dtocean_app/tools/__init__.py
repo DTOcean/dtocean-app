@@ -17,6 +17,7 @@
 
 import abc
 
+
 class GUITool(object):
     
     __metaclass__ = abc.ABCMeta
@@ -31,22 +32,23 @@ class GUITool(object):
     
     @abc.abstractmethod
     def get_weight(self):
-
+        
         '''A method for getting the order of priority of the tool.
-
+        
         Returns:
           int
         '''
-
+        
         return
     
     @abc.abstractmethod
     def has_widget(self):
-
+        
         '''A method for indicating if the tool creates a widget
-
+        
         Returns:
           bool
         '''
-
+        
         return
+

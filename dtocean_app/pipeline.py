@@ -254,14 +254,14 @@ class PipeLine(PipeLineDock):
                                            controller)
             
             if result is not None: return result
-
-        return None
         
+        return None
+    
     def _make_menus(self, shell, position):
         
         proxy_index = self.treeView.indexAt(position)
         controller = self._find_controller(proxy_index)
-
+        
         if isinstance(controller, InputBranchControl):
             
             # Set the widget action

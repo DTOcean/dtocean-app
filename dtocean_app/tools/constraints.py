@@ -40,17 +40,17 @@ class GUIConstraintsTool(GUITool, ConstraintsTool):
         return
     
     def get_weight(self):
-
+        
         '''A method for getting the order of priority of the strategy.
-
+        
         Returns:
           int
         '''
-
+        
         return 2
     
     def has_widget(self):
-
+        
         return True
     
     def get_widget(self):
@@ -82,5 +82,5 @@ class GUIConstraintsTool(GUITool, ConstraintsTool):
     def connect(self, **kwargs):
                 
         self._elec, self._constrained_lines = get_constraints(self.data)
-
+        
         return

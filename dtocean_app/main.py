@@ -3695,7 +3695,7 @@ class DTOceanWindow(MainWindow):
         self.setEnabled(True)
         
         return
-
+    
     @QtCore.pyqtSlot(object)
     def _close_tool(self, tool):
         
@@ -3711,7 +3711,7 @@ class DTOceanWindow(MainWindow):
         self._thread_tool = None
         
         return
-
+    
     @QtCore.pyqtSlot(object)
     def _close_tool_widget(self, tool):
         
