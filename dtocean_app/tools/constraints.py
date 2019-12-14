@@ -15,6 +15,8 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import matplotlib.pyplot as plt
+
 from dtocean_core.tools.constraints import ConstraintsTool, get_constraints
 from dtocean_electrical.output import plot_devices
 
@@ -33,6 +35,7 @@ class GUIConstraintsTool(GUITool, ConstraintsTool):
         GUITool.__init__(self)
         self._elec = None
         self._constrained_lines = None
+        self._fig = None
         
         return
     
@@ -66,8 +69,15 @@ class GUIConstraintsTool(GUITool, ConstraintsTool):
                            []
                            )
         widget = MPLWidget(fig, self.parent)
+        self._fig = fig
         
         return widget
+    
+    def destroy_widget(self):
+        
+        plt.close(self._fig)
+        
+        return
     
     def connect(self, **kwargs):
                 

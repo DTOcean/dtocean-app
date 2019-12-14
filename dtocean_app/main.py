@@ -3700,13 +3700,25 @@ class DTOceanWindow(MainWindow):
     def _close_tool(self, tool):
         
         if tool.has_widget():
+            
             widget = tool.get_widget()
-            if widget is not None: widget.show()
+            
+            if widget is not None:
+                widget.setWindowModality(QtCore.Qt.ApplicationModal)
+                widget.show()
+                widget.closing.connect(lambda: self._close_tool_widget(tool))
         
         self._thread_tool = None
         
         return
 
+    @QtCore.pyqtSlot(object)
+    def _close_tool_widget(self, tool):
+        
+        tool.destroy_widget()
+        
+        return
+    
     @QtCore.pyqtSlot()
     def _close_progress(self):
         

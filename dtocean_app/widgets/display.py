@@ -131,6 +131,8 @@ class MPLWidget(FigureCanvas):
 
     """Ultimately, this is a QWidget (as well as a FigureCanvasAgg, etc.)."""
 
+    closing = QtCore.pyqtSignal()
+    
     def __init__(self, figure, parent=None):
 
         FigureCanvas.__init__(self, figure)
@@ -139,6 +141,13 @@ class MPLWidget(FigureCanvas):
                                    QtGui.QSizePolicy.Expanding)
         FigureCanvas.updateGeometry(self)
 
+        return
+    
+    def closeEvent(self, event):
+        
+        self.closing.emit()
+        event.accept()
+        
         return
 
 
