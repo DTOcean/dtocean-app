@@ -502,10 +502,10 @@ class PlotManagerWidget(QtGui.QWidget, Ui_PlotManagerWidget):
             self.defaultButton.setDisabled(True)
         
         return
-        
-    @QtCore.pyqtSlot()    
+    
+    @QtCore.pyqtSlot()
     def _set_path(self):
-
+        
         if self._ext_types is None: return
         
         extlist = ["{} (*.{})".format(v, k) for k, v in
@@ -524,9 +524,11 @@ class PlotManagerWidget(QtGui.QWidget, Ui_PlotManagerWidget):
         self.pathEdit.setText(file_path)
         
         return
-        
-    @QtCore.pyqtSlot()    
+    
+    @QtCore.pyqtSlot()
     def _set_save(self):
+        
+        if self._ext_types is None: return
         
         valid_exts = [".{}".format(k) for k in self._ext_types.keys()]
         file_path = str(self.pathEdit.text())
@@ -539,7 +541,7 @@ class PlotManagerWidget(QtGui.QWidget, Ui_PlotManagerWidget):
             
         return
     
-    @QtCore.pyqtSlot()    
+    @QtCore.pyqtSlot()
     def _set_custom_size(self):
         
         size = get_current_figure_size()
