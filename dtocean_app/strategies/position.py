@@ -606,7 +606,7 @@ class AdvancedPositionWidget(QtGui.QWidget,
         return
     
     @QtCore.pyqtSlot()
-    def _update_status(self, init=False, update_results=False):
+    def _update_status(self, init=False, update_results=True):
         
 #        # Pick up the current tab to reload after update
 #        current_tab_idx = self.tabWidget.currentIndex()
@@ -982,7 +982,7 @@ class AdvancedPositionWidget(QtGui.QWidget,
         
         self._config["worker_dir"] = str(self.workdirLineEdit.text())
         self.workdirLineEdit.clearFocus()
-        self._update_status()
+        self._update_status(update_results=False)
         
         return
     
@@ -1013,7 +1013,7 @@ class AdvancedPositionWidget(QtGui.QWidget,
             
             self._config["worker_dir"] = str(worker_dir)
             self.workdirLineEdit.setText(worker_dir)
-            self._update_status()
+            self._update_status(update_results=False)
         
         return
     
@@ -1025,7 +1025,7 @@ class AdvancedPositionWidget(QtGui.QWidget,
         else:
             self._config["n_threads"] = None
         
-        self._update_status()
+        self._update_status(update_results=False)
         
         return
     
@@ -1044,7 +1044,7 @@ class AdvancedPositionWidget(QtGui.QWidget,
         else:
             self._config["clean_existing_dir"] = None
         
-        self._update_status()
+        self._update_status(update_results=False)
         
         return
     
@@ -1097,7 +1097,7 @@ class AdvancedPositionWidget(QtGui.QWidget,
         
         else:
             
-            self._update_custom_sims(update_status=False)
+            self._update_custom_sims()
         
         if button_id == 5:
             custom_enabled = True
@@ -1130,7 +1130,7 @@ class AdvancedPositionWidget(QtGui.QWidget,
         self._sims_to_load = sims_to_load
         
         if update_status:
-            self._update_status()
+            self._update_status(update_status)
         
         return
     
@@ -1362,7 +1362,7 @@ class AdvancedPositionWidget(QtGui.QWidget,
             
             raise RuntimeError(err_msg)
         
-        self._update_status()
+        self._update_status(update_results=False)
         
         return
     
@@ -1465,7 +1465,6 @@ class AdvancedPositionWidget(QtGui.QWidget,
         '''
         
         self._set_config = deepcopy(self._config)
-        self._update_status(update_results=True)
         
         return deepcopy(self._config)
     
@@ -1483,7 +1482,7 @@ class AdvancedPositionWidget(QtGui.QWidget,
         
         self._config = deepcopy(config_dict)
         self._set_config = deepcopy(config_dict)
-        self._update_status(init=True, update_results=True)
+        self._update_status(init=True)
         
         return
 
