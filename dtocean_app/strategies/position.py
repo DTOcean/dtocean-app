@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-#    Copyright (C) 2016-2018 Mathew Topper
+#    Copyright (C) 2019-2020 Mathew Topper
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -71,6 +71,24 @@ module_logger = logging.getLogger(__name__)
 
 # User home directory
 HOME = os.path.expanduser("~")
+
+NAME_MAP = {"sim_number": "Simulation #",
+            "project.lcoe_mode": "LCOE Mode",
+            "array_orientation": "Grid Orientation",
+            "delta_row": "Row Spacing",
+            "delta_col": "Column Spacing",
+            "n_nodes": "No. of Devices Requested",
+            "project.number_of_devices": "No. of Devices Simulated",
+            "project.annual_energy": "Annual Mechanical Energy",
+            "project.q_factor": "q-factor",
+            "project.capex_total": "CAPEX",
+            "project.capex_breakdown": "CAPEX",
+            "project.lifetime_opex_mode": "OPEX Mode",
+            "project.lifetime_energy_mode": "Lifetime Energy Mode",
+            "device.minimum_distance_x":
+                "Minimum device spacing in longitudinal direction",
+            "device.minimum_distance_y":
+                "Minimum device spacing in transverse direction"}
 
 
 class ThreadLoadSimulations(QtCore.QThread):
@@ -237,27 +255,6 @@ class AdvancedPositionWidget(QtGui.QWidget,
         self._param_lines = []
         self._optimiser_status_str = None
         
-        self._name_map = {"sim_number": "Simulation #",
-                          "project.lcoe_mode": "LCOE Mode",
-                          "array_orientation": "Grid Orientation",
-                          "delta_row": "Row Spacing",
-                          "delta_col": "Column Spacing",
-                          "n_nodes": "No. of Devices Requested",
-                          "project.number_of_devices":
-                              "No. of Devices Simulated",
-                          "project.annual_energy":
-                              "Annual Mechanical Energy",
-                          "project.q_factor": "q-factor",
-                          "project.capex_total": "CAPEX",
-                          "project.capex_breakdown": "CAPEX",
-                          "project.lifetime_opex_mode": "OPEX Mode",
-                          "project.lifetime_energy_mode":
-                              "Lifetime Energy Mode",
-                          "device.minimum_distance_x":
-                              "Minimum device spacing in x-direction",
-                          "device.minimum_distance_y":
-                              "Minimum device spacing in y-direction"}
-        
         self._unit_map = {"project.lcoe_mode": "Euro/kWh",
                           "array_orientation": "Deg",
                           "delta_row": "m",
@@ -280,7 +277,6 @@ class AdvancedPositionWidget(QtGui.QWidget,
             config["root_project_path"] = "worker.prj"
         
         return config
-    
     
     def _init_ui(self, parent):
         
@@ -345,8 +341,8 @@ class AdvancedPositionWidget(QtGui.QWidget,
         
         for i, param_name in enumerate(param_names):
             
-            if param_name in self._name_map:
-                group_title = self._name_map[param_name]
+            if param_name in NAME_MAP:
+                group_title = NAME_MAP[param_name]
             else:
                 group_title = param_name
             
@@ -399,7 +395,7 @@ class AdvancedPositionWidget(QtGui.QWidget,
                 
                 for var in param_multipier_vars[param_name]:
                     
-                    mapped_name = self._name_map[var]
+                    mapped_name = NAME_MAP[var]
                     var_box["range.box.var"].addItem(mapped_name)
             
             # Slots
@@ -717,7 +713,7 @@ class AdvancedPositionWidget(QtGui.QWidget,
                     
                     var_box["range.box.type"].setCurrentIndex(1)
                     
-                    range_var_text = self._name_map[
+                    range_var_text = NAME_MAP[
                                                 range_settings["variable"]]
                     multi_var_idx = var_box["range.box.var"].findText(
                                                             range_var_text)
@@ -886,11 +882,11 @@ class AdvancedPositionWidget(QtGui.QWidget,
         
         for column in df.columns:
             
-            for key in self._name_map.keys():
+            for key in NAME_MAP.keys():
                 
                 if key in column:
                     
-                    column = column.replace(key, self._name_map[key])
+                    column = column.replace(key, NAME_MAP[key])
                     
                     if key in self._unit_map:
                         column += " ({})".format(self._unit_map[key])
@@ -2135,7 +2131,9 @@ def _get_range_config(var_box_values):
     
     if range_config_dict["type"] == "multiplier":
         
-        range_config_dict["variable"] = var_box_values["range.box.var"]
+        reverse_name_map = {v: k for k, v in NAME_MAP.items()}
+        range_var = reverse_name_map[var_box_values["range.box.var"]]
+        range_config_dict["variable"] = range_var
         min_key = "min_multiplier"
         max_key = "max_multiplier"
     
