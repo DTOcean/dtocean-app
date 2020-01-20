@@ -725,6 +725,10 @@ class AdvancedPositionWidget(QtGui.QWidget,
                 
                 elif range_settings["type"] == "fixed":
                     
+                    var_box["range.box.type"].setCurrentIndex(0)
+                    var_box["range.box.var"].setCurrentIndex(0)
+                    var_box["range.box.var"].setDisabled(True)
+                    
                     min_range = range_settings["min"]
                     max_range = range_settings["max"]
                 
