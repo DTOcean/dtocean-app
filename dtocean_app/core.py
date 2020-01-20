@@ -123,7 +123,7 @@ class GUIProject(QtCore.QObject, Project):
         self.sims_updated.emit()
         
         return
-
+    
     def _set_active_index(self, index):
         
         super(GUIProject, self)._set_active_index(index)
@@ -135,18 +135,7 @@ class GUIProject(QtCore.QObject, Project):
             self.active_title_changed.emit(active_sim_title)
         
         return
-        
-    def _dump(self):
-        
-        new_project = Project(self.title)
-        
-        new_project._pool = self._pool
-        new_project._simulations = self._simulations
-        new_project._active_index = self._active_index
-        new_project._db_cred = self._db_cred
-        
-        return new_project
-        
+    
     def _load(self, project):
         
         self.title = project.title
@@ -234,15 +223,7 @@ class GUICore(QtCore.QObject, Core):
         self.new_simulation(new_project, simulation_title)
         
         return new_project
-        
-    def dump_project(self, project, dump_path):
-        
-        core_project = project._dump()
-        
-        super(GUICore, self).dump_project(core_project, dump_path)
-        
-        return
-        
+    
     def load_project(self, load_path):
         
         core_project = super(GUICore, self).load_project(load_path)
