@@ -34,11 +34,6 @@ import pandas as pd
 from PyQt4 import QtGui, QtCore
 
 try:
-    from yaml import CLoader as Loader
-except ImportError:
-    from yaml import Loader
-
-try:
     _fromUtf8 = QtCore.QString.fromUtf8
 except AttributeError:
     def _fromUtf8(s):
@@ -641,7 +636,7 @@ class About(QtGui.QDialog, Ui_AboutDialog):
         software_path = os.path.join(resources_path, "software.yaml")
         
         with open(software_path, 'r') as stream:
-            software_dict = yaml.load(stream, Loader=Loader)
+            software_dict = yaml.load(stream, Loader=yaml.FullLoader)
             
         software_str = "DTOcean {} ({})".format(software_dict["version"],
                                                 arch_str)
@@ -651,7 +646,7 @@ class About(QtGui.QDialog, Ui_AboutDialog):
         names_path = os.path.join(resources_path, "people.yaml")
         
         with open(names_path, 'r') as stream:
-            names = yaml.load(stream, Loader=Loader)
+            names = yaml.load(stream, Loader=yaml.FullLoader)
         
         if names is None:
             
