@@ -174,57 +174,6 @@ class GUIAdvancedPosition(GUIStrategy, AdvancedPosition):
         widget = AdvancedPositionWidget(parent, shell, config)
         
         return widget
-    
-    @classmethod
-    def get_worker_directory_status(cls, config):
-        
-        worker_directory = config["worker_dir"]
-        
-        status_str = None
-        status_code = None
-        
-        if os.path.isdir(worker_directory):
-            
-            if len(os.listdir(worker_directory)) == 0:
-                
-                status_str = "Worker directory empty"
-                status_code = 1
-            
-            elif not config['clean_existing_dir']:
-                
-                status_str = "Worker directory contains files"
-                status_code = 0
-        
-        else:
-            
-            status_str = "Worker directory does not yet exist"
-            status_code = 1
-        
-        return status_str, status_code
-    
-    @classmethod
-    def get_optimiser_status(cls, config):
-        
-        root_project_path = config['root_project_path']
-        worker_directory = config["worker_dir"]
-        
-        status_str = None
-        status_code = None
-        
-        if os.path.isdir(worker_directory):
-            
-            _, root_project_name = os.path.split(root_project_path)
-            root_project_base_name, _ = os.path.splitext(root_project_name)
-            pickle_name = "{}_results.pkl".format(root_project_base_name)
-            
-            results_path = os.path.join(worker_directory, pickle_name)
-            
-            if os.path.isfile(results_path):
-                
-                status_str = "Optimisation complete"
-                status_code = 1
-        
-        return status_str, status_code
 
 
 class AdvancedPositionWidget(QtGui.QWidget,
