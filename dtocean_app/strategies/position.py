@@ -727,7 +727,8 @@ class AdvancedPositionWidget(QtGui.QWidget,
         (project_status_strs,
          project_status_code) = GUIAdvancedPosition.get_project_status(
                                                          self._shell.core,
-                                                         self._shell.project)
+                                                         self._shell.project,
+                                                         self._config)
         
         (config_status_str,
          config_status_code) = GUIAdvancedPosition.get_config_status(
