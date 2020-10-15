@@ -239,7 +239,7 @@ def gui_interface():
         
     '''
     
-    epiStr = ('''Mathew Topper (c) 2018.''')
+    epiStr = ('''The DTOcean Developers (c) 2020.''')
     
     desStr = "Run the DTOcean graphical application."
     
@@ -262,7 +262,7 @@ def gui_interface():
     debug = args.debug
     trace_warnings = args.trace_warnings
     force_quit = args.quit
-        
+    
     main(debug=debug, trace_warnings=trace_warnings, force_quit=force_quit)
     
     return
