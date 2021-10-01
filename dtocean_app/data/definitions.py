@@ -899,24 +899,46 @@ class SimpleData(GUIStructure, SimpleData):
             
         elif self.meta.result.types[0] == "float":
             
+            unit = None
+            minimum = None
+            maximum = None
+            
             if self.meta.result.units is not None:
                 unit = self.meta.result.units[0]
-            else:
-                unit = None
             
-            input_widget = FloatSelect(self.parent,
-                                       unit)
+            if self.meta.result.minimum_equals is not None:
+                minimum = self.meta.result.minimum_equals[0]
+            elif self.meta.result.minimums is not None:
+                minimum = self.meta.result.minimums[0] + 1e-322
+            
+            if self.meta.result.maximum_equals is not None:
+                maximum = self.meta.result.maximum_equals[0]
+            elif self.meta.result.maximums is not None:
+                maximum = self.meta.result.maximums[0] - 1e-322
+            
+            input_widget = FloatSelect(self.parent, unit, minimum, maximum)
             input_widget._set_value(self.data.result)
             
         elif self.meta.result.types[0] == "int":
             
+            unit = None
+            minimum = None
+            maximum = None
+            
             if self.meta.result.units is not None:
                 unit = self.meta.result.units[0]
-            else:
-                unit = None
             
-            input_widget = IntSelect(self.parent,
-                                     unit)
+            if self.meta.result.minimum_equals is not None:
+                minimum = self.meta.result.minimum_equals[0]
+            elif self.meta.result.minimums is not None:
+                minimum = self.meta.result.minimum_equals[0] + 1
+            
+            if self.meta.result.maximum_equals is not None:
+                maximum = self.meta.result.maximum_equals[0]
+            elif self.meta.result.maximums is not None:
+                maximum = self.meta.result.maximums[0] - 1
+            
+            input_widget = IntSelect(self.parent, unit, minimum, maximum)
             input_widget._set_value(self.data.result)
             
         elif self.meta.result.types[0] == "str":

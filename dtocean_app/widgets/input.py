@@ -208,18 +208,21 @@ class FloatSelect(QtGui.QWidget, Ui_ScientificSelect):
     
     read_value = QtCore.pyqtSignal()
 
-    def __init__(self, parent=None, units=None):
+    def __init__(self, parent=None,
+                       units=None,
+                       minimum=None,
+                       maximum=None):
 
         QtGui.QWidget.__init__(self, parent)
         Ui_ScientificSelect.__init__(self)
         
         self.setupUi(self)
-        self._init_ui(units)
+        self._init_ui(units, minimum, maximum)
 
         return
 
-    def _init_ui(self, units):
-
+    def _init_ui(self, units, minimum, maximum):
+        
         if units is None:
             unitsStr = ""
         else:
@@ -227,10 +230,16 @@ class FloatSelect(QtGui.QWidget, Ui_ScientificSelect):
         
         self.unitsLabel.setText(unitsStr)
         
+        if minimum is not None:
+            self.doubleSpinBox.setMinimum(minimum)
+        
+        if maximum is not None:
+            self.doubleSpinBox.setMaximum(maximum)
+        
         self.doubleSpinBox.valueChanged.connect(self._emit_read)
         self.buttonBox.button(QtGui.QDialogButtonBox.Ok).clicked.connect(
                                           self._emit_read)
-
+        
         return
         
     def _set_value(self, value):
@@ -269,18 +278,21 @@ class IntSelect(QtGui.QWidget, Ui_IntSelect):
     
     read_value = QtCore.pyqtSignal()
 
-    def __init__(self, parent, units=None):
+    def __init__(self, parent,
+                       units=None,
+                       minimum=None,
+                       maximum=None):
 
         QtGui.QWidget.__init__(self, parent)
         Ui_IntSelect.__init__(self)
         
         self.setupUi(self)
-        self._init_ui(units)
+        self._init_ui(units, minimum, maximum)
 
         return
 
-    def _init_ui(self, units):
-
+    def _init_ui(self, units, minimum, maximum):
+        
         if units is None:
             unitsStr = ""
         else:
@@ -288,10 +300,16 @@ class IntSelect(QtGui.QWidget, Ui_IntSelect):
         
         self.unitsLabel.setText(unitsStr)
         
+        if minimum is not None:
+            self.spinBox.setMinimum(minimum)
+        
+        if maximum is not None:
+            self.spinBox.setMaximum(maximum)
+        
         self.spinBox.valueChanged.connect(self._emit_read)
         self.buttonBox.button(QtGui.QDialogButtonBox.Ok).clicked.connect(
                                           self._emit_read)
-
+        
         return
         
     def _set_value(self, value):

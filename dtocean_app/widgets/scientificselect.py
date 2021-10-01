@@ -52,7 +52,7 @@ class ScientificDoubleSpinBox(QDoubleSpinBox):
         super(QDoubleSpinBox, self).__init__(*args, **kwargs)
         self.setMinimum(-1.e+18)
         self.setMaximum(1.e+18)
-        self.setDecimals(1000)
+        self.setDecimals(323)
 
     def validate(self, text, position):
         
