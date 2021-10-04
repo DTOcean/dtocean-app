@@ -202,7 +202,7 @@ class AdvancedPositionWidget(QtGui.QWidget,
         self._load_sims_thread = None
         self._param_boxes = {}
         self._param_lines = []
-        self._optimiser_status_str = None
+        self._optimiser_status_code = None
         
         self._unit_map = {"project.lcoe_mode": "Euro/kWh",
                           "array_orientation": "Deg",
@@ -573,7 +573,7 @@ class AdvancedPositionWidget(QtGui.QWidget,
         
         if not update_results: return
         
-        results_open = (self._optimiser_status_str is not None and
+        results_open = (self._optimiser_status_code == 1 and
                         self._shell.strategy is not None and
                         self._config == self._shell.strategy._config)
         
@@ -737,6 +737,7 @@ class AdvancedPositionWidget(QtGui.QWidget,
         status_template = '<li style="color: {};">{}</li>'
         status_str = ""
         optimiser_status_str = None
+        optimiser_status_code = None
         
         for project_status_str in project_status_strs:
             status_str += \
@@ -766,14 +767,14 @@ class AdvancedPositionWidget(QtGui.QWidget,
                     status_template.format(color_map[optimiser_status_code],
                                            optimiser_status_str)
         
-        self._optimiser_status_str = optimiser_status_str
+        self._optimiser_status_code = optimiser_status_code
         
         # Define a global status
         if (config_status_code == 0 or
-              project_status_code == 0 or
-              worker_dir_status_code == 0):
+            project_status_code == 0 or
+            worker_dir_status_code == 0):
             
-            if optimiser_status_str is not None:
+            if optimiser_status_code == 1:
                 
                 status_code = 1
                 self._config["force_strategy_run"] = False
