@@ -74,7 +74,7 @@ HOME = os.path.expanduser("~")
 
 NAME_MAP = {"sim_number": "Simulation #",
             "project.lcoe_mode": "LCOE Mode",
-            "array_orientation": "Grid Orientation",
+            "grid_orientation": "Grid Orientation",
             "delta_row": "Row Spacing",
             "delta_col": "Column Spacing",
             "n_nodes": "No. of Devices Requested",
@@ -206,7 +206,7 @@ class AdvancedPositionWidget(QtGui.QWidget,
         self._optimiser_status_code = None
         
         self._unit_map = {"project.lcoe_mode": "Euro/kWh",
-                          "array_orientation": "Deg",
+                          "grid_orientation": "Deg",
                           "delta_row": "m",
                           "delta_col": "m",
                           "project.annual_energy": "MWh",
@@ -259,21 +259,21 @@ class AdvancedPositionWidget(QtGui.QWidget,
         
         ## PARAMS TAB
         
-        param_names = ["array_orientation",
+        param_names = ["grid_orientation",
                        "delta_row",
                        "delta_col",
                        "n_nodes",
                        "t1",
                        "t2"]
         
-        param_box_classes = {"array_orientation": QtGui.QDoubleSpinBox,
+        param_box_classes = {"grid_orientation": QtGui.QDoubleSpinBox,
                              "delta_row": QtGui.QDoubleSpinBox,
                              "delta_col": QtGui.QDoubleSpinBox,
                              "n_nodes": QtGui.QSpinBox,
                              "t1": QtGui.QDoubleSpinBox,
                              "t2": QtGui.QDoubleSpinBox}
         
-        param_box_types = {"array_orientation": float,
+        param_box_types = {"grid_orientation": float,
                            "delta_row": float,
                            "delta_col": float,
                            "n_nodes": int,
@@ -283,7 +283,7 @@ class AdvancedPositionWidget(QtGui.QWidget,
         param_multipier_vars = {"delta_row": ["device.minimum_distance_x"],
                                 "delta_col": ["device.minimum_distance_y"]}
         
-        param_limits_dict = {"array_orientation": (-90, 90),
+        param_limits_dict = {"grid_orientation": (-90, 90),
                              "delta_row": (0, None),
                              "delta_col": (0, None),
                              "n_nodes": (0, None),
@@ -529,12 +529,8 @@ class AdvancedPositionWidget(QtGui.QWidget,
 #        print current_tab_idx
         
         if init:
-            
-            try:
-                self._init_tab_control()
-                self._init_tab_parameters()
-            except:
-                pass
+            self._init_tab_control()
+            self._init_tab_parameters()
         
         self._update_status_control()
         
@@ -607,6 +603,8 @@ class AdvancedPositionWidget(QtGui.QWidget,
         parameters = self._config["parameters"]
         
         for param_name in parameters:
+            
+            if param_name not in self._param_boxes: continue
             
             param_settings = parameters[param_name]
             var_box = self._param_boxes[param_name]
@@ -1709,7 +1707,6 @@ def _make_fixed_combo_slot(that, param_name, param_type, param_limits):
         if checked_state == QtCore.Qt.Checked:
             
             value = param_type(var_box_dict["fixed.box"].value())
-            
             param_dict["fixed"] = value
         
         else:
