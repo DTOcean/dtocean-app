@@ -395,41 +395,6 @@ class AdvancedPositionWidget(QtGui.QWidget,
             var_box["range.box.max"].valueChanged.connect(
                                                     getattr(self, attr_name))
             
-            interp_type_slot = _make_interp_type_slot(self,
-                                                      param_name,
-                                                      param_type,
-                                                      param_limits)
-            
-            attr_name = "interp_type_slot_{}".format(i)
-            setattr(self, attr_name, interp_type_slot)
-            
-            var_box["button.group"].buttonClicked['int'].connect(
-                                                    getattr(self, attr_name))
-            
-            generic_interp_slot = _make_generic_interp_slot(self,
-                                                            param_name,
-                                                            param_type,
-                                                            param_limits)
-            
-            attr_name = "generic_interp_slot_{}".format(i)
-            setattr(self, attr_name, generic_interp_slot)
-            
-            
-            var_box["interp.box.step"].valueChanged.connect(
-                                                    getattr(self, attr_name))
-            var_box["interp.edit.values"].returnPressed.connect(
-                                                    getattr(self, attr_name))
-            
-            interp_values_reset_slot = _make_interp_values_reset_slot(
-                                                                    self,
-                                                                    param_name)
-            
-            attr_name = "interp_values_reset_slot_{}".format(i)
-            setattr(self, attr_name, interp_values_reset_slot)
-            
-            var_box["interp.edit.values"].editingFinished.connect(
-                                                    getattr(self, attr_name))
-            
             self._param_boxes[param_name] = var_box
             
             if i != len(param_names) - 1:
@@ -648,9 +613,7 @@ class AdvancedPositionWidget(QtGui.QWidget,
                 
                 var_box["fixed.check"].toggle()
                 var_box["fixed.box"].setValue(param_settings["fixed"])
-                
                 var_box["range.group"].setEnabled(False)
-                var_box["interp.group"].setEnabled(False)
                 
                 continue
             
@@ -689,32 +652,6 @@ class AdvancedPositionWidget(QtGui.QWidget,
                 
                 var_box["range.box.min"].setValue(min_range)
                 var_box["range.box.max"].setValue(max_range)
-            
-            if "interp" in param_settings and param_settings["interp"]:
-                
-                interp_settings = param_settings["interp"]
-                
-                if interp_settings["type"] == "range":
-                    
-                    var_box["interp.button.range"].toggle()
-                    var_box["interp.box.step"].setValue(
-                                            interp_settings["delta"])
-                    var_box["interp.edit.values"].setDisabled(True)
-                
-                elif interp_settings["type"] == "fixed":
-                    
-                    var_box["interp.button.fixed"].toggle()
-                    
-                    val_strs = [str(x) for x in interp_settings["values"]]
-                    val_str = ", ".join(val_strs)
-                    var_box["interp.edit.values"].setText(val_str)
-                    var_box["interp.box.step"].setDisabled(True)
-                
-                else:
-                    
-                    err_str = ("Unrecognised interpolation type "
-                               "'{}'").format(interp_settings["type"])
-                    raise ValueError(err_str)
         
         return
     
@@ -1680,128 +1617,8 @@ def _make_var_box(widget, parent, object_name, group_title, box_class):
     var_box_dict["range.layout"].addLayout(var_box_dict["range.grid"])
     var_box_dict["root.layout"].addWidget(var_box_dict["range.group"])
     
-    var_box_dict["interp.group"] = QtGui.QGroupBox(var_box_dict["root"])
-    var_box_dict["interp.group"].setFlat(True)
-    var_box_dict["interp.group"].setObjectName(
-                                _get_obj_name(object_name, "interp.group"))
-    
-    var_box_dict["interp.layout"] = QtGui.QHBoxLayout(
-                                                var_box_dict["interp.group"])
-    var_box_dict["interp.layout"].setObjectName(
-                                _get_obj_name(object_name, "interp.layout"))
-    
-    var_box_dict["interp.grid"] = QtGui.QGridLayout()
-    var_box_dict["interp.grid"].setSpacing(10)
-    var_box_dict["interp.grid"].setObjectName(
-                                _get_obj_name(object_name, "interp.grid"))
-    
-    var_box_dict["interp.button.range"] = QtGui.QRadioButton(
-                                                var_box_dict["interp.group"])
-    var_box_dict["interp.button.range"].setObjectName(
-                            _get_obj_name(object_name, "interp.button.range"))
-    
-    var_box_dict["interp.grid"].addWidget(var_box_dict["interp.button.range"],
-                                          0,
-                                          0,
-                                          1,
-                                          1)
-    
-    var_box_dict["interp.label.step"] = QtGui.QLabel(
-                                                var_box_dict["interp.group"])
-    var_box_dict["interp.label.step"].setLayoutDirection(QtCore.Qt.RightToLeft)
-    var_box_dict["interp.label.step"].setAlignment(QtCore.Qt.AlignRight |
-                                                   QtCore.Qt.AlignTrailing|
-                                                   QtCore.Qt.AlignVCenter)
-    var_box_dict["interp.label.step"].setObjectName(
-                            _get_obj_name(object_name, "interp.label.step"))
-    
-    var_box_dict["interp.grid"].addWidget(var_box_dict["interp.label.step"],
-                                          0,
-                                          1,
-                                          1,
-                                          1)
-    
-    var_box_dict["interp.box.step"] = box_class(var_box_dict["interp.group"])
-    var_box_dict["interp.box.step"].setMaximum(sys.maxint)
-    
-    sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Fixed,
-                                   QtGui.QSizePolicy.Fixed)
-    sizePolicy.setHorizontalStretch(0)
-    sizePolicy.setVerticalStretch(0)
-    sizePolicy.setHeightForWidth(
-            var_box_dict["interp.box.step"].sizePolicy().hasHeightForWidth())
-    
-    var_box_dict["interp.box.step"].setSizePolicy(sizePolicy)
-    var_box_dict["interp.box.step"].setMinimumSize(QtCore.QSize(75, 0))
-    var_box_dict["interp.box.step"].setObjectName(
-                            _get_obj_name(object_name, "interp.box.step"))
-    
-    var_box_dict["interp.grid"].addWidget(var_box_dict["interp.box.step"],
-                                          0,
-                                          2,
-                                          1,
-                                          1)
-    
-    var_box_dict["interp.button.fixed"] = QtGui.QRadioButton(
-                                                var_box_dict["interp.group"])
-    var_box_dict["interp.button.fixed"].setObjectName(
-                            _get_obj_name(object_name, "interp.button.fixed"))
-    
-    var_box_dict["interp.grid"].addWidget(var_box_dict["interp.button.fixed"],
-                                          1,
-                                          0,
-                                          1,
-                                          1)
-    
-    var_box_dict["interp.label.values"] = QtGui.QLabel(
-                                                var_box_dict["interp.group"])
-    var_box_dict["interp.label.values"].setAlignment(QtCore.Qt.AlignRight |
-                                                     QtCore.Qt.AlignTrailing |
-                                                     QtCore.Qt.AlignVCenter)
-    var_box_dict["interp.label.values"].setObjectName(
-                            _get_obj_name(object_name, "interp.label.values"))
-    
-    var_box_dict["interp.grid"].addWidget(var_box_dict["interp.label.values"],
-                                          1,
-                                          1,
-                                          1,
-                                          1)
-    
-    var_box_dict["interp.edit.values"] = QtGui.QLineEdit(
-                                                var_box_dict["interp.group"])
-    var_box_dict["interp.edit.values"].setObjectName(
-                            _get_obj_name(object_name, "interp.edit.values"))
-    
-    var_box_dict["interp.grid"].addWidget(var_box_dict["interp.edit.values"],
-                                          1,
-                                          2,
-                                          1,
-                                          1)
-    
-    var_box_dict["interp.label.commas"] = QtGui.QLabel(
-                                                var_box_dict["interp.group"])
-    var_box_dict["interp.label.commas"].setObjectName(
-                            _get_obj_name(object_name, "interp.label.commas"))
-    
-    var_box_dict["interp.grid"].addWidget(var_box_dict["interp.label.commas"],
-                                          1,
-                                          3,
-                                          1,
-                                          1)
-    
-    var_box_dict["interp.layout"].addLayout(var_box_dict["interp.grid"])
-    var_box_dict["root.layout"].addWidget(var_box_dict["interp.group"])
-    
-    var_box_dict["button.group"] = QtGui.QButtonGroup(widget)
-    var_box_dict["button.group"].setObjectName(_fromUtf8("buttonGroup"))
-    var_box_dict["button.group"].addButton(var_box_dict["interp.button.range"])
-    var_box_dict["button.group"].addButton(var_box_dict["interp.button.fixed"])
-    
-    var_box_dict["button.group"].setId(var_box_dict["interp.button.range"], 1)
-    var_box_dict["button.group"].setId(var_box_dict["interp.button.fixed"], 2)
-    
     widget_name = str(widget.objectName())
-
+    
     var_box_dict["root"].setTitle(_get_translation(widget_name,
                                                    group_title))
     var_box_dict["fixed.check"].setText(_get_translation(widget_name,
@@ -1816,19 +1633,6 @@ def _make_var_box(widget, parent, object_name, group_title, box_class):
                                                              "Min:"))
     var_box_dict["range.label.max"].setText(_get_translation(widget_name,
                                                              "Max:"))
-    var_box_dict["interp.group"].setTitle(_get_translation(widget_name,
-                                                           "Interpolation"))
-    var_box_dict["interp.button.range"].setText(_get_translation(widget_name,
-                                                                 "Range"))
-    var_box_dict["interp.label.step"].setText(_get_translation(widget_name,
-                                                                 "Step:"))
-    var_box_dict["interp.button.fixed"].setText(_get_translation(widget_name,
-                                                                 "Fixed"))
-    var_box_dict["interp.label.values"].setText(_get_translation(widget_name,
-                                                                 "Values:"))
-    var_box_dict["interp.label.commas"].setText(_get_translation(
-                                                    widget_name,
-                                                    "(seperated by commas)"))
     
     return var_box_dict
 
@@ -1868,7 +1672,6 @@ def _make_fixed_combo_slot(that, param_name, param_type, param_limits):
     def slot_function(that, checked_state):
         
         range_group = that._param_boxes[param_name]["range.group"]
-        interp_group = that._param_boxes[param_name]["interp.group"]
         
         if checked_state == QtCore.Qt.Checked:
             enabled = False
@@ -1876,8 +1679,6 @@ def _make_fixed_combo_slot(that, param_name, param_type, param_limits):
             enabled = True
         
         range_group.setEnabled(enabled)
-        interp_group.setEnabled(enabled)
-        
         param_dict = {}
         var_box_dict = that._param_boxes[param_name]
         
@@ -1891,8 +1692,6 @@ def _make_fixed_combo_slot(that, param_name, param_type, param_limits):
             
             var_box_values = _read_var_box_values(var_box_dict, param_type)
             param_dict["range"] = _get_range_config(var_box_values)
-            param_dict["interp"] = _get_interp_config(var_box_values,
-                                                      param_limits)
         
         that._config["parameters"][param_name] = param_dict
         
@@ -1958,79 +1757,6 @@ def _make_generic_range_slot(that, param_name, param_type):
     return types.MethodType(slot_function, that)
 
 
-def _make_interp_type_slot(that, param_name, param_type, param_limits):
-    
-    @QtCore.pyqtSlot(object)
-    def slot_function(that, button_id):
-        
-        if button_id == 1:
-            
-            use_range = True
-        
-        elif button_id == 2:
-            
-            use_range = False
-        
-        else:
-            
-            err_str = "Unexpected button id '{}' received".format(button_id)
-            raise RuntimeError(err_str)
-        
-        var_box_dict = that._param_boxes[param_name]
-        
-        var_box_dict["interp.box.step"].setEnabled(use_range)
-        var_box_dict["interp.edit.values"].setEnabled(not use_range)
-        
-        var_box_values = _read_var_box_values(var_box_dict, param_type)
-        interp_config = _get_interp_config(var_box_values, param_limits)
-        that._config["parameters"][param_name]["interp"] = interp_config
-        
-        return
-    
-    return types.MethodType(slot_function, that)
-
-
-def _make_generic_interp_slot(that, param_name, param_type, param_limits):
-    
-    @QtCore.pyqtSlot(object)
-    def slot_function(that, *args):
-        
-        var_box_dict = that._param_boxes[param_name]
-        var_box_values = _read_var_box_values(var_box_dict, param_type)
-        interp_config = _get_interp_config(var_box_values, param_limits)
-        that._config["parameters"][param_name]["interp"] = interp_config
-        var_box_dict["interp.edit.values"].clearFocus()
-        
-        return
-    
-    return types.MethodType(slot_function, that)
-
-
-def _make_interp_values_reset_slot(that, param_name):
-    
-    @QtCore.pyqtSlot(object)
-    def slot_function(that, *args):
-        
-        interp_settings = that._config["parameters"][param_name]["interp"]
-        
-        if ("values" not in interp_settings or
-            interp_settings["values"] is None):
-            
-            val_str = ""
-            
-        else:
-            
-            val_strs = [str(x) for x in interp_settings["values"]]
-            val_str = ", ".join(val_strs)
-        
-        var_box_dict = that._param_boxes[param_name]
-        var_box_dict["interp.edit.values"].setText(val_str)
-        
-        return
-    
-    return types.MethodType(slot_function, that)
-
-
 def _read_var_box_values(var_box_dict, var_type):
     
     var_box_values = {}
@@ -2050,28 +1776,6 @@ def _read_var_box_values(var_box_dict, var_type):
     
     var_name = "range.box.max"
     var_value = var_type(var_box_dict[var_name].value())
-    var_box_values[var_name] = var_value
-    
-    if bool(var_box_dict["interp.button.range"].isChecked()):
-        use_interp_range = True
-    else:
-        use_interp_range = False
-    
-    var_box_values["interp.button.range"] = use_interp_range
-    var_box_values["interp.button.fixed"] = not use_interp_range
-    
-    var_name = "interp.box.step"
-    var_value = var_type(var_box_dict[var_name].value())
-    var_box_values[var_name] = var_value
-    
-    var_name = "interp.edit.values"
-    var_text = str(var_box_dict[var_name].text())
-    
-    if var_text:
-        var_value = [var_type(x) for x in var_text.split(",")]
-    else:
-        var_value = None
-    
     var_box_values[var_name] = var_value
     
     return var_box_values
@@ -2100,39 +1804,6 @@ def _get_range_config(var_box_values):
     range_config_dict[max_key] = var_box_values["range.box.max"]
     
     return range_config_dict
-
-
-def _get_interp_config(var_box_values, param_limits):
-    
-    interp_config_dict = {}
-    
-    if var_box_values["interp.button.range"]:
-        
-        interp_type = "range"
-        interp_config_dict["delta"] = var_box_values["interp.box.step"]
-    
-    else:
-        
-        interp_type = "fixed"
-        values = var_box_values["interp.edit.values"]
-        
-        if values is not None:
-            
-            values.sort()
-            
-            if param_limits is not None:
-            
-                if param_limits[0] is not None:
-                    values = [x for x in values if x >= param_limits[0]]
-                
-                if param_limits[1] is not None:
-                    values = [x for x in values if x <= param_limits[1]]
-            
-        interp_config_dict["values"] = values
-    
-    interp_config_dict["type"] = interp_type
-    
-    return interp_config_dict
 
 
 def _close_plot(plot_widget):
