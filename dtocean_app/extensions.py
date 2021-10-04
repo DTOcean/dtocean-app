@@ -47,7 +47,7 @@ class GUIStrategyManager(ListFrameEditor, StrategyManager):
         
         # Store widget handles
         self._strategy_widget = None
-                        
+        
         return
         
     def _init_ui(self, title=None):
@@ -278,6 +278,7 @@ class GUIStrategyManager(ListFrameEditor, StrategyManager):
                                                             self._shell)
         self._strategy_widget.config_set.connect(self._config_set_ui_switch)
         self._strategy_widget.config_null.connect(self._config_null_ui_switch)
+        self._strategy_widget.reset.connect(self._reset_strategy)
         self._set_main_widget(self._strategy_widget)
 
         if (self._strategy is not None and
@@ -294,6 +295,12 @@ class GUIStrategyManager(ListFrameEditor, StrategyManager):
         
         self._last_selected = None
         self._strategy = None
+        
+        if self._strategy_widget is not None:
+            self._strategy_widget.reset.disconnect()
+            self._strategy_widget.config_set.disconnect()
+            self._strategy_widget.config_null.disconnect()
+        
         self._strategy_widget = None
         
         self._update_configuration()

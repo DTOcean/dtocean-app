@@ -22,6 +22,9 @@
    </property>
    <item>
     <widget class="QTabWidget" name="tabWidget">
+     <property name="focusPolicy">
+      <enum>Qt::TabFocus</enum>
+     </property>
      <property name="autoFillBackground">
       <bool>false</bool>
      </property>
@@ -84,7 +87,7 @@
               </property>
               <layout class="QVBoxLayout" name="verticalLayout_3">
                <item>
-                <widget class="QPushButton" name="importButton">
+                <widget class="QPushButton" name="importConfigButton">
                  <property name="sizePolicy">
                   <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
                    <horstretch>0</horstretch>
@@ -100,7 +103,7 @@
                 </widget>
                </item>
                <item>
-                <widget class="QPushButton" name="exportButton">
+                <widget class="QPushButton" name="exportConfigButton">
                  <property name="sizePolicy">
                   <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
                    <horstretch>0</horstretch>
@@ -363,7 +366,7 @@
             <property name="title">
              <string>Advanced</string>
             </property>
-            <layout class="QVBoxLayout" name="verticalLayout_6">
+            <layout class="QVBoxLayout" name="verticalLayout_16">
              <item>
               <widget class="QCheckBox" name="cleanDirCheckBox">
                <property name="text">
@@ -1217,6 +1220,64 @@ size (inches)</string>
       </layout>
       <zorder>frame_2</zorder>
       <zorder></zorder>
+     </widget>
+     <widget class="QWidget" name="tab_5_debug">
+      <property name="autoFillBackground">
+       <bool>true</bool>
+      </property>
+      <attribute name="title">
+       <string>Debug</string>
+      </attribute>
+      <layout class="QVBoxLayout" name="verticalLayout_18">
+       <item>
+        <layout class="QHBoxLayout" name="horizontalLayout_19">
+         <item>
+          <widget class="QPushButton" name="importYAMLButton">
+           <property name="focusPolicy">
+            <enum>Qt::NoFocus</enum>
+           </property>
+           <property name="toolTip">
+            <string>Load simulation file (.yaml) from the working directory (without executing)</string>
+           </property>
+           <property name="text">
+            <string>Import simulation file...</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <spacer name="horizontalSpacer_11">
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>40</width>
+             <height>20</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
+        </layout>
+       </item>
+       <item>
+        <spacer name="verticalSpacer_3">
+         <property name="orientation">
+          <enum>Qt::Vertical</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>20</width>
+           <height>704</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+      </layout>
+      <zorder>layoutWidget</zorder>
+      <zorder></zorder>
+      <zorder>horizontalSpacer_11</zorder>
+      <zorder></zorder>
+      <zorder>verticalSpacer_3</zorder>
      </widget>
     </widget>
    </item>

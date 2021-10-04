@@ -17,7 +17,7 @@
 
 import abc
 
-from PyQt4.QtCore import pyqtWrapperType
+from PyQt4 import QtCore
 
 
 class GUIStrategy(object):
@@ -120,7 +120,7 @@ class StrategyWidget(object):
             params.append(param)
             
         return params
-        
-class PyQtABCMeta(pyqtWrapperType, abc.ABCMeta):
-    
+
+
+class PyQtABCMeta(QtCore.pyqtWrapperType, abc.ABCMeta):
     pass

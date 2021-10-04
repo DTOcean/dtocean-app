@@ -184,6 +184,7 @@ class AdvancedPositionWidget(QtGui.QWidget,
     
     config_set = QtCore.pyqtSignal()
     config_null = QtCore.pyqtSignal()
+    reset = QtCore.pyqtSignal()
     
     def __init__(self, parent, shell, config):
         
@@ -243,8 +244,8 @@ class AdvancedPositionWidget(QtGui.QWidget,
         
         # Signals
         
-        self.importButton.clicked.connect(self._import_config)
-        self.exportButton.clicked.connect(self._export_config)
+        self.importConfigButton.clicked.connect(self._import_config)
+        self.exportConfigButton.clicked.connect(self._export_config)
         self.workdirLineEdit.returnPressed.connect(self._record_worker_dir)
         self.workdirLineEdit.editingFinished.connect(self._update_worker_dir)
         self.workdirToolButton.clicked.connect(self._select_worker_dir)
@@ -254,6 +255,7 @@ class AdvancedPositionWidget(QtGui.QWidget,
         self.cleanDirCheckBox.stateChanged.connect(
                                             self._update_clean_existing_dir)
         self.abortSpinBox.valueChanged.connect(self._update_max_simulations)
+        self.importYAMLButton.clicked.connect(self._import_yaml)
         
         ## PARAMS TAB
         
@@ -833,7 +835,7 @@ class AdvancedPositionWidget(QtGui.QWidget,
         
         if not file_path: return
         
-        config = GUIAdvancedPosition.load_config(file_path)
+        config = GUIAdvancedPosition.load_config(str(file_path))
         self._config = self._init_config(config)
         
         self._update_status(init=True)
@@ -943,6 +945,28 @@ class AdvancedPositionWidget(QtGui.QWidget,
             self._config["max_simulations"] = max_simulations
         else:
             self._config["max_simulations"] = None
+        
+        return
+    
+        
+    @QtCore.pyqtSlot()
+    def _import_yaml(self):
+        
+        msg = "Import Simulation"
+        valid_exts = "Output files (*.yaml)"
+        
+        yaml_file_path = QtGui.QFileDialog.getOpenFileName(self,
+                                                           msg,
+                                                           HOME,
+                                                           valid_exts)
+        
+        if not yaml_file_path: return
+        
+        self._shell.strategy.import_simulation_file(self._shell.core,
+                                                    self._shell.project,
+                                                    str(yaml_file_path))
+        
+        self.reset.emit()
         
         return
     

@@ -78,7 +78,8 @@ class MultiSensitivityWidget(QtGui.QWidget,
     
     config_set = QtCore.pyqtSignal()
     config_null = QtCore.pyqtSignal()
-        
+    reset = QtCore.pyqtSignal()
+    
     def __init__(self, parent):
         
         QtGui.QWidget.__init__(self, parent)

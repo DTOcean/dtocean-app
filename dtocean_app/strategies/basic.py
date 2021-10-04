@@ -63,6 +63,7 @@ class BasicWidget(Message, StrategyWidget):
     
     config_set = QtCore.pyqtSignal()
     config_null = QtCore.pyqtSignal()
+    reset = QtCore.pyqtSignal()
     
     def __init__(self, parent, text):
         
