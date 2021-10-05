@@ -690,14 +690,20 @@ class AdvancedPositionWidget(QtGui.QWidget,
              worker_dir_status_code) = \
                  GUIAdvancedPosition.get_worker_directory_status(self._config)
             
+            (optimiser_status_str,
+             optimiser_status_code) = \
+                     GUIAdvancedPosition.get_optimiser_status(self._shell.core,
+                                                              self._config)
+            
             if worker_dir_status_str is not None:
+                
+                if (worker_dir_status_code == 0 and
+                    optimiser_status_code > 0):
+                    worker_dir_status_code = optimiser_status_code
+                
                 status_str += \
                     status_template.format(color_map[worker_dir_status_code],
                                            worker_dir_status_str)
-            
-            (optimiser_status_str,
-             optimiser_status_code) = \
-                     GUIAdvancedPosition.get_optimiser_status(self._config)
             
             if optimiser_status_str is not None:
                 status_str += \
