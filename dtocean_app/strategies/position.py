@@ -705,6 +705,11 @@ class AdvancedPositionWidget(QtGui.QWidget,
                     status_template.format(color_map[worker_dir_status_code],
                                            worker_dir_status_str)
             
+            elif worker_dir_status_code == 1:
+                
+                optimiser_status_str = None
+                optimiser_status_code = 0
+            
             if optimiser_status_str is not None:
                 status_str += \
                     status_template.format(color_map[optimiser_status_code],
