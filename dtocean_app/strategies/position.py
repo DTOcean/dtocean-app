@@ -690,8 +690,15 @@ class AdvancedPositionWidget(QtGui.QWidget,
              worker_dir_status_code) = \
                  GUIAdvancedPosition.get_worker_directory_status(self._config)
             
-            (optimiser_status_str,
-             optimiser_status_code) = \
+            if worker_dir_status_code == 1:
+                
+                optimiser_status_str = None
+                optimiser_status_code = 0
+            
+            else:
+                
+                (optimiser_status_str,
+                 optimiser_status_code) = \
                      GUIAdvancedPosition.get_optimiser_status(self._shell.core,
                                                               self._config)
             
@@ -704,11 +711,6 @@ class AdvancedPositionWidget(QtGui.QWidget,
                 status_str += \
                     status_template.format(color_map[worker_dir_status_code],
                                            worker_dir_status_str)
-            
-            elif worker_dir_status_code == 1:
-                
-                optimiser_status_str = None
-                optimiser_status_code = 0
             
             if optimiser_status_str is not None:
                 status_str += \
@@ -864,15 +866,7 @@ class AdvancedPositionWidget(QtGui.QWidget,
         
         if not file_path: return
         
-        config_template = load_config_template()
-        config = deepcopy(self._config)
-        config.pop("threads_auto")
-        
-        if "force_strategy_run" in self._config:
-            config.pop("force_strategy_run")
-        
-        config_template.update(config)
-        dump_config(config_template, file_path)
+        dump_config(file_path, self._config)
         
         return
     
