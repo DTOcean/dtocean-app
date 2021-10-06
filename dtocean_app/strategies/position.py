@@ -120,9 +120,9 @@ class ThreadLoadSimulations(QtCore.QThread):
                                         self._shell.project,
                                         exclude_default=self._exclude_default)
             
-            self._shell.strategy.load_simulations(self._shell.core,
-                                                  self._shell.project,
-                                                  self._sim_numbers)
+            self._shell.strategy.load_simulation_ids(self._shell.core,
+                                                     self._shell.project,
+                                                     self._sim_numbers)
         
         except: 
             
@@ -778,7 +778,7 @@ class AdvancedPositionWidget(QtGui.QWidget,
         # TODO: Consider adding names and units to config file and using
         # meta data for variables.
         
-        df = GUIAdvancedPosition.get_results_table(self._config)
+        df = GUIAdvancedPosition.get_all_results(self._config)
         
         if (self._results_df is not None and
             df.equals(self._results_df)): return
@@ -1277,7 +1277,7 @@ class AdvancedPositionWidget(QtGui.QWidget,
             
             raise RuntimeError(err_msg)
         
-        self._update_status(update_results=False)
+        self._update_status_plots()
         
         return
     
