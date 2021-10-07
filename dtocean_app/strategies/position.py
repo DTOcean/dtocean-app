@@ -159,7 +159,6 @@ class GUIAdvancedPosition(GUIStrategy, AdvancedPosition):
     
     @property
     def allow_rerun(self):
-        
         return True
     
     def get_weight(self):
@@ -238,9 +237,7 @@ class AdvancedPositionWidget(QtGui.QWidget,
     def _init_config(cls, config):
         
         new_config = deepcopy(config)
-        
-        if new_config["root_project_path"] is None:
-            new_config["root_project_path"] = "worker.prj"
+        new_config["root_project_path"] = "worker.prj"
         
         config_template = load_config_template()
         all_keys = config_template.keys()
@@ -815,15 +812,15 @@ class AdvancedPositionWidget(QtGui.QWidget,
         if self._worker_dir_status_code == 1:
             self.tabWidget.setTabEnabled(1, True)
             self.tabWidget.setTabEnabled(2, True)
+            self.settingsFrame.setEnabled(True)
+            self.paramsFrame.setEnabled(True)
         else:
             self.tabWidget.setTabEnabled(1, False)
             self.tabWidget.setTabEnabled(2, False)
         
         if not update_results: return
         
-        results_open = (self._optimiser_status_code == 1 and
-                        self._shell.strategy is not None and
-                        self._config == self._shell.strategy._config)
+        results_open = self._optimiser_status_code == 1
         
         if not results_open:
             
@@ -834,6 +831,8 @@ class AdvancedPositionWidget(QtGui.QWidget,
             
             self.tabWidget.setTabEnabled(3, True)
             self.tabWidget.setTabEnabled(4, True)
+            self.settingsFrame.setEnabled(False)
+            self.paramsFrame.setEnabled(False)
             
             self._update_status_results()
             self._update_status_plots()
@@ -884,6 +883,18 @@ class AdvancedPositionWidget(QtGui.QWidget,
                  optimiser_status_code) = \
                      GUIAdvancedPosition.get_optimiser_status(self._shell.core,
                                                               self._config)
+                
+                if optimiser_status_code == 1:
+                    
+                    old_config_path = os.path.join(
+                                        self._config["worker_dir"], 
+                                        GUIAdvancedPosition.get_config_fname())
+                    old_config = GUIAdvancedPosition.load_config(
+                                                            old_config_path)
+                    old_config['clean_existing_dir'] = False
+                    
+                    self._config = self._init_config(old_config)
+                    self._set_config = deepcopy(self._config)
             
             if worker_dir_status_str is not None:
                 
@@ -1122,7 +1133,7 @@ class AdvancedPositionWidget(QtGui.QWidget,
         else:
             self._config["clean_existing_dir"] = None
         
-        self._update_status(update_results=False)
+        self._update_status()
         
         return
     
