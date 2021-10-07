@@ -237,17 +237,19 @@ class AdvancedPositionWidget(QtGui.QWidget,
     
     def _init_config(cls, config):
         
-        if config["root_project_path"] is None:
-            config["root_project_path"] = "worker.prj"
+        new_config = deepcopy(config)
+        
+        if new_config["root_project_path"] is None:
+            new_config["root_project_path"] = "worker.prj"
         
         config_template = load_config_template()
         all_keys = config_template.keys()
         
         for key in all_keys:
             if key not in config:
-                config[key] = None
+                new_config[key] = None
         
-        return config
+        return new_config
     
     def _init_ui(self, parent):
         
@@ -1714,8 +1716,9 @@ class AdvancedPositionWidget(QtGui.QWidget,
         
         module_logger.debug("Setting configuration")
         
-        self._config = deepcopy(config_dict)
-        self._set_config = deepcopy(config_dict)
+        safe_config = self._init_config(config_dict)
+        self._config = safe_config
+        self._set_config = deepcopy(safe_config)
         self._update_status(init=True)
         
         return
