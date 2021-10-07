@@ -16,6 +16,7 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
+import re
 import sys
 import types
 import logging
@@ -30,6 +31,8 @@ import matplotlib.pyplot as plt
 from PIL import Image
 from PyQt4 import QtCore, QtGui
 
+from aneris.utilities.misc import OrderedSet
+from dtocean_core.pipeline import Tree
 from dtocean_core.strategies.position import AdvancedPosition
 from dtocean_core.strategies.position_optimiser import (dump_config,
                                                         load_config_template)
@@ -42,6 +45,7 @@ from ..widgets.dialogs import ProgressBar
 from ..widgets.display import (MPLWidget,
                                get_current_figure_size,
                                get_current_filetypes)
+from ..widgets.extendedcombobox import ExtendedComboBox
 from ..widgets.scientificselect import ScientificDoubleSpinBox
 
 if is_high_dpi():
@@ -203,7 +207,10 @@ class AdvancedPositionWidget(QtGui.QWidget,
         self._load_sims_thread = None
         self._param_boxes = {}
         self._param_lines = []
+        self._worker_dir_status_code = None
         self._optimiser_status_code = None
+        self._var_box_to_id_map = None
+        self._var_id_to_box_map = None
         
         self._unit_map = {"project.lcoe_mode": "Euro/kWh",
                           "grid_orientation": "Deg",
@@ -215,16 +222,30 @@ class AdvancedPositionWidget(QtGui.QWidget,
                           "project.lifetime_opex_mode": "Euro",
                           "project.lifetime_energy_mode": "MWh"}
         
+        self._default_base_penalty = 1.
+        self._default_tolerance = 1e-11
+        self._default_n_threads = 1
+        self._default_min_evals = 1
+        self._default_max_evals = 128
+        self._default_popsize = 1
+        self._default_max_resamples_algorithm = 1
+        self._default_max_resamples = 2
+        
         self._init_ui(parent)
         
         return
     
     def _init_config(cls, config):
         
-        config["threads_auto"] = False
-        
         if config["root_project_path"] is None:
             config["root_project_path"] = "worker.prj"
+        
+        config_template = load_config_template()
+        all_keys = config_template.keys()
+        
+        for key in all_keys:
+            if key not in config:
+                config[key] = None
         
         return config
     
@@ -236,28 +257,62 @@ class AdvancedPositionWidget(QtGui.QWidget,
         
         ## CONTROL TAB
         
-        self.nThreadSpinBox.setMaximum(self._max_threads)
-        self.autoThreadBox.setDisabled(True)
-        
-        self._set_manual_thread_message()
-        self._set_objective_variables()
-        
         # Signals
         
         self.importConfigButton.clicked.connect(self._import_config)
         self.exportConfigButton.clicked.connect(self._export_config)
-        self.workdirLineEdit.returnPressed.connect(self._record_worker_dir)
-        self.workdirLineEdit.editingFinished.connect(self._update_worker_dir)
-        self.workdirToolButton.clicked.connect(self._select_worker_dir)
-        self.nThreadSpinBox.valueChanged.connect(self._update_n_threads)
-        self.penaltyDoubleSpinBox.valueChanged.connect(
-                                                    self._update_base_penalty)
+        self.workDirLineEdit.returnPressed.connect(self._update_worker_dir)
+        self.workDirLineEdit.editingFinished.connect(self._reset_worker_dir)
+        self.workDirToolButton.clicked.connect(self._select_worker_dir)
         self.cleanDirCheckBox.stateChanged.connect(
                                             self._update_clean_existing_dir)
-        self.abortSpinBox.valueChanged.connect(self._update_max_simulations)
-        self.importYAMLButton.clicked.connect(self._import_yaml)
+        
+        ## SETTINGS TAB
+        
+        self.tabWidget.setTabEnabled(1, False)
+        
+        self.costVarBox = _init_extended_combo_box(self, "costVarBox")
+        self.costVarLayout.addWidget(self.costVarBox)
+        
+        self.penaltySpinBox = _init_sci_spin_box(self, "penaltySpinBox")
+        self.penaltyLayout.addWidget(self.penaltySpinBox)
+        self.penaltySpinBox.setValue(self._default_base_penalty)
+        self.penaltyUnitsLabel.clear()
+        
+        self.toleranceSpinBox = _init_sci_spin_box(self, "toleranceSpinBox")
+        self.toleranceLayout.addWidget(self.toleranceSpinBox)
+        self.toleranceSpinBox.setValue(self._default_tolerance)
+        self.toleranceUnitsLabel.clear()
+        
+        self.nThreadSpinBox.setMaximum(self._max_threads)
+        
+        self._init_costvar_variables()
+        self._init_manual_thread_message()
+        
+        
+        # Signals
+        
+        self.costVarBox.currentIndexChanged.connect(self._update_objective)
+        self.costVarCheckBox.stateChanged.connect(self._update_maximise)
+        self.penaltySpinBox.valueChanged.connect(self._update_base_penalty)
+        self.toleranceSpinBox.valueChanged.connect(self._update_tolerance)
+        self.nThreadSpinBox.valueChanged.connect(self._update_n_threads)
+        self.abortXSpinBox.valueChanged.connect(self._update_max_simulations)
+        self.abortTimeSpinBox.valueChanged.connect(self._update_max_time)
+        self.minNoiseCheckBox.stateChanged.connect(self._update_min_noise_auto)
+        self.minNoiseSpinBox.valueChanged.connect(self._update_min_noise)
+        self.maxNoiseSpinBox.valueChanged.connect(self._update_max_noise)
+        self.populationCheckBox.stateChanged.connect(
+                                                self._update_population_auto)
+        self.populationSpinBox.valueChanged.connect(self._update_population)
+        self.maxResamplesComboBox.currentIndexChanged.connect(
+                                        self._update_max_resamples_algorithm)
+        self.maxResamplesSpinBox.valueChanged.connect(
+                                                    self._update_max_resamples)
         
         ## PARAMS TAB
+        
+        self.tabWidget.setTabEnabled(2, False)
         
         param_names = ["grid_orientation",
                        "delta_row",
@@ -418,7 +473,7 @@ class AdvancedPositionWidget(QtGui.QWidget,
         
         ## RESULTS TAB
         
-        self.tabWidget.setTabEnabled(2, False)
+        self.tabWidget.setTabEnabled(3, False)
         
         self.simButtonGroup.setId(self.bestSimButton, 1)
         self.simButtonGroup.setId(self.worstSimButton, 2)
@@ -440,6 +495,8 @@ class AdvancedPositionWidget(QtGui.QWidget,
         self.dataTableLayout.addWidget(self.dataTableWidget)
         
         ## PLOTS TAB
+        
+        self.tabWidget.setTabEnabled(4, False)
         
         # Add spin boxes
         
@@ -482,6 +539,12 @@ class AdvancedPositionWidget(QtGui.QWidget,
         self.plotButton.clicked.connect(self._set_plot)
         self.plotExportButton.clicked.connect(self._get_export_details)
         
+        ## DEBUG TAB
+        
+        # Signals
+        
+        self.importYAMLButton.clicked.connect(self._import_yaml)
+        
         ## GLOBAL
         
         # Set up progress bar
@@ -498,74 +561,88 @@ class AdvancedPositionWidget(QtGui.QWidget,
         
         return
     
-    def _set_objective_variables(self):
+    def _init_costvar_variables(self):
         
-        objective_variable = "project.lcoe_mode"
-        var_meta = self._shell.core.get_metadata(objective_variable)
-        var_text = var_meta.title
+        self.costVarBox.clear()
         
-        self.costVarComboBox.addItem(var_text)
+        active_modules = self._shell.module_menu.get_active(
+                                                        self._shell.core,
+                                                        self._shell.project)
+        active_themes = self._shell.theme_menu.get_active(
+                                                        self._shell.core,
+                                                        self._shell.project)
+        active_interfaces = active_modules + active_themes
         
-        if not var_meta.units:
-            self.penaltyUnitsLabel.clear()
+        if not active_interfaces: return
+        
+        if self._var_box_to_id_map is None:
+            var_box_to_id_map = {}
+            var_id_to_box_map = {}
         else:
-            label_str = "({})".format(var_meta.units[0])
-            self.penaltyUnitsLabel.setText(label_str)
+            var_box_to_id_map = self._var_box_to_id_map
+            var_id_to_box_map = self._var_id_to_box_map
+        
+        var_names = []
+        tree = Tree()
+        box_number = 0
+        
+        for interface_name in active_interfaces:
+            
+            branch = tree.get_branch(self._shell.core,
+                                     self._shell.project,
+                                     interface_name)
+            
+            var_outputs = branch.get_outputs(self._shell.core,
+                                            self._shell.project)
+            unique_vars = OrderedSet(var_outputs)
+            
+            for var_id in unique_vars:
+                
+                var_meta = self._shell.core.get_metadata(var_id)
+                
+                if "SimpleData" in var_meta.structure:
+                    
+                    if var_meta.types is None:
+                        
+                        errStr = ("Variable {} with SimpleData structure "
+                                  "requires types meta data to be "
+                                  "set").format(var_id)
+                        raise ValueError(errStr)
+                    
+                    if "float" in var_meta.types:
+                        
+                        title = var_meta.title
+                        
+                        if var_meta.units is not None:
+                            
+                            title = "{} ({})".format(title,
+                                                     var_meta.units[0])
+                        
+                        var_names.append(title)
+                        var_box_to_id_map[box_number] = var_id
+                        var_id_to_box_map[var_id] = box_number
+                        box_number += 1
+        
+        self._var_box_to_id_map = var_box_to_id_map
+        self._var_id_to_box_map = var_id_to_box_map
+        self.costVarBox.addItems(var_names)
+        self.costVarBox.setCurrentIndex(-1)
         
         return
     
-    def _set_manual_thread_message(self):
+    def _init_manual_thread_message(self):
         
         thread_msg = "({} threads available)".format(self._max_threads)
         self.threadInfoLabel.setText(thread_msg)
         
         return
     
-    @QtCore.pyqtSlot()
-    def _update_status(self, init=False, update_results=True):
-        
-#        # Pick up the current tab to reload after update
-#        current_tab_idx = self.tabWidget.currentIndex()
-#        print current_tab_idx
-        
-        if init:
-            self._init_tab_control()
-            self._init_tab_parameters()
-        
-        self._update_status_control()
-        
-        if not update_results: return
-        
-        results_open = (self._optimiser_status_code == 1 and
-                        self._shell.strategy is not None and
-                        self._config == self._shell.strategy._config)
-        
-        if not results_open:
-            
-            self.tabWidget.setTabEnabled(2, False)
-            self.tabWidget.setTabEnabled(3, False)
-        
-        else:
-            
-            self.tabWidget.setTabEnabled(2, True)
-            self.tabWidget.setTabEnabled(3, True)
-        
-            self._update_status_results()
-            self._update_status_plots()
-        
-        return
-    
     def _init_tab_control(self):
         
-        if self._config["worker_dir"] is not None:
-            self.workdirLineEdit.setText(self._config["worker_dir"])
-        
-        if self._config["n_threads"] is not None:
-            self.nThreadSpinBox.setValue(self._config["n_threads"])
-        
-        if self._config["base_penalty"] is not None:
-            self.penaltyDoubleSpinBox.setValue(
-                                            self._config["base_penalty"])
+        if self._config["worker_dir"] is None:
+            self.workDirLineEdit.clear()
+        else:
+            self.workDirLineEdit.setText(self._config["worker_dir"])
         
         if self._config["clean_existing_dir"] is not None:
             
@@ -579,22 +656,86 @@ class AdvancedPositionWidget(QtGui.QWidget,
                 if self.cleanDirCheckBox.isChecked():
                     self.cleanDirCheckBox.toggle()
         
-        if self._config["max_simulations"] is not None:
-            self.abortSpinBox.setValue(self._config["max_simulations"])
+        return
+    
+    def _init_tab_settings(self):
         
-        if self._config["threads_auto"]:
+        if (self._config["objective"] is not None and
+            self._config["objective"] in self._var_id_to_box_map):
+            box_number = self._var_id_to_box_map[self._config["objective"]]
+            self.costVarBox.setCurrentIndex(box_number)
+        else:
+            self.costVarBox.setCurrentIndex(-1)
+        
+        if self._config["maximise"] is None:
+            self.costVarCheckBox.setChecked(False)
+        else:
+            self.costVarCheckBox.setChecked(self._config["maximise"])
+        
+        if self._config["base_penalty"] is None:
+            self.penaltySpinBox.setValue(self._default_base_penalty)
+        else:
+            self.penaltySpinBox.setValue(self._config["base_penalty"])
+        
+        if self._config["tolfun"] is None:
+            self.toleranceSpinBox.setValue(self._default_tolerance)
+        else:
+            self.toleranceSpinBox.setValue(self._config["tolfun"])
+        
+        if self._config["n_threads"] is None:
+            self.nThreadSpinBox.setValue(self._default_n_threads)
+        else:
+            self.nThreadSpinBox.setValue(self._config["n_threads"])
+        
+        if self._config["max_simulations"] is None:
+            self.abortXSpinBox.setValue(0)
+        else:
+            self.abortXSpinBox.setValue(self._config["max_simulations"])
+        
+        if self._config["timeout"] is None:
+            self.abortTimeSpinBox.setValue(0)
+        else:
+            self.abortTimeSpinBox.setValue(self._config["timeout"])
+        
+        if self._config["timeout"] is None:
+            self.abortTimeSpinBox.setValue(0)
+        else:
+            self.abortTimeSpinBox.setValue(self._config["timeout"])
+        
+        if self._config["min_evals"] is None:
+            self.minNoiseCheckBox.setChecked(True)
+            self.minNoiseSpinBox.setValue(self._default_min_evals)
+        else:
+            self.minNoiseCheckBox.setChecked(False)
+            self.minNoiseSpinBox.setValue(self._config["min_evals"])
+        
+        if self._config["max_evals"] is None:
+            self.maxNoiseSpinBox.setValue(self._default_max_evals)
+        else:
+            self.maxNoiseSpinBox.setValue(self._config["max_evals"])
+        
+        if self._config["max_resample_factor"] is None:
             
-            if not self.autoThreadBox.isChecked():
-                
-                self.autoThreadBox.toggle()
-                self.threadInfoLabel.setText("Auto mode")
+            self.maxResamplesComboBox.setCurrentIndex(
+                                    self._default_max_resamples_algorithm)
+            self.maxResamplesSpinBox.setValue(self._default_max_resamples)
         
         else:
             
-            if self.autoThreadBox.isChecked():
-                
-                self.autoThreadBox.toggle()
-                self._set_manual_thread_message()
+            # Check for use of auto setting
+            auto_match = re.match(r"auto([0-9]+)",
+                                  str(self._config["max_resample_factor"]),
+                                  re.I)
+            
+            if auto_match:
+                items = auto_match.groups()
+                auto_resample_iterations = int(items[0])
+                self.maxResamplesComboBox.setCurrentIndex(1)
+                self.maxResamplesSpinBox.setValue(auto_resample_iterations)
+            else:
+                max_resample_factor = self._config["max_resample_factor"]
+                self.maxResamplesComboBox.setCurrentIndex(0)
+                self.maxResamplesSpinBox.setValue(max_resample_factor)
         
         return
     
@@ -655,6 +796,48 @@ class AdvancedPositionWidget(QtGui.QWidget,
         
         return
     
+    @QtCore.pyqtSlot()
+    def _update_status(self, init=False, update_results=True):
+        
+#        # Pick up the current tab to reload after update
+#        current_tab_idx = self.tabWidget.currentIndex()
+#        print current_tab_idx
+        
+        if init:
+            self._init_tab_control()
+            self._init_tab_settings()
+            self._init_tab_parameters()
+        
+        self._update_status_control()
+        
+        if self._worker_dir_status_code == 1:
+            self.tabWidget.setTabEnabled(1, True)
+            self.tabWidget.setTabEnabled(2, True)
+        else:
+            self.tabWidget.setTabEnabled(1, False)
+            self.tabWidget.setTabEnabled(2, False)
+        
+        if not update_results: return
+        
+        results_open = (self._optimiser_status_code == 1 and
+                        self._shell.strategy is not None and
+                        self._config == self._shell.strategy._config)
+        
+        if not results_open:
+            
+            self.tabWidget.setTabEnabled(3, False)
+            self.tabWidget.setTabEnabled(4, False)
+        
+        else:
+            
+            self.tabWidget.setTabEnabled(3, True)
+            self.tabWidget.setTabEnabled(4, True)
+            
+            self._update_status_results()
+            self._update_status_plots()
+        
+        return
+    
     def _update_status_control(self):
         
         color_map = {0: "#aa0000",
@@ -675,14 +858,12 @@ class AdvancedPositionWidget(QtGui.QWidget,
         status_str = ""
         optimiser_status_str = None
         optimiser_status_code = None
+        worker_dir_status_code = None
         
         for project_status_str in project_status_strs:
             status_str += \
                     status_template.format(color_map[project_status_code],
                                            project_status_str)
-        
-        status_str += status_template.format(color_map[config_status_code],
-                                             config_status_str)
         
         if self._config["worker_dir"] is not None:
             
@@ -717,6 +898,13 @@ class AdvancedPositionWidget(QtGui.QWidget,
                     status_template.format(color_map[optimiser_status_code],
                                            optimiser_status_str)
         
+        else:
+            
+            status_str += \
+                    status_template.format(color_map[0],
+                                           "No worker directory set")
+        
+        self._worker_dir_status_code = worker_dir_status_code
         self._optimiser_status_code = optimiser_status_code
         
         # Define a global status
@@ -740,11 +928,17 @@ class AdvancedPositionWidget(QtGui.QWidget,
             if "force_strategy_run" in self._config:
                 self._config.pop("force_strategy_run")
         
-        if (self._set_config is not None and
-            self._set_config != self._config):
+        if ((self._set_config is None and status_code > 0) or
+            (self._set_config is not None and
+             self._set_config != self._config)):
             
             status_str += status_template.format(color_map[2],
                                                  "Configuration modified")
+        
+        else:
+            
+            status_str += status_template.format(color_map[config_status_code],
+                                                 config_status_str)
         
         status_str_rich = ('<html><head/><body><p><span '
                            'style="font-size: 10pt;">'
@@ -871,19 +1065,27 @@ class AdvancedPositionWidget(QtGui.QWidget,
         return
     
     @QtCore.pyqtSlot()
-    def _record_worker_dir(self):
+    def _update_worker_dir(self):
         
-        self._config["worker_dir"] = str(self.workdirLineEdit.text())
-        self.workdirLineEdit.clearFocus()
+        worker_dir = str(self.workDirLineEdit.text())
+        if not worker_dir: worker_dir = None
+        
+        self._config["worker_dir"] = worker_dir
+        self.workDirLineEdit.clearFocus()
         self._update_status(update_results=False)
         
         return
     
     @QtCore.pyqtSlot()
-    def _update_worker_dir(self):
+    def _reset_worker_dir(self):
         
         worker_dir = self._config["worker_dir"]
-        self.workdirLineEdit.setText(worker_dir)
+        
+        if worker_dir is None:
+            self.workDirLineEdit.clear()
+            return
+        
+        self.workDirLineEdit.setText(worker_dir)
         
         return
     
@@ -905,27 +1107,8 @@ class AdvancedPositionWidget(QtGui.QWidget,
         if worker_dir:
             
             self._config["worker_dir"] = str(worker_dir)
-            self.workdirLineEdit.setText(worker_dir)
+            self.workDirLineEdit.setText(worker_dir)
             self._update_status(update_results=False)
-        
-        return
-    
-    @QtCore.pyqtSlot(int)
-    def _update_n_threads(self, n_threads):
-        
-        if n_threads > 0:
-            self._config["n_threads"] = n_threads
-        else:
-            self._config["n_threads"] = None
-        
-        self._update_status(update_results=False)
-        
-        return
-    
-    @QtCore.pyqtSlot(float)
-    def _update_base_penalty(self, penalty_value):
-        
-        self._config["base_penalty"] = penalty_value
         
         return
     
@@ -942,6 +1125,55 @@ class AdvancedPositionWidget(QtGui.QWidget,
         return
     
     @QtCore.pyqtSlot(int)
+    def _update_objective(self, box_number):
+        
+        if box_number < 0: return
+        
+        var_id = self._var_box_to_id_map[box_number]
+        var_meta = self._shell.core.get_metadata(var_id)
+        
+        self._config["objective"] = var_id
+        self._update_status(update_results=False)
+        
+        if var_meta.units is None:
+            self.penaltyUnitsLabel.clear()
+            self.toleranceUnitsLabel.clear()
+            return
+        
+        unit = var_meta.units[0]
+        self.penaltyUnitsLabel.setText(unit)
+        self.toleranceUnitsLabel.setText(unit)
+        
+        return
+    
+    @QtCore.pyqtSlot(object)
+    def _update_maximise(self, checked_state):
+        
+        if checked_state == QtCore.Qt.Checked:
+            self._config["maximise"] = True
+        else:
+            self._config["maximise"] = False
+        
+        return
+    
+    @QtCore.pyqtSlot(float)
+    def _update_base_penalty(self, value):
+        self._config["base_penalty"] = value
+        self._update_status(update_results=False)
+        return
+    
+    @QtCore.pyqtSlot(float)
+    def _update_tolerance(self, value):
+        self._config["tolfun"] = value
+        return
+    
+    @QtCore.pyqtSlot(int)
+    def _update_n_threads(self, n_threads):
+        self._config["n_threads"] = n_threads
+        self._update_status(update_results=False)
+        return
+    
+    @QtCore.pyqtSlot(int)
     def _update_max_simulations(self, max_simulations):
         
         if max_simulations > 0:
@@ -951,7 +1183,94 @@ class AdvancedPositionWidget(QtGui.QWidget,
         
         return
     
+    @QtCore.pyqtSlot(int)
+    def _update_max_time(self, timeout):
         
+        if timeout > 0:
+            self._config["timeout"] = timeout
+        else:
+            self._config["timeout"] = None
+        
+        return
+    
+    @QtCore.pyqtSlot(object)
+    def _update_min_noise_auto(self, checked_state):
+        
+        self.minNoiseSpinBox.setValue(self._default_min_evals)
+        
+        if checked_state == QtCore.Qt.Checked:
+            self._config["min_evals"] = None
+            self.minNoiseSpinBox.setEnabled(False)
+            self.maxNoiseSpinBox.setMinimum(1)
+        else:
+            value = int(self.minNoiseSpinBox.value())
+            self._config["min_evals"] = value
+            self.minNoiseSpinBox.setEnabled(True)
+        
+        return
+    
+    @QtCore.pyqtSlot(int)
+    def _update_min_noise(self, value):
+        self._config["min_evals"] = value
+        self.maxNoiseSpinBox.setMinimum(value)
+        return
+    
+    @QtCore.pyqtSlot(int)
+    def _update_max_noise(self, value):
+        self._config["max_evals"] = value
+        return
+    
+    @QtCore.pyqtSlot(object)
+    def _update_population_auto(self, checked_state):
+        
+        self.populationSpinBox.setValue(self._default_popsize)
+        
+        if checked_state == QtCore.Qt.Checked:
+            self._config["popsize"] = None
+            self.populationSpinBox.setEnabled(False)
+        else:
+            value = int(self.populationSpinBox.value())
+            self._config["popsize"] = value
+            self.populationSpinBox.setEnabled(True)
+        
+        return
+    
+    @QtCore.pyqtSlot(int)
+    def _update_population(self, value):
+        self._config["popsize"] = value
+        return
+    
+    @QtCore.pyqtSlot(int)
+    def _update_max_resamples_algorithm(self, box_number):
+        
+        if box_number < 0: return
+        if box_number > 1:
+            raise RuntimeError("Algorithm index is out of range")
+        
+        value = int(self.maxResamplesSpinBox.value())
+        
+        if box_number == 1:
+            value = "auto{}".format(value)
+        
+        self._config["max_resample_factor"] = value
+        
+        return
+    
+    @QtCore.pyqtSlot(int)
+    def _update_max_resamples(self, value):
+        
+        algorithm = int(self.maxResamplesComboBox.currentIndex())
+        
+        if algorithm > 1:
+            raise RuntimeError("Algorithm index is out of range")
+        
+        if algorithm == 1:
+            value = "auto{}".format(value)
+        
+        self._config["max_resample_factor"] = value
+        
+        return
+    
     @QtCore.pyqtSlot()
     def _import_yaml(self):
         
@@ -1691,6 +2010,21 @@ def _init_sci_spin_box(parent, name):
     sciSpinBox.setObjectName(_fromUtf8(name))
     
     return sciSpinBox
+
+
+def _init_extended_combo_box(parent, name):
+    
+    sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Expanding,
+                                       QtGui.QSizePolicy.Fixed)
+    sizePolicy.setHorizontalStretch(0)
+    sizePolicy.setVerticalStretch(0)
+    
+    eComboBox = ExtendedComboBox(parent)
+    eComboBox.setSizePolicy(sizePolicy)
+    eComboBox.setMinimumSize(QtCore.QSize(0, 0))
+    eComboBox.setObjectName(_fromUtf8(name))
+    
+    return eComboBox
 
 
 def _make_fixed_combo_slot(that, param_name, param_type, param_limits):
