@@ -236,8 +236,12 @@ class GUIStrategyManager(ListFrameEditor, StrategyManager):
         
         return
     
+    def _set_strategy_name(self):
+        self._set_dynamic_label(self._last_selected)
+        return
+
     @QtCore.pyqtSlot()
-    def _complete_strategy(self):
+    def _set_strategy_name_completed(self):
         
         strategy_name = "{} (completed)".format(self._last_selected)
         self._set_dynamic_label(strategy_name)
@@ -322,7 +326,10 @@ class GUIStrategyManager(ListFrameEditor, StrategyManager):
         
         if "force_strategy_run" in config:
             force_strategy_run = config["force_strategy_run"]
-            self._complete_strategy()
+            if force_strategy_run:
+                self._set_strategy_name()
+            else:
+                self._set_strategy_name_completed()
         else:
             self._set_dynamic_label(self._strategy.get_name())
         

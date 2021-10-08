@@ -1695,7 +1695,7 @@ class DTOceanWindow(MainWindow):
         self._shell.strategy_loaded.connect(
                                     self._strategy_manager._load_strategy)
         self._shell.strategy_completed.connect(
-                                    self._strategy_manager._complete_strategy)
+                        self._strategy_manager._set_strategy_name_completed)
         
         # Set up the data check diaglog
         self._data_check = DataCheck(self)
