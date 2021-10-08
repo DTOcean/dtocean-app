@@ -33,11 +33,9 @@ class GUIStrategy(object):
         
         return
     
-    @abc.abstractproperty
-    def allow_rerun(self):
-        
+    @abc.abstractmethod
+    def allow_rerun(self, core, project):
         """Can the strategy be rerun after first execution"""
-        
         return NotImplementedError
 
     @abc.abstractmethod

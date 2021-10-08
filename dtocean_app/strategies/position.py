@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-#    Copyright (C) 2019-2020 Mathew Topper
+#    Copyright (C) 2019-2021 Mathew Topper
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -157,9 +157,12 @@ class GUIAdvancedPosition(GUIStrategy, AdvancedPosition):
         
         return
     
-    @property
-    def allow_rerun(self):
-        return True
+    def allow_rerun(self, core, project):
+        
+        if self._config is None: return False
+        if self._config['clean_existing_dir']: return True
+        
+        return AdvancedPosition.allow_rerun(core, project, self._config)
     
     def get_weight(self):
         
