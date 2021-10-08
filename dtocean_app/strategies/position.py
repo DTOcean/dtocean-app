@@ -811,26 +811,25 @@ class AdvancedPositionWidget(QtGui.QWidget,
         
         self._update_status_control()
         
-        if self._worker_dir_status_code == 1:
+        if self._worker_dir_status_code > 1:
             self.tabWidget.setTabEnabled(1, True)
             self.tabWidget.setTabEnabled(2, True)
+            self.tabWidget.setTabEnabled(3, False)
+            self.tabWidget.setTabEnabled(4, False)
             self.settingsFrame.setEnabled(True)
             self.paramsFrame.setEnabled(True)
         else:
             self.tabWidget.setTabEnabled(1, False)
             self.tabWidget.setTabEnabled(2, False)
-        
-        if not update_results: return
-        
-        results_open = self._optimiser_status_code == 1
-        
-        if not results_open:
-            
             self.tabWidget.setTabEnabled(3, False)
             self.tabWidget.setTabEnabled(4, False)
         
-        else:
+        if not update_results: return
+        
+        if self._optimiser_status_code == 1:
             
+            self.tabWidget.setTabEnabled(1, True)
+            self.tabWidget.setTabEnabled(2, True)
             self.tabWidget.setTabEnabled(3, True)
             self.tabWidget.setTabEnabled(4, True)
             self.settingsFrame.setEnabled(False)
@@ -838,6 +837,15 @@ class AdvancedPositionWidget(QtGui.QWidget,
             
             self._update_status_results()
             self._update_status_plots()
+        
+        elif self._optimiser_status_code == 2:
+            
+            self.tabWidget.setTabEnabled(1, True)
+            self.tabWidget.setTabEnabled(2, True)
+            self.tabWidget.setTabEnabled(3, False)
+            self.tabWidget.setTabEnabled(4, False)
+            self.settingsFrame.setEnabled(False)
+            self.paramsFrame.setEnabled(False)
         
         return
     
