@@ -240,6 +240,7 @@ class AdvancedPositionWidget(QtGui.QWidget,
         
         new_config = deepcopy(config)
         new_config["root_project_path"] = "worker.prj"
+        new_config["clean_existing_dir"] = False
         
         config_template = load_config_template()
         all_keys = config_template.keys()
@@ -804,12 +805,12 @@ class AdvancedPositionWidget(QtGui.QWidget,
 #        current_tab_idx = self.tabWidget.currentIndex()
 #        print current_tab_idx
         
+        init |= self._update_status_control()
+        
         if init:
             self._init_tab_control()
             self._init_tab_settings()
             self._init_tab_parameters()
-        
-        self._update_status_control()
         
         if self._worker_dir_status_code > 1:
             self.tabWidget.setTabEnabled(1, True)
@@ -851,6 +852,8 @@ class AdvancedPositionWidget(QtGui.QWidget,
     
     def _update_status_control(self):
         
+        init = False
+        
         color_map = {0: "#aa0000",
                      1: "#00aa00",
                      2: "#ff8100"}
@@ -865,16 +868,9 @@ class AdvancedPositionWidget(QtGui.QWidget,
          config_status_code) = GUIAdvancedPosition.get_config_status(
                                                                  self._config)
         
-        status_template = '<li style="color: {};">{}</li>'
-        status_str = ""
         optimiser_status_str = None
-        optimiser_status_code = None
-        worker_dir_status_code = None
-        
-        for project_status_str in project_status_strs:
-            status_str += \
-                    status_template.format(color_map[project_status_code],
-                                           project_status_str)
+        optimiser_status_code = 0
+        old_config = None
         
         if self._config["worker_dir"] is not None:
             
@@ -882,7 +878,7 @@ class AdvancedPositionWidget(QtGui.QWidget,
              worker_dir_status_code) = \
                  GUIAdvancedPosition.get_worker_directory_status(self._config)
             
-            if worker_dir_status_code == 1:
+            if worker_dir_status_code >= 1:
                 
                 optimiser_status_str = None
                 optimiser_status_code = 0
@@ -894,41 +890,70 @@ class AdvancedPositionWidget(QtGui.QWidget,
                      GUIAdvancedPosition.get_optimiser_status(self._shell.core,
                                                               self._config)
                 
-                if optimiser_status_code == 1:
+                if optimiser_status_code >= 1:
                     
+                    # Pick up the old config
                     old_config_path = os.path.join(
                                         self._config["worker_dir"], 
                                         GUIAdvancedPosition.get_config_fname())
                     old_config = GUIAdvancedPosition.load_config(
                                                             old_config_path)
-                    old_config['clean_existing_dir'] = False
-                    
-                    self._config = self._init_config(old_config)
-                    self._set_config = deepcopy(self._config)
+                    old_config.pop('clean_existing_dir')
             
-            if worker_dir_status_str is not None:
-                
-                if (worker_dir_status_code == 0 and
-                    optimiser_status_code > 0):
-                    worker_dir_status_code = optimiser_status_code
-                
-                status_str += \
-                    status_template.format(color_map[worker_dir_status_code],
-                                           worker_dir_status_str)
+        else:
             
-            if optimiser_status_str is not None:
-                status_str += \
+            worker_dir_status_str = "No worker directory set"
+            worker_dir_status_code = 0
+        
+        # Confirm optimiser status 2 (restart) only if the config in memory
+        # matches the saved config
+        if optimiser_status_code == 2:
+            
+            test_config = deepcopy(self._shell.strategy._config)
+            test_config.pop('clean_existing_dir')
+            test_config.pop('force_strategy_run')
+            old_config['root_project_path'] =  test_config['root_project_path']
+            
+            config_match = (self._shell.strategy is not None and
+                            old_config == test_config)
+            
+            if not config_match:
+                optimiser_status_code = 0
+            else:
+                worker_dir_status_code = 1
+        
+        self._worker_dir_status_code = worker_dir_status_code
+        self._optimiser_status_code = optimiser_status_code
+        
+        # Write status
+        status_template = '<li style="color: {};">{}</li>'
+        status_str = ""
+        
+        if optimiser_status_code >= 1:
+            
+            status_str += \
                     status_template.format(color_map[optimiser_status_code],
                                            optimiser_status_str)
         
         else:
             
-            status_str += \
-                    status_template.format(color_map[0],
-                                           "No worker directory set")
+            for project_status_str in project_status_strs:
+                status_str += \
+                        status_template.format(color_map[project_status_code],
+                                               project_status_str)
+            
+            if worker_dir_status_str is not None:
+                status_str += \
+                    status_template.format(color_map[worker_dir_status_code],
+                                           worker_dir_status_str)
         
-        self._worker_dir_status_code = worker_dir_status_code
-        self._optimiser_status_code = optimiser_status_code
+        # Replace the config with the saved version if the optimiser status
+        # is completed or available for restart
+        if optimiser_status_code >= 1:
+            old_config['clean_existing_dir'] = self._config[
+                                                        'clean_existing_dir']
+            self._config = self._init_config(old_config)
+            init = True
         
         # Define a global status
         if (config_status_code == 0 or
@@ -936,20 +961,13 @@ class AdvancedPositionWidget(QtGui.QWidget,
             worker_dir_status_code == 0):
             
             if optimiser_status_code == 1:
-                
                 status_code = 1
-                self._config["force_strategy_run"] = False
-            
             else:
-                
                 status_code = 0
-            
+        
         else:
             
             status_code = 1
-            
-            if "force_strategy_run" in self._config:
-                self._config.pop("force_strategy_run")
         
         test_shell_config = deepcopy(self._shell.strategy._config)
         test_config = deepcopy(self._config)
@@ -967,7 +985,7 @@ class AdvancedPositionWidget(QtGui.QWidget,
             status_str += status_template.format(color_map[2],
                                                  "Configuration modified")
         
-        else:
+        elif optimiser_status_code == 0:
             
             status_str += status_template.format(color_map[config_status_code],
                                                  config_status_str)
@@ -979,12 +997,17 @@ class AdvancedPositionWidget(QtGui.QWidget,
         
         self.statusLabel.setText(status_str_rich)
         
+        if optimiser_status_code == 1:
+            self._config["force_strategy_run"] = False
+        else:
+            self._config["force_strategy_run"] = True
+        
         if status_code > 0:
             self.config_set.emit()
         else:
             self.config_null.emit()
         
-        return
+        return init
     
     def _update_status_results(self):
         
