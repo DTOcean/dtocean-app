@@ -1448,7 +1448,8 @@ class Shell(QtCore.QObject):
             self.project.active_title_changed.emit(active_sim_title)
         
         # Assertain if the strategy can be released
-        self.strategy.strategy_run = self.strategy.allow_rerun
+        self.strategy.strategy_run = self.strategy.allow_rerun(self.core,
+                                                               self.project)
         
         # If the strategy is no longer active release the hidden variables
         if not self.strategy.strategy_run:
