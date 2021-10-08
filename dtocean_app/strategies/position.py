@@ -200,7 +200,6 @@ class AdvancedPositionWidget(QtGui.QWidget,
         
         self._shell = shell
         self._config = self._init_config(config)
-        self._set_config = None
         self._max_threads = multiprocessing.cpu_count()
         self._progress = None
         self._results_df = None
@@ -944,9 +943,18 @@ class AdvancedPositionWidget(QtGui.QWidget,
             if "force_strategy_run" in self._config:
                 self._config.pop("force_strategy_run")
         
-        if ((self._set_config is None and status_code > 0) or
-            (self._set_config is not None and
-             self._set_config != self._config)):
+        test_shell_config = deepcopy(self._shell.strategy._config)
+        test_config = deepcopy(self._config)
+        
+        if 'force_strategy_run' in test_shell_config:
+            test_shell_config.pop('force_strategy_run')
+        
+        if 'force_strategy_run' in test_config:
+            test_config.pop('force_strategy_run')
+        
+        if ((test_shell_config is None and status_code > 0) or
+            (test_shell_config is not None and
+             test_shell_config != test_config)):
             
             status_str += status_template.format(color_map[2],
                                                  "Configuration modified")
@@ -1714,8 +1722,6 @@ class AdvancedPositionWidget(QtGui.QWidget,
           dict
         '''
         
-        self._set_config = deepcopy(self._config)
-        
         return deepcopy(self._config)
     
     def set_configuration(self, config_dict=None):
@@ -1732,7 +1738,6 @@ class AdvancedPositionWidget(QtGui.QWidget,
         
         safe_config = self._init_config(config_dict)
         self._config = safe_config
-        self._set_config = deepcopy(safe_config)
         self._update_status(init=True)
         
         return
