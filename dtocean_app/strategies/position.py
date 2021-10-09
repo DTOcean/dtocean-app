@@ -852,6 +852,7 @@ class AdvancedPositionWidget(QtGui.QWidget,
     
     def _update_status_control(self):
         
+        # True if the widget should be initialised
         init = False
         
         color_map = {0: "#aa0000",
@@ -878,12 +879,7 @@ class AdvancedPositionWidget(QtGui.QWidget,
              worker_dir_status_code) = \
                  GUIAdvancedPosition.get_worker_directory_status(self._config)
             
-            if worker_dir_status_code >= 1:
-                
-                optimiser_status_str = None
-                optimiser_status_code = 0
-            
-            else:
+            if worker_dir_status_code == 0:
                 
                 (optimiser_status_str,
                  optimiser_status_code) = \
@@ -925,28 +921,6 @@ class AdvancedPositionWidget(QtGui.QWidget,
         self._worker_dir_status_code = worker_dir_status_code
         self._optimiser_status_code = optimiser_status_code
         
-        # Write status
-        status_template = '<li style="color: {};">{}</li>'
-        status_str = ""
-        
-        if optimiser_status_code >= 1:
-            
-            status_str += \
-                    status_template.format(color_map[optimiser_status_code],
-                                           optimiser_status_str)
-        
-        else:
-            
-            for project_status_str in project_status_strs:
-                status_str += \
-                        status_template.format(color_map[project_status_code],
-                                               project_status_str)
-            
-            if worker_dir_status_str is not None:
-                status_str += \
-                    status_template.format(color_map[worker_dir_status_code],
-                                           worker_dir_status_str)
-        
         # Replace the config with the saved version if the optimiser status
         # is completed or available for restart
         if optimiser_status_code >= 1:
@@ -969,6 +943,30 @@ class AdvancedPositionWidget(QtGui.QWidget,
             
             status_code = 1
         
+        # Start writing status
+        status_template = '<li style="color: {};">{}</li>'
+        status_str = ""
+        
+        if optimiser_status_code >= 1:
+            
+            status_str += \
+                    status_template.format(color_map[optimiser_status_code],
+                                           optimiser_status_str)
+        
+        else:
+            
+            for project_status_str in project_status_strs:
+                status_str += \
+                        status_template.format(color_map[project_status_code],
+                                               project_status_str)
+            
+            if worker_dir_status_str is not None:
+                status_str += \
+                    status_template.format(color_map[worker_dir_status_code],
+                                           worker_dir_status_str)
+        
+        # Determine if the configuration has changed against the config
+        # in the active strategy
         test_shell_config = deepcopy(self._shell.strategy._config)
         test_config = deepcopy(self._config)
         
