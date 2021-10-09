@@ -754,13 +754,16 @@ class AdvancedPositionWidget(QtGui.QWidget,
             
             if "fixed" in param_settings and param_settings["fixed"]:
                 
-                var_box["fixed.check"].toggle()
+                var_box["fixed.check"].setChecked(True)
                 var_box["fixed.box"].setValue(param_settings["fixed"])
                 var_box["range.group"].setEnabled(False)
                 
                 continue
             
             if "range" in param_settings and param_settings["range"]:
+                
+                var_box["fixed.check"].setChecked(False)
+                var_box["range.group"].setEnabled(True)
                 
                 range_settings = param_settings["range"]
                 
