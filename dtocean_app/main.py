@@ -3463,9 +3463,6 @@ class DTOceanWindow(MainWindow):
     @QtCore.pyqtSlot()
     def _execute_strategy(self):
         
-        # Save the project
-        self._save_project()
-        
         # Close the strategy manager
         self._strategy_manager.close()
         
