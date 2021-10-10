@@ -825,7 +825,7 @@ class AdvancedPositionWidget(QtGui.QWidget,
             self._init_tab_settings()
             self._init_tab_parameters()
         
-        if self._worker_dir_status_code > 1:
+        if self._worker_dir_status_code >= 1:
             self.tabWidget.setTabEnabled(1, True)
             self.tabWidget.setTabEnabled(2, True)
             self.tabWidget.setTabEnabled(3, False)
@@ -931,6 +931,12 @@ class AdvancedPositionWidget(QtGui.QWidget,
             self._config = self._init_config(old_config)
             init = True
         
+#        print "c: {} p: {} w: {} o: {}".format(
+#            config_status_code,
+#            project_status_code,
+#            worker_dir_status_code,
+#            optimiser_status_code)
+        
         # Define a global status
         if (config_status_code == 0 or
             project_status_code == 0 or
@@ -944,6 +950,8 @@ class AdvancedPositionWidget(QtGui.QWidget,
         else:
             
             status_code = 1
+        
+#        print "status_code: {}".format(status_code)
         
         # Start writing status
         status_template = '<li style="color: {};">{}</li>'
@@ -995,7 +1003,8 @@ class AdvancedPositionWidget(QtGui.QWidget,
             
             status_str += status_template.format(color_map[config_status_code],
                                                  config_status_str)
-        
+            status_code = 0
+            
         status_str_rich = ('<html><head/><body><p><span '
                            'style="font-size: 10pt;">'
                            '<ul>{}</ul>'
