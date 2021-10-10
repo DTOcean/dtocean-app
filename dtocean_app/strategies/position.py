@@ -815,9 +815,8 @@ class AdvancedPositionWidget(QtGui.QWidget,
     @QtCore.pyqtSlot()
     def _update_status(self, init=False, update_results=True):
         
-#        # Pick up the current tab to reload after update
-#        current_tab_idx = self.tabWidget.currentIndex()
-#        print current_tab_idx
+        # Pick up the current tab to reload after update
+        current_tab_idx = self.tabWidget.currentIndex()
         
         init |= self._update_status_control()
         
@@ -839,7 +838,9 @@ class AdvancedPositionWidget(QtGui.QWidget,
             self.tabWidget.setTabEnabled(3, False)
             self.tabWidget.setTabEnabled(4, False)
         
-        if not update_results: return
+        if not update_results:
+            self.tabWidget.setCurrentIndex(current_tab_idx)
+            return
         
         if self._optimiser_status_code == 1:
             
@@ -861,6 +862,8 @@ class AdvancedPositionWidget(QtGui.QWidget,
             self.tabWidget.setTabEnabled(4, False)
             self.settingsFrame.setEnabled(False)
             self.paramsFrame.setEnabled(False)
+        
+        self.tabWidget.setCurrentIndex(current_tab_idx)
         
         return
     
