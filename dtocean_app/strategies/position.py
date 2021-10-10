@@ -904,31 +904,16 @@ class AdvancedPositionWidget(QtGui.QWidget,
             worker_dir_status_str = "No worker directory set"
             worker_dir_status_code = 0
         
-        # Confirm optimiser status 2 (restart) only if the config in memory
-        # matches the saved config
-        if optimiser_status_code == 2:
-            
-            test_config = deepcopy(self._shell.strategy._config)
-            test_config.pop('clean_existing_dir')
-            test_config.pop('force_strategy_run')
-            old_config['root_project_path'] =  test_config['root_project_path']
-            
-            config_match = (self._shell.strategy is not None and
-                            old_config == test_config)
-            
-            if not config_match:
-                optimiser_status_code = 0
-            else:
-                worker_dir_status_code = 1
-        
         self._worker_dir_status_code = worker_dir_status_code
         self._optimiser_status_code = optimiser_status_code
         
         # Replace the config with the saved version if the optimiser status
-        # is completed or available for restart
+        # is completed or available for restart. Sync clean_existing_dir
         if optimiser_status_code >= 1:
-            old_config['clean_existing_dir'] = self._config[
-                                                        'clean_existing_dir']
+            old_config['clean_existing_dir'] = \
+                                            self._config['clean_existing_dir']
+            self._shell.strategy._config['clean_existing_dir'] = \
+                                            self._config['clean_existing_dir']
             self._config = self._init_config(old_config)
             init = True
         
@@ -979,12 +964,18 @@ class AdvancedPositionWidget(QtGui.QWidget,
         if 'force_strategy_run' in test_config:
             test_config.pop('force_strategy_run')
         
+        # Debug why configs don't match
+#        a = test_shell_config
+#        b = test_config
+#        print [(k, a[k], b[k]) for k in a if k in b and a[k]!=b[k]]
+        
         if ((test_shell_config is None and status_code > 0) or
             (test_shell_config is not None and
              test_shell_config != test_config)):
             
             status_str += status_template.format(color_map[2],
                                                  "Configuration modified")
+            status_code = 1
         
         elif optimiser_status_code == 0:
             
@@ -1174,7 +1165,7 @@ class AdvancedPositionWidget(QtGui.QWidget,
         if checked_state == QtCore.Qt.Checked:
             self._config["clean_existing_dir"] = True
         else:
-            self._config["clean_existing_dir"] = None
+            self._config["clean_existing_dir"] = False
         
         self._update_status()
         
