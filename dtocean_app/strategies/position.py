@@ -1142,7 +1142,7 @@ class AdvancedPositionWidget(QtGui.QWidget,
         
         self._config["worker_dir"] = worker_dir
         self.workDirLineEdit.clearFocus()
-        self._update_status(update_results=False)
+        self._update_status()
         
         return
     
