@@ -1379,27 +1379,33 @@ class AdvancedPositionWidget(QtGui.QWidget,
     def _select_sims_to_load(self, button_id):
         
         lcoe_column = self._results_df.columns[1]
+        ascending = True
+        
+        if 'maximise' in self._config and self._config['maximise']:
+            ascending = False
         
         if button_id == 1:
             
-            check_df = self._results_df.sort_values(by=[lcoe_column])
+            check_df = self._results_df.sort_values(by=[lcoe_column],
+                                                    ascending=ascending)
             self._sims_to_load = check_df["Simulation #"][:1].tolist()
         
         elif button_id == 2:
             
             check_df = self._results_df.sort_values(by=[lcoe_column],
-                                                    ascending=False)
+                                                    ascending=not ascending)
             self._sims_to_load = check_df["Simulation #"][:1].tolist()
         
         elif button_id == 3:
             
-            check_df = self._results_df.sort_values(by=[lcoe_column])
+            check_df = self._results_df.sort_values(by=[lcoe_column],
+                                                    ascending=ascending)
             self._sims_to_load = check_df["Simulation #"][:5].tolist()
         
         elif button_id == 4:
             
             check_df = self._results_df.sort_values(by=[lcoe_column],
-                                                    ascending=False)
+                                                    ascending=not ascending)
             self._sims_to_load = check_df["Simulation #"][:5].tolist()
         
         else:
