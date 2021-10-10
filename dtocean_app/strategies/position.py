@@ -102,11 +102,15 @@ class ThreadLoadSimulations(QtCore.QThread):
     taskFinished = QtCore.pyqtSignal()
     error_detected =  QtCore.pyqtSignal(object, object, object)
     
-    def __init__(self, shell, sim_numbers, exclude_default):
+    def __init__(self, shell,
+                       sim_numbers,
+                       remove_simulations,
+                       exclude_default):
         
         super(ThreadLoadSimulations, self).__init__()
         self._shell = shell
         self._sim_numbers = sim_numbers
+        self._remove_simulations = remove_simulations
         self._exclude_default = exclude_default
         
         return
@@ -119,7 +123,8 @@ class ThreadLoadSimulations(QtCore.QThread):
             self._shell.core.blockSignals(True)
             self._shell.project.blockSignals(True)
             
-            self._shell.strategy.remove_simulations(
+            if self._remove_simulations:
+                self._shell.strategy.remove_simulations(
                                         self._shell.core,
                                         self._shell.project,
                                         exclude_default=self._exclude_default)
@@ -203,6 +208,7 @@ class AdvancedPositionWidget(QtGui.QWidget,
         self._max_threads = multiprocessing.cpu_count()
         self._progress = None
         self._results_df = None
+        self._delete_sims = True
         self._protect_default = True
         self._sims_to_load = None
         self._load_sims_thread = None
@@ -496,6 +502,13 @@ class AdvancedPositionWidget(QtGui.QWidget,
         self.dataTableWidget.setMinimumSize(QtCore.QSize(0, 0))
         self.dataTableLayout.addWidget(self.dataTableWidget)
         
+        # Signals
+        
+        self.deleteSimsBox.stateChanged.connect(
+                                                self._update_delete_sims)
+        self.protectDefaultBox.stateChanged.connect(
+                                                self._update_protect_default)
+        
         ## PLOTS TAB
         
         self.tabWidget.setTabEnabled(4, False)
@@ -530,9 +543,7 @@ class AdvancedPositionWidget(QtGui.QWidget,
         self.plotWidget = None
         
         # Signals
-        
-        self.protectDefaultBox.stateChanged.connect(
-                                                self._update_protect_default)
+
         self.simButtonGroup.buttonClicked['int'].connect(
                                                     self._select_sims_to_load)
         self.simSelectEdit.textEdited.connect(self._update_custom_sims)
@@ -1340,6 +1351,18 @@ class AdvancedPositionWidget(QtGui.QWidget,
         return
     
     @QtCore.pyqtSlot(object)
+    def _update_delete_sims(self, checked_state):
+        
+        if checked_state == QtCore.Qt.Checked:
+            self._delete_sims = True
+            self.protectDefaultBox.setEnabled(True)
+        else:
+            self._delete_sims = False
+            self.protectDefaultBox.setEnabled(False)
+        
+        return
+    
+    @QtCore.pyqtSlot(object)
     def _update_protect_default(self, checked_state):
         
         if checked_state == QtCore.Qt.Checked:
@@ -1425,6 +1448,7 @@ class AdvancedPositionWidget(QtGui.QWidget,
         
         self._load_sims_thread = ThreadLoadSimulations(self._shell,
                                                        self._sims_to_load,
+                                                       self._delete_sims,
                                                        self._protect_default)
         
         self._load_sims_thread.start()

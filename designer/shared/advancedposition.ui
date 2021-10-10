@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>600</width>
+    <width>673</width>
     <height>786</height>
    </rect>
   </property>
@@ -854,8 +854,8 @@
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>767</width>
-            <height>807</height>
+            <width>663</width>
+            <height>756</height>
            </rect>
           </property>
           <layout class="QHBoxLayout" name="horizontalLayout_31" stretch="1,0">
@@ -911,12 +911,9 @@
       <attribute name="title">
        <string>Results</string>
       </attribute>
-      <layout class="QVBoxLayout" name="verticalLayout_11" stretch="0,1">
+      <layout class="QVBoxLayout" name="verticalLayout_11">
        <item>
         <layout class="QHBoxLayout" name="horizontalLayout_14" stretch="1,0">
-         <property name="spacing">
-          <number>0</number>
-         </property>
          <item>
           <widget class="QGroupBox" name="inspectBox">
            <property name="sizePolicy">
@@ -936,28 +933,112 @@
            </property>
            <layout class="QVBoxLayout" name="verticalLayout_8">
             <item>
-             <layout class="QHBoxLayout" name="horizontalLayout_10">
-              <item>
-               <widget class="QLabel" name="inspectLabel">
+             <layout class="QGridLayout" name="gridLayout_4">
+              <item row="0" column="0">
+               <layout class="QHBoxLayout" name="horizontalLayout_10">
+                <item>
+                 <widget class="QLabel" name="inspectLabel">
+                  <property name="text">
+                   <string>Select simulations to inspect:</string>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <spacer name="horizontalSpacer_6">
+                  <property name="orientation">
+                   <enum>Qt::Horizontal</enum>
+                  </property>
+                  <property name="sizeHint" stdset="0">
+                   <size>
+                    <width>40</width>
+                    <height>20</height>
+                   </size>
+                  </property>
+                 </spacer>
+                </item>
+               </layout>
+              </item>
+              <item row="0" column="1">
+               <widget class="QCheckBox" name="deleteSimsBox">
+                <property name="layoutDirection">
+                 <enum>Qt::RightToLeft</enum>
+                </property>
                 <property name="text">
-                 <string>Select simulations to inspect:</string>
+                 <string>Delete existing simulations</string>
+                </property>
+                <property name="checked">
+                 <bool>true</bool>
                 </property>
                </widget>
               </item>
-              <item>
-               <spacer name="horizontalSpacer_6">
-                <property name="orientation">
-                 <enum>Qt::Horizontal</enum>
-                </property>
-                <property name="sizeHint" stdset="0">
-                 <size>
-                  <width>40</width>
-                  <height>20</height>
-                 </size>
-                </property>
-               </spacer>
+              <item row="1" column="0">
+               <layout class="QHBoxLayout" name="horizontalLayout_9">
+                <item>
+                 <widget class="QRadioButton" name="bestSimButton">
+                  <property name="text">
+                   <string>Best</string>
+                  </property>
+                  <attribute name="buttonGroup">
+                   <string notr="true">simButtonGroup</string>
+                  </attribute>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QRadioButton" name="worstSimButton">
+                  <property name="text">
+                   <string>Worst</string>
+                  </property>
+                  <attribute name="buttonGroup">
+                   <string notr="true">simButtonGroup</string>
+                  </attribute>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QRadioButton" name="top5SimButton">
+                  <property name="text">
+                   <string>Top 5</string>
+                  </property>
+                  <attribute name="buttonGroup">
+                   <string notr="true">simButtonGroup</string>
+                  </attribute>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QRadioButton" name="bottom5SimButton">
+                  <property name="text">
+                   <string>Bottom 5</string>
+                  </property>
+                  <attribute name="buttonGroup">
+                   <string notr="true">simButtonGroup</string>
+                  </attribute>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QRadioButton" name="customSimButton">
+                  <property name="text">
+                   <string>Custom</string>
+                  </property>
+                  <attribute name="buttonGroup">
+                   <string notr="true">simButtonGroup</string>
+                  </attribute>
+                 </widget>
+                </item>
+                <item>
+                 <spacer name="horizontalSpacer_7">
+                  <property name="orientation">
+                   <enum>Qt::Horizontal</enum>
+                  </property>
+                  <property name="sizeHint" stdset="0">
+                   <size>
+                    <width>40</width>
+                    <height>20</height>
+                   </size>
+                  </property>
+                 </spacer>
+                </item>
+               </layout>
               </item>
-              <item>
+              <item row="1" column="1">
                <widget class="QCheckBox" name="protectDefaultBox">
                 <property name="layoutDirection">
                  <enum>Qt::RightToLeft</enum>
@@ -969,73 +1050,6 @@
                  <bool>true</bool>
                 </property>
                </widget>
-              </item>
-             </layout>
-            </item>
-            <item>
-             <layout class="QHBoxLayout" name="horizontalLayout_9">
-              <item>
-               <widget class="QRadioButton" name="bestSimButton">
-                <property name="text">
-                 <string>Best</string>
-                </property>
-                <attribute name="buttonGroup">
-                 <string notr="true">simButtonGroup</string>
-                </attribute>
-               </widget>
-              </item>
-              <item>
-               <widget class="QRadioButton" name="worstSimButton">
-                <property name="text">
-                 <string>Worst</string>
-                </property>
-                <attribute name="buttonGroup">
-                 <string notr="true">simButtonGroup</string>
-                </attribute>
-               </widget>
-              </item>
-              <item>
-               <widget class="QRadioButton" name="top5SimButton">
-                <property name="text">
-                 <string>Top 5</string>
-                </property>
-                <attribute name="buttonGroup">
-                 <string notr="true">simButtonGroup</string>
-                </attribute>
-               </widget>
-              </item>
-              <item>
-               <widget class="QRadioButton" name="bottom5SimButton">
-                <property name="text">
-                 <string>Bottom 5</string>
-                </property>
-                <attribute name="buttonGroup">
-                 <string notr="true">simButtonGroup</string>
-                </attribute>
-               </widget>
-              </item>
-              <item>
-               <widget class="QRadioButton" name="customSimButton">
-                <property name="text">
-                 <string>Custom</string>
-                </property>
-                <attribute name="buttonGroup">
-                 <string notr="true">simButtonGroup</string>
-                </attribute>
-               </widget>
-              </item>
-              <item>
-               <spacer name="horizontalSpacer_7">
-                <property name="orientation">
-                 <enum>Qt::Horizontal</enum>
-                </property>
-                <property name="sizeHint" stdset="0">
-                 <size>
-                  <width>40</width>
-                  <height>20</height>
-                 </size>
-                </property>
-               </spacer>
               </item>
              </layout>
             </item>
@@ -1109,7 +1123,7 @@
            </property>
            <property name="sizeHint" stdset="0">
             <size>
-             <width>1</width>
+             <width>13</width>
              <height>20</height>
             </size>
            </property>
