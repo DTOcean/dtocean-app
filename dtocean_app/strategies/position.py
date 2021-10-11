@@ -75,24 +75,17 @@ module_logger = logging.getLogger(__name__)
 
 # User home directory
 HOME = os.path.expanduser("~")
-
-NAME_MAP = {"sim_number": "Simulation #",
-            "project.lcoe_mode": "LCOE Mode",
-            "grid_orientation": "Grid Orientation",
-            "delta_row": "Row Spacing",
-            "delta_col": "Column Spacing",
-            "n_nodes": "No. of Devices Requested",
-            "project.number_of_devices": "No. of Devices Simulated",
-            "project.annual_energy": "Annual Mechanical Energy",
-            "project.q_factor": "q-factor",
-            "project.capex_total": "CAPEX",
-            "project.capex_breakdown": "CAPEX",
-            "project.lifetime_opex_mode": "OPEX Mode",
-            "project.lifetime_energy_mode": "Lifetime Energy Mode",
-            "device.minimum_distance_x":
-                "Minimum device spacing in longitudinal direction",
-            "device.minimum_distance_y":
-                "Minimum device spacing in transverse direction"}
+TITLE_MAP = {"sim_number": "Simulation #",
+             "grid_orientation": "Grid Orientation",
+             "delta_row": "Row Spacing",
+             "delta_col": "Column Spacing",
+             "n_nodes": "No. of Devices Requested",
+             "n_evals": "No. of Evaluations",
+             "project.capex_breakdown": "CAPEX"}
+UNIT_MAP = {"grid_orientation": "Deg",
+            "delta_row": "m",
+            "delta_col": "m",
+            "project.capex_breakdown": "Euro"}
 
 
 class ThreadLoadSimulations(QtCore.QThread):
@@ -213,18 +206,10 @@ class AdvancedPositionWidget(QtGui.QWidget,
         self._param_lines = []
         self._worker_dir_status_code = None
         self._optimiser_status_code = None
-        self._var_box_to_id_map = None
-        self._var_id_to_box_map = None
-        
-        self._unit_map = {"project.lcoe_mode": "Euro/kWh",
-                          "grid_orientation": "Deg",
-                          "delta_row": "m",
-                          "delta_col": "m",
-                          "project.annual_energy": "MWh",
-                          "project.capex_total": "Euro",
-                          "project.capex_breakdown": "Euro",
-                          "project.lifetime_opex_mode": "Euro",
-                          "project.lifetime_energy_mode": "MWh"}
+        self._var_id_to_title_map = None
+        self._var_id_to_unit_map = None
+        self._cost_var_box_to_var_id_map = None
+        self._var_id_to_cost_var_box_map = None
         
         self._default_base_penalty = 1.
         self._default_tolerance = 1e-11
@@ -291,9 +276,8 @@ class AdvancedPositionWidget(QtGui.QWidget,
         
         self.nThreadSpinBox.setMaximum(self._max_threads)
         
-        self._init_costvar_variables()
+        self._init_variables()
         self._init_manual_thread_message()
-        
         
         # Signals
         
@@ -352,13 +336,13 @@ class AdvancedPositionWidget(QtGui.QWidget,
         
         for i, param_name in enumerate(param_names):
             
-            if param_name in NAME_MAP:
-                group_title = NAME_MAP[param_name]
+            if param_name in TITLE_MAP:
+                group_title = TITLE_MAP[param_name]
             else:
                 group_title = param_name
             
-            if param_name in self._unit_map:
-                group_title += " ({})".format(self._unit_map[param_name])
+            if param_name in UNIT_MAP:
+                group_title += " ({})".format(UNIT_MAP[param_name])
             
             box_class = param_box_classes[param_name]
             var_box = _make_var_box(self,
@@ -405,17 +389,18 @@ class AdvancedPositionWidget(QtGui.QWidget,
                 var_box["range.box.type"].addItem("Multiplier")
                 
                 for var in param_multipier_vars[param_name]:
-                    
-                    mapped_name = NAME_MAP[var]
+                    mapped_name = self._var_id_to_title_map[var]
                     var_box["range.box.var"].addItem(mapped_name)
             
             # Slots
             param_type = param_box_types[param_name]
             
-            fixed_combo_slot = _make_fixed_combo_slot(self,
-                                                      param_name,
-                                                      param_type,
-                                                      param_limits)
+            fixed_combo_slot = _make_fixed_combo_slot(
+                                                    self,
+                                                    param_name,
+                                                    param_type,
+                                                    param_limits,
+                                                    self._var_id_to_title_map)
             
             attr_name = "fixed_combo_slot_{}".format(i)
             setattr(self, attr_name, fixed_combo_slot)
@@ -435,7 +420,8 @@ class AdvancedPositionWidget(QtGui.QWidget,
             
             range_type_slot = _make_range_type_slot(self,
                                                     param_name,
-                                                    param_type)
+                                                    param_type,
+                                                    self._var_id_to_title_map)
             
             attr_name = "range_type_slot_{}".format(i)
             setattr(self, attr_name, range_type_slot)
@@ -443,9 +429,11 @@ class AdvancedPositionWidget(QtGui.QWidget,
             var_box["range.box.type"].currentIndexChanged[str].connect(
                                                     getattr(self, attr_name))
             
-            generic_range_slot = _make_generic_range_slot(self,
-                                                          param_name,
-                                                          param_type)
+            generic_range_slot = _make_generic_range_slot(
+                                                self,
+                                                param_name,
+                                                param_type,
+                                                self._var_id_to_title_map)
             
             attr_name = "generic_range_slot_{}".format(i)
             setattr(self, attr_name, generic_range_slot)
@@ -571,7 +559,7 @@ class AdvancedPositionWidget(QtGui.QWidget,
         
         return
     
-    def _init_costvar_variables(self):
+    def _init_variables(self):
         
         self.costVarBox.clear()
         
@@ -585,12 +573,16 @@ class AdvancedPositionWidget(QtGui.QWidget,
         
         if not active_interfaces: return
         
-        if self._var_box_to_id_map is None:
-            var_box_to_id_map = {}
-            var_id_to_box_map = {}
+        if self._cost_var_box_to_var_id_map is None:
+            cost_var_box_to_id_map = {}
+            var_id_to_cost_var_box_map = {}
+            var_id_to_title_map = deepcopy(TITLE_MAP)
+            var_id_to_unit_map = deepcopy(UNIT_MAP)
         else:
-            var_box_to_id_map = self._var_box_to_id_map
-            var_id_to_box_map = self._var_id_to_box_map
+            cost_var_box_to_id_map = self._cost_var_box_to_var_id_map
+            var_id_to_cost_var_box_map = self._var_id_to_cost_var_box_map
+            var_id_to_title_map = self._var_id_to_title_map
+            var_id_to_unit_map = self._var_id_to_unit_map
         
         var_names = []
         tree = Tree()
@@ -602,39 +594,48 @@ class AdvancedPositionWidget(QtGui.QWidget,
                                      self._shell.project,
                                      interface_name)
             
+            var_inputs = branch.get_inputs(self._shell.core,
+                                           self._shell.project)
             var_outputs = branch.get_outputs(self._shell.core,
-                                            self._shell.project)
-            unique_vars = OrderedSet(var_outputs)
+                                             self._shell.project)
+            
+            unique_vars = OrderedSet(var_inputs + var_outputs)
             
             for var_id in unique_vars:
                 
                 var_meta = self._shell.core.get_metadata(var_id)
                 
-                if "SimpleData" in var_meta.structure:
+                if "SimpleData" not in var_meta.structure: continue
                     
-                    if var_meta.types is None:
-                        
-                        errStr = ("Variable {} with SimpleData structure "
-                                  "requires types meta data to be "
-                                  "set").format(var_id)
-                        raise ValueError(errStr)
-                    
-                    if "float" in var_meta.types:
-                        
-                        title = var_meta.title
-                        
-                        if var_meta.units is not None:
-                            
-                            title = "{} ({})".format(title,
-                                                     var_meta.units[0])
-                        
-                        var_names.append(title)
-                        var_box_to_id_map[box_number] = var_id
-                        var_id_to_box_map[var_id] = box_number
-                        box_number += 1
+                if var_meta.types is None:
+                    errStr = ("Variable {} with SimpleData structure requires "
+                              "types meta data to be set").format(var_id)
+                    raise ValueError(errStr)
+                
+                var_type = var_meta.types[0]
+                
+                if var_type not in ["float", "int"]: continue
+                
+                title = var_meta.title
+                var_id_to_title_map[var_id] = title
+                
+                if var_meta.units is not None:
+                    unit = var_meta.units[0]
+                    title = "{} ({})".format(title, unit)
+                    var_id_to_unit_map[var_id] = unit
+                
+                if var_id not in var_outputs or var_type == "int": continue
+                
+                # Collect data for costVarBox
+                var_names.append(title)
+                cost_var_box_to_id_map[box_number] = var_id
+                var_id_to_cost_var_box_map[var_id] = box_number
+                box_number += 1
         
-        self._var_box_to_id_map = var_box_to_id_map
-        self._var_id_to_box_map = var_id_to_box_map
+        self._var_id_to_title_map = var_id_to_title_map
+        self._var_id_to_unit_map = var_id_to_unit_map
+        self._cost_var_box_to_var_id_map = cost_var_box_to_id_map
+        self._var_id_to_cost_var_box_map = var_id_to_cost_var_box_map
         self.costVarBox.addItems(var_names)
         self.costVarBox.setCurrentIndex(-1)
         
@@ -671,8 +672,8 @@ class AdvancedPositionWidget(QtGui.QWidget,
     def _init_tab_settings(self):
         
         if (self._config["objective"] is not None and
-            self._config["objective"] in self._var_id_to_box_map):
-            box_number = self._var_id_to_box_map[self._config["objective"]]
+            self._config["objective"] in self._var_id_to_cost_var_box_map):
+            box_number = self._var_id_to_cost_var_box_map[self._config["objective"]]
             self.costVarBox.setCurrentIndex(box_number)
         else:
             self.costVarBox.setCurrentIndex(-1)
@@ -779,7 +780,7 @@ class AdvancedPositionWidget(QtGui.QWidget,
                     
                     var_box["range.box.type"].setCurrentIndex(1)
                     
-                    range_var_text = NAME_MAP[
+                    range_var_text = self._var_id_to_title_map[
                                                 range_settings["variable"]]
                     multi_var_idx = var_box["range.box.var"].findText(
                                                             range_var_text)
@@ -1033,9 +1034,6 @@ class AdvancedPositionWidget(QtGui.QWidget,
         else:
             self.simLoadButton.setEnabled(True)
         
-        # TODO: Consider adding names and units to config file and using
-        # meta data for variables.
-        
         df = GUIAdvancedPosition.get_all_results(self._config)
         
         if (self._results_df is not None and
@@ -1045,14 +1043,15 @@ class AdvancedPositionWidget(QtGui.QWidget,
         
         for column in df.columns:
             
-            for key in NAME_MAP.keys():
+            for key in self._var_id_to_title_map.keys():
                 
                 if key in column:
                     
-                    column = column.replace(key, NAME_MAP[key])
+                    column = column.replace(key,
+                                            self._var_id_to_title_map[key])
                     
-                    if key in self._unit_map:
-                        column += " ({})".format(self._unit_map[key])
+                    if key in self._var_id_to_unit_map:
+                        column += " ({})".format(self._var_id_to_unit_map[key])
                     
                     break
             
@@ -1193,7 +1192,7 @@ class AdvancedPositionWidget(QtGui.QWidget,
         
         if box_number < 0: return
         
-        var_id = self._var_box_to_id_map[box_number]
+        var_id = self._cost_var_box_to_var_id_map[box_number]
         var_meta = self._shell.core.get_metadata(var_id)
         
         self._config["objective"] = var_id
@@ -2108,7 +2107,11 @@ def _init_extended_combo_box(parent, name):
     return eComboBox
 
 
-def _make_fixed_combo_slot(that, param_name, param_type, param_limits):
+def _make_fixed_combo_slot(that,
+                           param_name,
+                           param_type,
+                           param_limits,
+                           name_map):
     
     @QtCore.pyqtSlot(object)
     def slot_function(that, checked_state):
@@ -2132,7 +2135,7 @@ def _make_fixed_combo_slot(that, param_name, param_type, param_limits):
         else:
             
             var_box_values = _read_var_box_values(var_box_dict, param_type)
-            param_dict["range"] = _get_range_config(var_box_values)
+            param_dict["range"] = _get_range_config(var_box_values, name_map)
         
         that._config["parameters"][param_name] = param_dict
         
@@ -2158,7 +2161,7 @@ def _make_fixed_value_slot(that, param_name, param_type):
     return types.MethodType(slot_function, that)
 
 
-def _make_range_type_slot(that, param_name, param_type):
+def _make_range_type_slot(that, param_name, param_type, name_map):
     
     @QtCore.pyqtSlot(object)
     def slot_function(that, current_str):
@@ -2175,7 +2178,7 @@ def _make_range_type_slot(that, param_name, param_type):
         
         var_box_dict = that._param_boxes[param_name]
         var_box_values = _read_var_box_values(var_box_dict, param_type)
-        range_config = _get_range_config(var_box_values)
+        range_config = _get_range_config(var_box_values, name_map)
         that._config["parameters"][param_name]["range"] = range_config
         
         return
@@ -2183,14 +2186,14 @@ def _make_range_type_slot(that, param_name, param_type):
     return types.MethodType(slot_function, that)
 
 
-def _make_generic_range_slot(that, param_name, param_type):
+def _make_generic_range_slot(that, param_name, param_type, name_map):
     
     @QtCore.pyqtSlot(object)
     def slot_function(that, *args):
         
         var_box_dict = that._param_boxes[param_name]
         var_box_values = _read_var_box_values(var_box_dict, param_type)
-        range_config = _get_range_config(var_box_values)
+        range_config = _get_range_config(var_box_values, name_map)
         that._config["parameters"][param_name]["range"] = range_config
         
         return
@@ -2222,7 +2225,7 @@ def _read_var_box_values(var_box_dict, var_type):
     return var_box_values
 
 
-def _get_range_config(var_box_values):
+def _get_range_config(var_box_values, name_map):
     
     range_config_dict = {}
     
@@ -2230,7 +2233,7 @@ def _get_range_config(var_box_values):
     
     if range_config_dict["type"] == "multiplier":
         
-        reverse_name_map = {v: k for k, v in NAME_MAP.items()}
+        reverse_name_map = {v: k for k, v in name_map.items()}
         range_var = reverse_name_map[var_box_values["range.box.var"]]
         range_config_dict["variable"] = range_var
         min_key = "min_multiplier"
