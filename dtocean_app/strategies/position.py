@@ -921,48 +921,66 @@ class AdvancedPositionWidget(QtGui.QWidget,
         self._optimiser_status_code = optimiser_status_code
         
         # Replace the config with the saved version if the optimiser status
-        # is completed or available for restart. Sync clean_existing_dir
+        # is completed or available for restart.
+        has_stored_config = (self._shell.strategy is not None and
+                             self._shell.strategy._config is not None)
+        
         if optimiser_status_code >= 1:
-            old_config['clean_existing_dir'] = \
-                                            self._config['clean_existing_dir']
-            self._shell.strategy._config['clean_existing_dir'] = \
-                                            self._config['clean_existing_dir']
+            if has_stored_config:
+                old_config['clean_existing_dir'] = \
+                            self._shell.strategy._config['clean_existing_dir']
             self._config = self._init_config(old_config)
             init = True
         
-#        print "c: {} p: {} w: {} o: {}".format(
+        # Determine if the configuration has changed against the config
+        # in the active strategy
+        copy_shell_config = None
+        config_keys = self._config.keys()
+        
+        if has_stored_config:
+            
+            copy_shell_config = {}
+            
+            for key in config_keys:
+                if key in (self._shell.strategy._config):
+                    copy_shell_config[key] = deepcopy(
+                                            self._shell.strategy._config[key])
+        
+            if ('clean_existing_dir' in copy_shell_config and
+                copy_shell_config['clean_existing_dir'] is None):
+                copy_shell_config['clean_existing_dir'] = False
+        
+        # Debug why configs don't match
+#        if copy_shell_config is not None:
+#            a = copy_shell_config
+#            b = self._config
+#            print set(a).symmetric_difference(set(b))
+#            print [(k, a[k], b[k]) for k in a if k in b and a[k]!=b[k]]
+        
+        # Test if configuration is new or modified
+        cnom = ((copy_shell_config is None) or 
+                (copy_shell_config is not None and
+                 copy_shell_config != self._config))
+        
+#        print "c: {} p: {} w: {} o: {} cnom: {}".format(
 #            config_status_code,
 #            project_status_code,
 #            worker_dir_status_code,
-#            optimiser_status_code)
+#            optimiser_status_code,
+#            cnom)
         
-        # Define a global status
-        if (config_status_code == 0 or
-            project_status_code == 0 or
-            worker_dir_status_code == 0):
-            
-            if optimiser_status_code == 1:
-                status_code = 1
-            else:
-                status_code = 0
-        
-        else:
-            
-            status_code = 1
-        
-#        print "status_code: {}".format(status_code)
-        
-        # Start writing status
+        # Start writing status and check if apply button enabled
         status_template = '<li style="color: {};">{}</li>'
         status_str = ""
+        enable_apply = False
         
-        if optimiser_status_code >= 1:
+        if optimiser_status_code == 0:
             
-            status_str += \
-                    status_template.format(color_map[optimiser_status_code],
-                                           optimiser_status_str)
-        
-        else:
+            if config_status_code == 0:
+                
+                status_str += status_template.format(
+                                                color_map[config_status_code],
+                                                config_status_str)
             
             for project_status_str in project_status_strs:
                 status_str += \
@@ -974,30 +992,19 @@ class AdvancedPositionWidget(QtGui.QWidget,
                     status_template.format(color_map[worker_dir_status_code],
                                            worker_dir_status_str)
         
-        # Determine if the configuration has changed against the config
-        # in the active strategy
-        test_shell_config = deepcopy(self._shell.strategy._config)
-        test_config = deepcopy(self._config)
+        else:
+            
+            status_str += \
+                    status_template.format(color_map[optimiser_status_code],
+                                           optimiser_status_str)
         
-        # Debug why configs don't match
-#        a = test_shell_config
-#        b = test_config
-#        print [(k, a[k], b[k]) for k in a if k in b and a[k]!=b[k]]
-        
-        if ((test_shell_config is None and status_code > 0) or
-            (test_shell_config is not None and
-             test_shell_config != test_config)):
+        if (not (optimiser_status_code == 0 and config_status_code == 0) and
+            cnom):
             
             status_str += status_template.format(color_map[2],
                                                  "Configuration modified")
-            status_code = 1
+            enable_apply = True
         
-        elif optimiser_status_code == 0:
-            
-            status_str += status_template.format(color_map[config_status_code],
-                                                 config_status_str)
-            status_code = 0
-            
         status_str_rich = ('<html><head/><body><p><span '
                            'style="font-size: 10pt;">'
                            '<ul>{}</ul>'
@@ -1005,7 +1012,8 @@ class AdvancedPositionWidget(QtGui.QWidget,
         
         self.statusLabel.setText(status_str_rich)
         
-        if status_code > 0:
+        # Signals for apply button
+        if enable_apply:
             self.config_set.emit()
         else:
             self.config_null.emit()
