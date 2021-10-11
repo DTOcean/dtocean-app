@@ -210,7 +210,6 @@ class ThreadOpen(QtCore.QThread):
                 
             # Load up the project
             load_project = self._core.load_project(prj_file_path)
-    
             self._project = load_project
             
             # Load up the scope if one was found
@@ -237,7 +236,7 @@ class ThreadOpen(QtCore.QThread):
             # Load up the strategy if one was found
             if stg_file_path is not None:
                 
-                strategy_manager = GUIStrategyManager()
+                strategy_manager = GUIStrategyManager(None)
                 self._strategy = strategy_manager.load_strategy(stg_file_path,
                                                                 load_project)
                 
@@ -345,7 +344,7 @@ class ThreadSave(QtCore.QThread):
             # Dump the strategy (if there is one)
             if self._strategy is not None:
             
-                strategy_manager = GUIStrategyManager() 
+                strategy_manager = GUIStrategyManager(None)
                 stg_file_path = os.path.join(dto_dir_path, "strategy.pkl")
                 strategy_manager.dump_strategy(self._strategy, stg_file_path)
                 
@@ -1686,7 +1685,7 @@ class DTOceanWindow(MainWindow):
                         lambda: self.actionInitiate_Pipeline.setEnabled(True))
         
         # Set up the strategy manager
-        self._strategy_manager = GUIStrategyManager(self)
+        self._strategy_manager = GUIStrategyManager(self._shell, self)
         self._strategy_manager.setWindowFlags(
                                     self._strategy_manager.windowFlags() |
                                     QtCore.Qt.WindowMaximizeButtonHint)
@@ -2456,9 +2455,7 @@ class DTOceanWindow(MainWindow):
         
     @QtCore.pyqtSlot()
     def _set_strategy(self):
-
-        self._strategy_manager.show(self._shell)
-
+        self._strategy_manager.show()
         return
         
     @QtCore.pyqtSlot(object, int)

@@ -36,11 +36,11 @@ class GUIStrategyManager(ListFrameEditor, StrategyManager):
     
     """Strategy discovery"""
     
-    def __init__(self, parent=None):
+    def __init__(self, shell, parent=None):
         
         StrategyManager.__init__(self, strategies, "GUIStrategy")
         ListFrameEditor.__init__(self, parent, "Strategy Manager")
-        self._shell = None
+        self._shell = shell
         self._strategy = None
         self._last_df = None
         self._last_selected = None
@@ -358,13 +358,9 @@ class GUIStrategyManager(ListFrameEditor, StrategyManager):
         return new_strategy
         
     @QtCore.pyqtSlot(object)
-    def show(self, shell):
-        
-        self._shell = shell
+    def show(self):
         self._update_configuration()
-        
         super(GUIStrategyManager, self).show()
-        
         return
         
 class GUIToolManager(ToolManager):
