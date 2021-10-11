@@ -979,12 +979,6 @@ class AdvancedPositionWidget(QtGui.QWidget,
         test_shell_config = deepcopy(self._shell.strategy._config)
         test_config = deepcopy(self._config)
         
-        if 'force_strategy_run' in test_shell_config:
-            test_shell_config.pop('force_strategy_run')
-        
-        if 'force_strategy_run' in test_config:
-            test_config.pop('force_strategy_run')
-        
         # Debug why configs don't match
 #        a = test_shell_config
 #        b = test_config
