@@ -38,7 +38,7 @@
       <item>
        <widget class="QLabel" name="label_2">
         <property name="text">
-         <string>Select a variable from a module to vary. The range of values must be supplied using commas to separate them.</string>
+         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Select a variable from a module to vary. The range of values must be supplied using commas to separate them.&lt;/p&gt;&lt;p&gt;Note that the project may contain only one existing simulation.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
         </property>
         <property name="wordWrap">
          <bool>true</bool>
