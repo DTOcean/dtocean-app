@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-#    Copyright (C) 2016-2018 Mathew Topper
+#    Copyright (C) 2016-2021 Mathew Topper
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -27,15 +27,9 @@ class GUIStrategy(object):
     '''The base abstract class for discovery of GUI supported strategy 
     classes'''
     
-    def __init__(self):
-        
-        self.strategy_run = None
-        
-        return
-    
     @abc.abstractmethod
-    def allow_rerun(self, core, project):
-        """Can the strategy be rerun after first execution"""
+    def allow_run(self, core, project):
+        """Can the strategy be run"""
         return NotImplementedError
 
     @abc.abstractmethod

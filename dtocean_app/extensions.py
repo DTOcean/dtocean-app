@@ -32,7 +32,7 @@ from .widgets.output import OutputDataTable
 
 class GUIStrategyManager(ListFrameEditor, StrategyManager):
     
-    strategy_selected = QtCore.pyqtSignal(object, object)
+    strategy_selected = QtCore.pyqtSignal(object)
     
     """Strategy discovery"""
     
@@ -225,14 +225,14 @@ class GUIStrategyManager(ListFrameEditor, StrategyManager):
     def _load_strategy(self, strategy):
         
         strategy_name = strategy.get_name()
-
+        
         self._strategy = strategy
         self._last_selected = strategy_name
         
-        if not strategy.strategy_run:
-             strategy_name = "{} (completed)".format(strategy_name)
-        
-        self._set_dynamic_label(strategy_name)
+        if strategy.allow_run(self._shell.core, self._shell.project):
+            self._set_strategy_name()
+        else:
+            self._set_strategy_name_unavailable()
         
         return
     
@@ -241,13 +241,14 @@ class GUIStrategyManager(ListFrameEditor, StrategyManager):
         return
 
     @QtCore.pyqtSlot()
-    def _set_strategy_name_completed(self):
+    def _set_strategy_name_unavailable(self):
         
-        strategy_name = "{} (completed)".format(self._last_selected)
+        strategy_name = "{} (unavailable)".format(self._last_selected)
         self._set_dynamic_label(strategy_name)
         
         return
     
+    @QtCore.pyqtSlot(object)
     def _update_configuration(self, item=None):
         
         if item is None:
@@ -310,7 +311,7 @@ class GUIStrategyManager(ListFrameEditor, StrategyManager):
         self._update_configuration()
         self._set_dynamic_label("None")
         
-        self.strategy_selected.emit(self._strategy, None)
+        self.strategy_selected.emit(self._strategy)
         
         return
     
@@ -322,41 +323,15 @@ class GUIStrategyManager(ListFrameEditor, StrategyManager):
         config = self.mainWidget.get_configuration()
         self._strategy.configure(**config)
         
-        force_strategy_run = None
-        
-        if "force_strategy_run" in config:
-            force_strategy_run = config["force_strategy_run"]
-            if force_strategy_run:
-                self._set_strategy_name()
-            else:
-                self._set_strategy_name_completed()
+        if self._strategy.allow_run(self._shell.core, self._shell.project):
+            self._set_strategy_name()
         else:
-            self._set_dynamic_label(self._strategy.get_name())
+            self._set_strategy_name_unavailable()
         
-        self.strategy_selected.emit(self._strategy, force_strategy_run)
+        self.strategy_selected.emit(self._strategy)
         
         return
     
-    def _get_dump_dict(self, strategy):
-        
-        # Store the additional strategy information
-        stg_dict = StrategyManager._get_dump_dict(self, strategy)
-        stg_dict["strategy_run"] = strategy.strategy_run
-        
-        return stg_dict
-        
-    def _set_load_dict(self, stg_dict, project=None):
-        
-        # Now build the strategy
-        new_strategy = StrategyManager._set_load_dict(self, stg_dict,
-                                                            project=project)
-        
-        # Now deserialise the extra data (if available)
-        if "strategy_run" in stg_dict:
-            new_strategy.strategy_run = stg_dict["strategy_run"]
-
-        return new_strategy
-        
     @QtCore.pyqtSlot(object)
     def show(self):
         self._update_configuration()

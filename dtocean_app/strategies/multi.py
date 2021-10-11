@@ -47,8 +47,10 @@ class GUIMultiSensitivity(GUIStrategy, MultiSensitivity):
         
         return
     
-    def allow_rerun(self, core, project):
-        return False
+    def allow_run(self, core, project):
+        if len(project) > 1:
+            return False
+        return True
         
     def get_weight(self):
 

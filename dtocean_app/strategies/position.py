@@ -162,12 +162,11 @@ class GUIAdvancedPosition(GUIStrategy, AdvancedPosition):
         
         return
     
-    def allow_rerun(self, core, project):
-        
+    def allow_run(self, core, project):
         if self._config is None: return False
-        if self._config['clean_existing_dir']: return True
-        
-        return AdvancedPosition.allow_rerun(core, project, self._config)
+        print self._config
+        print AdvancedPosition.allow_run(core, project, self._config)
+        return AdvancedPosition.allow_run(core, project, self._config)
     
     def get_weight(self):
         

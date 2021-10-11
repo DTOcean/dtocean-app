@@ -35,7 +35,7 @@ class GUIBasicStrategy(GUIStrategy, BasicStrategy):
         
         return
     
-    def allow_rerun(self, core, project):
+    def allow_run(self, core, project):
         return True
         
     def get_weight(self):

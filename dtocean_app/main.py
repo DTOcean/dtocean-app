@@ -776,7 +776,6 @@ class Shell(QtCore.QObject):
     themes_executed = QtCore.pyqtSignal()
     strategy_selected = QtCore.pyqtSignal()
     strategy_executed = QtCore.pyqtSignal()
-    strategy_completed = QtCore.pyqtSignal()
     database_convert_active = QtCore.pyqtSignal()
     database_convert_complete = QtCore.pyqtSignal()
 
@@ -1208,11 +1207,8 @@ class Shell(QtCore.QObject):
 
         return
         
-    @QtCore.pyqtSlot(object, object)
-    def select_strategy(self, strategy, strategy_run=None):
-        
-        if strategy_run is None:
-            strategy_run = True
+    @QtCore.pyqtSlot(object)
+    def select_strategy(self, strategy):
         
         if self._active_thread is not None: self._active_thread.wait()
         
@@ -1231,8 +1227,7 @@ class Shell(QtCore.QObject):
             simulation.set_unavailable_variables(None)
         
         else:
-        
-            self.strategy.strategy_run = strategy_run
+            
             force_unavailable = self.strategy.get_variables()
             simulation.set_unavailable_variables(force_unavailable)
         
@@ -1447,16 +1442,12 @@ class Shell(QtCore.QObject):
             self.project.active_title_changed.emit(active_sim_title)
         
         # Assertain if the strategy can be released
-        self.strategy.strategy_run = self.strategy.allow_rerun(self.core,
-                                                               self.project)
+        allow_run = self.strategy.allow_run(self.core, self.project)
         
         # If the strategy is no longer active release the hidden variables
-        if not self.strategy.strategy_run:
-            
+        if not allow_run:
             [sim.set_unavailable_variables()
                                         for sim in self.project._simulations]
-            
-            self.strategy_completed.emit()
         
         # Emit signals on core
         self._finalize_core()
@@ -1694,8 +1685,6 @@ class DTOceanWindow(MainWindow):
                                     self._shell.select_strategy)
         self._shell.strategy_loaded.connect(
                                     self._strategy_manager._load_strategy)
-        self._shell.strategy_completed.connect(
-                        self._strategy_manager._set_strategy_name_completed)
         
         # Set up the data check diaglog
         self._data_check = DataCheck(self)
@@ -2332,14 +2321,27 @@ class DTOceanWindow(MainWindow):
         modules_scheduled = self._shell.get_scheduled_modules()
         modules_completed = self._shell.get_completed_modules()
         themes_scheduled = self._shell.get_scheduled_themes()
+        strategy_run = False
+        
+        if self._shell.strategy is not None:
+            strategy_run = self._shell.strategy.allow_run(self._shell.core,
+                                                          self._shell.project)
         
         # Set the run action buttons
-        if (self._shell.strategy is None or
-                (self._shell.strategy is not None and 
-                 not self._shell.strategy.strategy_run)):
+        if strategy_run:
+            
+            self.actionRun_Current.setDisabled(True)
+            self.actionRun_Themes.setDisabled(True)
+            
+            if modules_scheduled:
+                self.actionRun_Strategy.setEnabled(True)
+            else:
+                self.actionRun_Strategy.setDisabled(True)
+        
+        else:
             
             self.actionRun_Strategy.setDisabled(True)
-                    
+            
             if modules_scheduled:
                 self.actionRun_Current.setEnabled(True)
             else:
@@ -2349,17 +2351,7 @@ class DTOceanWindow(MainWindow):
                 self.actionRun_Themes.setEnabled(True)
             else:
                 self.actionRun_Themes.setDisabled(True)
-      
-        else:
-            
-            self.actionRun_Current.setDisabled(True)
-            self.actionRun_Themes.setDisabled(True)
-            
-            if modules_scheduled:
-                self.actionRun_Strategy.setEnabled(True)
-            else:
-                self.actionRun_Strategy.setDisabled(True)
-                
+        
         # Set the pipeline title
         if not modules_completed and modules_scheduled:
             pipeline_msg = "Define simulation inputs..."
