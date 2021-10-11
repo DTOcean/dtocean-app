@@ -1005,11 +1005,6 @@ class AdvancedPositionWidget(QtGui.QWidget,
         
         self.statusLabel.setText(status_str_rich)
         
-        if optimiser_status_code == 1:
-            self._config["force_strategy_run"] = False
-        else:
-            self._config["force_strategy_run"] = True
-        
         if status_code > 0:
             self.config_set.emit()
         else:
