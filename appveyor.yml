@@ -37,7 +37,7 @@ install:
   - conda install --file requirements-conda-dev.txt
   - python setup.py bootstrap
   - pip install -e .
-  - conda install mock "pytest<4" pytest-cov pytest-mock pytest-qt
+  - conda install mock "pytest>=3.6,<4" pytest-cov pytest-mock pytest-qt
 
 build: off
 
