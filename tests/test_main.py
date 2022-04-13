@@ -2037,8 +2037,7 @@ def test_select_strategy(qtbot, mocker, tmpdir, core):
         # Wait to register click
         qtbot.wait(200)
         
-        apply_button = strategy_manager.buttonBox.button(
-                                                QtGui.QDialogButtonBox.Apply)
+        apply_button = strategy_manager.applyButton
         
         # Apply strategy if possible
         if apply_button.isEnabled():
@@ -2050,7 +2049,7 @@ def test_select_strategy(qtbot, mocker, tmpdir, core):
     
     # Reset the strategy
     qtbot.mouseClick(
-            strategy_manager.buttonBox.button(QtGui.QDialogButtonBox.Reset),
+            strategy_manager.resetButton,
             QtCore.Qt.LeftButton)
     
     assert str(strategy_manager.topDynamicLabel.text()) == "None"
@@ -2221,16 +2220,14 @@ def test_strategy_save_close_open(qtbot, mocker, tmpdir, core):
     # Wait to register click
     qtbot.wait(200)
     
-    qtbot.mouseClick(
-            strategy_manager.buttonBox.button(QtGui.QDialogButtonBox.Apply),
-            QtCore.Qt.LeftButton)
+    qtbot.mouseClick(strategy_manager.applyButton,
+                     QtCore.Qt.LeftButton)
     
     assert str(strategy_manager.topDynamicLabel.text()) == str(item.text())
     
     # Close the dialog
-    qtbot.mouseClick(
-            strategy_manager.buttonBox.button(QtGui.QDialogButtonBox.Close),
-            QtCore.Qt.LeftButton)
+    qtbot.mouseClick(strategy_manager.closeButton,
+                     QtCore.Qt.LeftButton)
     
     # Save the simulation
     save_button = window.fileToolBar.widgetForAction(window.actionSave)
