@@ -7,18 +7,6 @@
 #      general configuration      #
 #---------------------------------#
 
-# Build only for commits to certain locations
-only_commits:
-  files:
-    - designer/
-    - dtocean_app/
-    - tests/
-    - setup.py
-
-skip_commits:
-  files:
-    - dtocean_app/config/
-
 # version format
 version: 2.0.0.dev0-build{build}
 
@@ -40,7 +28,7 @@ init:
 install:
   - "set PATH=%MINICONDA%;%MINICONDA%\\Scripts;%PATH%"
   - conda config --set always_yes yes --set changeps1 no
-  - conda install --quiet conda=4.6.14
+  - conda update --quiet conda
   - conda info --all
   - conda create -n _dtocean_app python=%PYTHON_VERSION% pip
   - activate _dtocean_app
@@ -49,20 +37,11 @@ install:
     conda install polite=0.10.1
     aneris=0.10.1
     dtocean-core=2.0.1
-    dtocean-economics=2.0.0
-    dtocean-electrical=2.0.0
-    dtocean-environment=2.0.0
-    dtocean-hydrodynamics=2.0.0
-    dtocean-installation=2.0.0
-    dtocean-logistics=2.0.0
-    dtocean-maintenance=2.0.0
-    dtocean-moorings=2.0.0
-    dtocean-qt=0.10.0
-    dtocean-reliability=2.0.0
+    dtocean-qt=0.10.1
   - conda install --file requirements-conda-dev.txt
   - python setup.py bootstrap
   - pip install -e .
-  - conda install pytest pytest-cov pytest-mock pytest-qt
+  - conda install mock "pytest>=3.6,<4" pytest-cov pytest-mock pytest-qt
 
 build: off
 
