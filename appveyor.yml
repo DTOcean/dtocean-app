@@ -73,7 +73,7 @@ install:
 build: off
 
 test_script:
-  - py.test -v --cov dtocean_app tests
+  - pytest --cov dtocean_app tests
 
 after_test:
  - pip install codecov
