@@ -8,7 +8,7 @@
 #---------------------------------#
 
 # version format
-version: 2.0.0.dev0-build{build}
+version: 2.1.0.build{build}
 
 environment:
   matrix:
@@ -16,13 +16,11 @@ environment:
       MINICONDA: C:\Miniconda
       ARCH: "32"
       CONDARC: .condarc-32
-      CORE_PKGS: netcdf4=1.3 numpy=1.11.3
     
     - PYTHON_VERSION: 2.7
       MINICONDA: C:\Miniconda-x64
       ARCH: "64"
       CONDARC: .condarc
-      CORE_PKGS: netcdf4=1.4 numpy=1.11.3=py27hab9e983_3
 
 init:
   - "ECHO %PYTHON_VERSION% %MINICONDA%"
@@ -32,48 +30,19 @@ install:
   - conda config --set always_yes yes --set changeps1 no
   - conda update --quiet conda
   - conda info --all
-  - conda create -n _dtocean_app python=%PYTHON_VERSION% pip
+  - conda create -n _dtocean_app python=%PYTHON_VERSION% pip pyyaml
   - activate _dtocean_app
   - copy %CONDARC% %CONDA_PREFIX%\\.condarc
-  - >
-    conda install polite=0.10.1
-    aneris=0.10.1
-    dtocean-qt=0.10.1
-    basemap
-    cmocean-matplotlib
-    contours
-    cycler
-    descartes-matplotlib
-    geoalchemy2
-    "matplotlib<2"
-    monotonic
-    natsort
-    "openpyxl<3"
-    packaging
-    "pandas>=0.18"
-    pil
-    psycopg2
-    pyproj
-    python-dateutil
-    "pyyaml>=5.1"
-    scipy
-    setuptools
-    shapely
-    utm
-    xarray
-    "xlrd<2"
-    "xlsxwriter<3"
-    xlwt
-    %CORE_PKGS%
-  - conda install --no-deps dtocean-core=2.0.1
+  - conda install polite==0.10.1 aneris==0.11.1 dtocean-core==3.0.0 dtocean-qt==0.10.1
+  - conda install --file requirements-conda-dev.txt
   - python setup.py bootstrap
   - pip install -e .
-  - conda install mock "pytest>=3.6,<4" pytest-cov pytest-mock pytest-qt
+  - conda install mock "pytest<4" pytest-cov pytest-mock pytest-qt
 
 build: off
 
 test_script:
-  - pytest --cov dtocean_app tests
+  - py.test --cov dtocean_app tests
 
 after_test:
  - pip install codecov
