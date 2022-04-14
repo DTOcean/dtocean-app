@@ -1,11 +1,14 @@
 pinned_packages:
+  - python=2
   - ipykernel=4.7.0
   - pyqt=4.11.4=py27_5
-  - python=2
-  - netcdf4=1.4
-  - numpy=1.11.3
+  - numpy=1.11.3=py27hab9e983_3
+
+disallow:
+  - matplotlib-base
 
 channels:
   - defaults
+  - free
   - conda-forge
   - dataonlygreater
