@@ -35,7 +35,7 @@ from aneris.utilities.misc import OrderedSet
 from dtocean_core.pipeline import Tree
 from dtocean_core.strategies.position import AdvancedPosition
 from dtocean_core.strategies.position_optimiser import (dump_config,
-                                                        load_config_template)
+                                                        _load_config_template)
 from dtocean_qt.models.DataFrameModel import DataFrameModel
 
 from . import GUIStrategy, StrategyWidget, PyQtABCMeta
@@ -171,7 +171,7 @@ class GUIAdvancedPosition(GUIStrategy, AdvancedPosition):
     
     def get_widget(self, parent, shell):
         
-        config = load_config_template()
+        config = _load_config_template()
         widget = AdvancedPositionWidget(parent, shell, config)
         
         return widget
@@ -227,15 +227,17 @@ class AdvancedPositionWidget(QtGui.QWidget,
     def _init_config(cls, config):
         
         new_config = deepcopy(config)
-        new_config["root_project_path"] = "worker.prj"
-        new_config["clean_existing_dir"] = False
         
-        config_template = load_config_template()
+        config_template = _load_config_template()
         all_keys = config_template.keys()
         
         for key in all_keys:
             if key not in config:
                 new_config[key] = None
+        
+        new_config["root_project_path"] = "worker.prj"
+        new_config["clean_existing_dir"] = False
+        if new_config["parameters"] is None: new_config["parameters"] = {}
         
         return new_config
     
@@ -389,6 +391,7 @@ class AdvancedPositionWidget(QtGui.QWidget,
                 var_box["range.box.type"].addItem("Multiplier")
                 
                 for var in param_multipier_vars[param_name]:
+                    if var not in self._var_id_to_title_map: continue
                     mapped_name = self._var_id_to_title_map[var]
                     var_box["range.box.var"].addItem(mapped_name)
             
@@ -771,10 +774,15 @@ class AdvancedPositionWidget(QtGui.QWidget,
             
             if "range" in param_settings and param_settings["range"]:
                 
+                range_settings = param_settings["range"]
+                
+                if (range_settings["type"] == "multiplier" and 
+                    range_settings["variable"] not in
+                                                self._var_id_to_title_map):
+                    continue
+                
                 var_box["fixed.check"].setChecked(False)
                 var_box["range.group"].setEnabled(True)
-                
-                range_settings = param_settings["range"]
                 
                 if range_settings["type"] == "multiplier":
                     
@@ -874,11 +882,12 @@ class AdvancedPositionWidget(QtGui.QWidget,
                      1: "#00aa00",
                      2: "#ff8100"}
         
-        (project_status_strs,
+        (project_status_str,
          project_status_code) = GUIAdvancedPosition.get_project_status(
                                                          self._shell.core,
                                                          self._shell.project,
                                                          self._config)
+        project_status_strs = project_status_str.split("\n")
         
         (config_status_str,
          config_status_code) = GUIAdvancedPosition.get_config_status(
@@ -2179,7 +2188,11 @@ def _make_range_type_slot(that, param_name, param_type, name_map):
         var_box_dict = that._param_boxes[param_name]
         var_box_values = _read_var_box_values(var_box_dict, param_type)
         range_config = _get_range_config(var_box_values, name_map)
-        that._config["parameters"][param_name]["range"] = range_config
+        
+        if param_name in that._config["parameters"]:
+            that._config["parameters"][param_name]["range"] = range_config
+        else:
+            that._config["parameters"][param_name] = {"range": range_config}
         
         return
     
@@ -2194,7 +2207,11 @@ def _make_generic_range_slot(that, param_name, param_type, name_map):
         var_box_dict = that._param_boxes[param_name]
         var_box_values = _read_var_box_values(var_box_dict, param_type)
         range_config = _get_range_config(var_box_values, name_map)
-        that._config["parameters"][param_name]["range"] = range_config
+        
+        if param_name in that._config["parameters"]:
+            that._config["parameters"][param_name]["range"] = range_config
+        else:
+            that._config["parameters"][param_name] = {"range": range_config}
         
         return
     

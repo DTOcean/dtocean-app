@@ -101,7 +101,7 @@ def core():
 def test_open_dtocean_window(qtbot, mocker, core):
         
     shell = Shell(core)
-    window = DTOceanWindow(shell)
+    window = DTOceanWindow(shell, debug=True)
     window.show()
     qtbot.addWidget(window)
     
@@ -146,7 +146,7 @@ def test_close_open_dock(qtbot, mocker, core):
 def test_new_project(qtbot, mocker, core):
     
     shell = Shell(core)
-    window = DTOceanWindow(shell)
+    window = DTOceanWindow(shell, debug=True)
     window.show()
     qtbot.addWidget(window)
     
@@ -171,7 +171,7 @@ def test_new_project(qtbot, mocker, core):
 def test_click_section_twice(qtbot, mocker, core):
     
     shell = Shell(core)
-    window = DTOceanWindow(shell)
+    window = DTOceanWindow(shell, debug=True)
     window.show()
     qtbot.addWidget(window)
 
@@ -206,7 +206,7 @@ def test_click_section_twice(qtbot, mocker, core):
 def test_set_device_type(qtbot, mocker, core):
     
     shell = Shell(core)
-    window = DTOceanWindow(shell)
+    window = DTOceanWindow(shell, debug=True)
     window.show()
     qtbot.addWidget(window)
     
@@ -268,7 +268,7 @@ def test_set_device_type(qtbot, mocker, core):
 def test_initiate_pipeline(qtbot, mocker, core):
     
     shell = Shell(core)
-    window = DTOceanWindow(shell)
+    window = DTOceanWindow(shell, debug=True)
     window.show()
     qtbot.addWidget(window)
     
@@ -354,7 +354,7 @@ def test_export_data(qtbot, mocker, tmpdir, core):
                         return_value=datastate_file_path)
     
     shell = Shell(core)
-    window = DTOceanWindow(shell)
+    window = DTOceanWindow(shell, debug=True)
     window.show()
     qtbot.addWidget(window)
                       
@@ -428,7 +428,7 @@ def test_import_data(qtbot, mocker, tmpdir, core):
                         return_value=datastate_file_path)
     
     shell = Shell(core)
-    window = DTOceanWindow(shell)
+    window = DTOceanWindow(shell, debug=True)
     window.show()
     qtbot.addWidget(window)
                       
@@ -507,7 +507,7 @@ def test_initiate_dataflow(qtbot, mocker, core):
     socket = shell.core.control._sequencer.get_socket("ModuleInterface")
     socket.add_interface(MockModule)
     
-    window = DTOceanWindow(shell)
+    window = DTOceanWindow(shell, debug=True)
     window.show()
     qtbot.addWidget(window)
     
@@ -650,7 +650,7 @@ def test_set_simulation_title(qtbot, mocker, core):
     socket = shell.core.control._sequencer.get_socket("ModuleInterface")
     socket.add_interface(MockModule)
     
-    window = DTOceanWindow(shell)
+    window = DTOceanWindow(shell, debug=True)
     window.show()
     qtbot.addWidget(window)
     
@@ -810,7 +810,7 @@ def test_simulation_clone_select(qtbot, mocker, core):
     socket = shell.core.control._sequencer.get_socket("ModuleInterface")
     socket.add_interface(MockModule)
     
-    window = DTOceanWindow(shell)
+    window = DTOceanWindow(shell, debug=True)
     window.show()
     qtbot.addWidget(window)
     
@@ -997,7 +997,7 @@ def test_credentials_add_delete(qtbot, mocker, tmpdir, core):
                       
     
     shell = Shell(core)
-    window = DTOceanWindow(shell)
+    window = DTOceanWindow(shell, debug=True)
     window.show()
     qtbot.addWidget(window)
 
@@ -1089,7 +1089,7 @@ def test_select_database(qtbot, mocker, tmpdir, core):
     
     
     shell = Shell(core)
-    window = DTOceanWindow(shell)
+    window = DTOceanWindow(shell, debug=True)
     window.show()
     qtbot.addWidget(window)
 
@@ -1167,7 +1167,7 @@ def test_deselect_database(qtbot, mocker, tmpdir, core):
                         return_value=QtGui.QMessageBox.Yes)
     
     shell = Shell(core)
-    window = DTOceanWindow(shell)
+    window = DTOceanWindow(shell, debug=True)
     window.show()
     qtbot.addWidget(window)
     
@@ -1254,7 +1254,7 @@ def test_credentials_rename(qtbot, mocker, tmpdir, core):
                       
     
     shell = Shell(core)
-    window = DTOceanWindow(shell)
+    window = DTOceanWindow(shell, debug=True)
     window.show()
     qtbot.addWidget(window)
 
@@ -1348,7 +1348,7 @@ def test_credentials_save(qtbot, mocker, tmpdir, core):
                       
     
     shell = Shell(core)
-    window = DTOceanWindow(shell)
+    window = DTOceanWindow(shell, debug=True)
     window.show()
     qtbot.addWidget(window)
 
@@ -1450,7 +1450,7 @@ def test_dump_load_database(qtbot, mocker, tmpdir, core):
                         return_value=QtGui.QMessageBox.Yes)
     
     shell = Shell(core)
-    window = DTOceanWindow(shell)
+    window = DTOceanWindow(shell, debug=True)
     window.show()
     qtbot.addWidget(window)
     
@@ -1528,7 +1528,7 @@ def test_save_modify_close(qtbot, mocker, tmpdir, core):
     socket = shell.core.control._sequencer.get_socket("ModuleInterface")
     socket.add_interface(MockModule)
     
-    window = DTOceanWindow(shell)
+    window = DTOceanWindow(shell, debug=True)
     window.show()
     qtbot.addWidget(window)
     
@@ -1730,7 +1730,7 @@ def test_save_project(qtbot, mocker, tmpdir, core):
     socket = shell.core.control._sequencer.get_socket("ModuleInterface")
     socket.add_interface(MockModule)
     
-    window = DTOceanWindow(shell)
+    window = DTOceanWindow(shell, debug=True)
     window.show()
     qtbot.addWidget(window)
     
@@ -1881,7 +1881,7 @@ def test_select_strategy(qtbot, mocker, tmpdir, core):
     socket = shell.core.control._sequencer.get_socket("ModuleInterface")
     socket.add_interface(MockModule)
     
-    window = DTOceanWindow(shell)
+    window = DTOceanWindow(shell, debug=True)
     window.show()
     qtbot.addWidget(window)
     
@@ -2041,10 +2041,10 @@ def test_select_strategy(qtbot, mocker, tmpdir, core):
         
         # Apply strategy if possible
         if apply_button.isEnabled():
-        
+            
             qtbot.mouseClick(apply_button, QtCore.Qt.LeftButton)
             top_label = str(strategy_manager.topDynamicLabel.text())
-    
+            
             assert top_label == str(item.text())
     
     # Reset the strategy
@@ -2063,7 +2063,7 @@ def test_strategy_save_close_open(qtbot, mocker, tmpdir, core):
     socket = shell.core.control._sequencer.get_socket("ModuleInterface")
     socket.add_interface(MockModule)
     
-    window = DTOceanWindow(shell)
+    window = DTOceanWindow(shell, debug=True)
     window.show()
     qtbot.addWidget(window)
     
