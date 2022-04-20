@@ -33,7 +33,7 @@ install:
   - conda create -n _dtocean_app python=%PYTHON_VERSION% pip pyyaml
   - activate _dtocean_app
   - copy %CONDARC% %CONDA_PREFIX%\\.condarc
-  - conda install polite==0.10.1 dtocean-core==3.0.1 dtocean-qt==0.10.1
+  - conda install "polite>=0.10.1,<1" "dtocean-core>=3.0.1,<4" "dtocean-qt>=0.10.1,<1" "dtocean-hydrodynamics>=3.0.0,<4"
   - conda install --file requirements-conda-dev.txt
   - python setup.py bootstrap
   - pip install -e .
@@ -42,7 +42,7 @@ install:
 build: off
 
 test_script:
-  - py.test --cov dtocean_app tests
+  - py.test -v --cov dtocean_app tests
 
 after_test:
  - pip install codecov
