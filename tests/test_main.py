@@ -17,6 +17,7 @@
 
 import os
 
+from flaky import flaky
 import pytest
 from PyQt4 import QtCore, QtGui
 
@@ -25,7 +26,6 @@ from dtocean_core.interfaces import ModuleInterface
 from dtocean_app.core import GUICore
 from dtocean_app.main import DTOceanWindow, Shell
 from dtocean_app.pipeline import InputVarControl, SectionControl
-from dtocean_app.widgets.dialogs import Message
 from dtocean_app.widgets.input import ListSelect
 
 
@@ -1520,6 +1520,7 @@ def test_dump_load_database(qtbot, mocker, tmpdir, core):
     db_selector.close()
 
 
+@flaky
 def test_save_modify_close(qtbot, mocker, tmpdir, core):
     
     shell = Shell(core)
