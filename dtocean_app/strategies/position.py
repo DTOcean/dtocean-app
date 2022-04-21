@@ -676,7 +676,8 @@ class AdvancedPositionWidget(QtGui.QWidget,
         
         if (self._config["objective"] is not None and
             self._config["objective"] in self._var_id_to_cost_var_box_map):
-            box_number = self._var_id_to_cost_var_box_map[self._config["objective"]]
+            box_number = self._var_id_to_cost_var_box_map[
+                                                    self._config["objective"]]
             self.costVarBox.setCurrentIndex(box_number)
         else:
             self.costVarBox.setCurrentIndex(-1)
@@ -711,22 +712,22 @@ class AdvancedPositionWidget(QtGui.QWidget,
         else:
             self.abortTimeSpinBox.setValue(self._config["timeout"])
         
-        if self._config["timeout"] is None:
-            self.abortTimeSpinBox.setValue(0)
-        else:
-            self.abortTimeSpinBox.setValue(self._config["timeout"])
-        
         if self._config["min_evals"] is None:
             self.minNoiseCheckBox.setChecked(True)
-            self.minNoiseSpinBox.setValue(self._default_min_evals)
         else:
-            self.minNoiseCheckBox.setChecked(False)
             self.minNoiseSpinBox.setValue(self._config["min_evals"])
+            self.minNoiseCheckBox.setChecked(False)
         
         if self._config["max_evals"] is None:
             self.maxNoiseSpinBox.setValue(self._default_max_evals)
         else:
             self.maxNoiseSpinBox.setValue(self._config["max_evals"])
+        
+        if self._config["popsize"] is None:
+            self.populationCheckBox.setChecked(True)
+        else:
+            self.populationSpinBox.setValue(self._config["popsize"])
+            self.populationCheckBox.setChecked(False)
         
         if self._config["max_resample_factor"] is None:
             
@@ -1028,77 +1029,6 @@ class AdvancedPositionWidget(QtGui.QWidget,
         
         return init
     
-    def _update_status_results(self):
-        
-        if "Default" not in self._shell.project.get_simulation_titles():
-            self.protectDefaultBox.setEnabled(False)
-            self._protect_default = False
-        else:
-            self.protectDefaultBox.setEnabled(True)
-            self.protectDefaultBox.stateChanged.emit(
-                                    self.protectDefaultBox.checkState())
-        
-        if self._sims_to_load is None:
-            self.simLoadButton.setDisabled(True)
-        else:
-            self.simLoadButton.setEnabled(True)
-        
-        df = GUIAdvancedPosition.get_all_results(self._config)
-        
-        if (self._results_df is not None and
-            df.equals(self._results_df)): return
-        
-        new_columns = []
-        
-        for column in df.columns:
-            
-            for key in self._var_id_to_title_map.keys():
-                
-                if key in column:
-                    
-                    column = column.replace(key,
-                                            self._var_id_to_title_map[key])
-                    
-                    if key in self._var_id_to_unit_map:
-                        column += " ({})".format(self._var_id_to_unit_map[key])
-                    
-                    break
-            
-            new_columns.append(column)
-        
-        df.columns = new_columns
-        
-        self._results_df = df
-        model = DataFrameModel(self._results_df)
-        self.dataTableWidget.setViewModel(model)
-        
-        # Update plots tab
-        new_columns.insert(0, "")
-        self._update_plot_comboboxes(new_columns)
-        self._clear_plot_widget()
-        
-        return
-    
-    def _update_status_plots(self):
-        
-        if self.plotWidget is None:
-            plot_export_enabled = False
-        else:
-            plot_export_enabled = True
-        
-        self.plotExportButton.setEnabled(plot_export_enabled)
-        
-        return
-    
-    def _update_plot_comboboxes(self, plot_columns):
-        
-        self.xAxisVarBox.addItems(plot_columns)
-        self.yAxisVarBox.addItems(plot_columns)
-        self.colorAxisVarBox.addItems(plot_columns)
-        self.filterVarBox.addItems(plot_columns)
-        
-        return
-    
     @QtCore.pyqtSlot()
     def _import_config(self):
         
@@ -1268,10 +1198,9 @@ class AdvancedPositionWidget(QtGui.QWidget,
     @QtCore.pyqtSlot(object)
     def _update_min_noise_auto(self, checked_state):
         
-        self.minNoiseSpinBox.setValue(self._default_min_evals)
-        
         if checked_state == QtCore.Qt.Checked:
             self._config["min_evals"] = None
+            self.minNoiseSpinBox.setValue(self._default_min_evals)
             self.minNoiseSpinBox.setEnabled(False)
             self.maxNoiseSpinBox.setMinimum(1)
         else:
@@ -1295,10 +1224,9 @@ class AdvancedPositionWidget(QtGui.QWidget,
     @QtCore.pyqtSlot(object)
     def _update_population_auto(self, checked_state):
         
-        self.populationSpinBox.setValue(self._default_popsize)
-        
         if checked_state == QtCore.Qt.Checked:
             self._config["popsize"] = None
+            self.populationSpinBox.setValue(self._default_popsize)
             self.populationSpinBox.setEnabled(False)
         else:
             value = int(self.populationSpinBox.value())
@@ -1343,24 +1271,54 @@ class AdvancedPositionWidget(QtGui.QWidget,
         
         return
     
-    @QtCore.pyqtSlot()
-    def _import_yaml(self):
+    def _update_status_results(self):
         
-        msg = "Import Simulation"
-        valid_exts = "Output files (*.yaml)"
+        if "Default" not in self._shell.project.get_simulation_titles():
+            self.protectDefaultBox.setEnabled(False)
+            self._protect_default = False
+        else:
+            self.protectDefaultBox.setEnabled(True)
+            self.protectDefaultBox.stateChanged.emit(
+                                    self.protectDefaultBox.checkState())
         
-        yaml_file_path = QtGui.QFileDialog.getOpenFileName(self,
-                                                           msg,
-                                                           HOME,
-                                                           valid_exts)
+        if self._sims_to_load is None:
+            self.simLoadButton.setDisabled(True)
+        else:
+            self.simLoadButton.setEnabled(True)
         
-        if not yaml_file_path: return
+        df = GUIAdvancedPosition.get_all_results(self._config)
         
-        self._shell.strategy.import_simulation_file(self._shell.core,
-                                                    self._shell.project,
-                                                    str(yaml_file_path))
+        if (self._results_df is not None and
+            df.equals(self._results_df)): return
         
-        self.reset.emit()
+        new_columns = []
+        
+        for column in df.columns:
+            
+            for key in self._var_id_to_title_map.keys():
+                
+                if key in column:
+                    
+                    column = column.replace(key,
+                                            self._var_id_to_title_map[key])
+                    
+                    if key in self._var_id_to_unit_map:
+                        column += " ({})".format(self._var_id_to_unit_map[key])
+                    
+                    break
+            
+            new_columns.append(column)
+        
+        df.columns = new_columns
+        
+        self._results_df = df
+        model = DataFrameModel(self._results_df)
+        self.dataTableWidget.setViewModel(model)
+        
+        # Update plots tab
+        new_columns.insert(0, "")
+        self._update_plot_comboboxes(new_columns)
+        self._clear_plot_widget()
         
         return
     
@@ -1514,6 +1472,26 @@ class AdvancedPositionWidget(QtGui.QWidget,
         if not save_path:return
         
         self._results_df.to_csv(str(save_path), index=False)
+        
+        return
+    
+    def _update_status_plots(self):
+        
+        if self.plotWidget is None:
+            plot_export_enabled = False
+        else:
+            plot_export_enabled = True
+        
+        self.plotExportButton.setEnabled(plot_export_enabled)
+        
+        return
+    
+    def _update_plot_comboboxes(self, plot_columns):
+        
+        self.xAxisVarBox.addItems(plot_columns)
+        self.yAxisVarBox.addItems(plot_columns)
+        self.colorAxisVarBox.addItems(plot_columns)
+        self.filterVarBox.addItems(plot_columns)
         
         return
     
@@ -1758,6 +1736,27 @@ class AdvancedPositionWidget(QtGui.QWidget,
             im.save(str(file_path), dpi=[dpi, dpi])
         except IOError:
             pass
+        
+        return
+    
+    @QtCore.pyqtSlot()
+    def _import_yaml(self):
+        
+        msg = "Import Simulation"
+        valid_exts = "Output files (*.yaml)"
+        
+        yaml_file_path = QtGui.QFileDialog.getOpenFileName(self,
+                                                           msg,
+                                                           HOME,
+                                                           valid_exts)
+        
+        if not yaml_file_path: return
+        
+        self._shell.strategy.import_simulation_file(self._shell.core,
+                                                    self._shell.project,
+                                                    str(yaml_file_path))
+        
+        self.reset.emit()
         
         return
     

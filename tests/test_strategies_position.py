@@ -22,11 +22,11 @@ pytest.importorskip("dtocean_hydro")
 
 from dtocean_app.core import GUICore
 from dtocean_app.main import Shell
-from dtocean_app.strategies.position import AdvancedPositionWidget
+from dtocean_app.strategies.position import (AdvancedPositionWidget,
+                                             GUIAdvancedPosition)
 from dtocean_core.interfaces import ModuleInterface
 from dtocean_core.menu import ModuleMenu, ProjectMenu
 from dtocean_core.pipeline import Tree
-
 
 
 class MockModule(ModuleInterface):
@@ -140,6 +140,109 @@ def hydro_shell(core, project):
     return shell
 
 
+@pytest.fixture(scope="module")
+def config():
+    
+    return {
+     'base_penalty': 2.0,
+     'clean_existing_dir': True,
+     'max_evals': 2,
+     'max_resample_factor': 5,
+     'max_simulations': 10,
+     'maximise': True,
+     'min_evals': 3,
+     'n_threads': 1,
+     'objective': 'project.annual_energy',
+     'parameters': {'delta_col': 
+                       {'range': {'max_multiplier': 2.0,
+                                   'min_multiplier': 1.0,
+                                   'type': 'multiplier',
+                                   'variable': 'device.minimum_distance_y'}},
+                     'delta_row': 
+                       {'range': {'max_multiplier': 2.0,
+                                   'min_multiplier': 1.0,
+                                   'type': 'multiplier',
+                                   'variable': 'device.minimum_distance_x'}},
+                     'grid_orientation': {'range': {'max': 90.0,
+                                                      'min': -90.0,
+                                                      'type': 'fixed'}},
+                     'n_nodes': {'range': {'max': 20,
+                                             'min': 1,
+                                             'type': 'fixed'},
+                                  'x0': 15},
+                     't1': {'range': {'max': 1.0,
+                                        'min': 0.0,
+                                        'type': 'fixed'}},
+                     't2': {'range': {'max': 1.0,
+                                        'min': 0.0,
+                                        'type': 'fixed'}}},
+     'popsize': 4,
+     'results_params': ['project.number_of_devices',
+                         'project.annual_energy',
+                         'project.q_factor',
+                         'project.capex_total',
+                         'project.capex_breakdown',
+                         'project.lifetime_opex_mean',
+                         'project.lifetime_cost_mean',
+                         'project.lifetime_energy_mean',
+                         'project.lcoe_mean'],
+     'root_project_path': None,
+     'timeout': 12,
+     'tolfun': 1.0,
+     'worker_dir': 'mock'
+    }
+
+
+@pytest.fixture(scope="module")
+def config_alt():
+    
+    return {
+     'base_penalty': 2.0,
+     'clean_existing_dir': True,
+     'max_evals': 3,
+     'max_resample_factor': "auto2",
+     'max_simulations': 1,
+     'maximise': False,
+     'min_evals': None,
+     'n_threads': 1,
+     'objective': 'project.annual_energy',
+     'parameters': {'delta_col': 
+                       {'fixed': 1},
+                     'delta_row': 
+                       {'range': {'max_multiplier': 2.0,
+                                   'min_multiplier': 1.0,
+                                   'type': 'multiplier',
+                                   'variable': 'device.minimum_distance_x'}},
+                     'grid_orientation': {'range': {'max': 90.0,
+                                                      'min': -90.0,
+                                                      'type': 'fixed'}},
+                     'n_nodes': {'range': {'max': 20,
+                                             'min': 1,
+                                             'type': 'fixed'},
+                                  'x0': 15},
+                     't1': {'range': {'max': 1.0,
+                                        'min': 0.0,
+                                        'type': 'fixed'}},
+                     't2': {'range': {'max': 1.0,
+                                        'min': 0.0,
+                                        'type': 'fixed'}}},
+     'popsize': None,
+     'results_params': ['project.number_of_devices',
+                         'project.annual_energy',
+                         'project.q_factor',
+                         'project.capex_total',
+                         'project.capex_breakdown',
+                         'project.lifetime_opex_mean',
+                         'project.lifetime_cost_mean',
+                         'project.lifetime_energy_mean',
+                         'project.lcoe_mean'],
+     'root_project_path': None,
+     'timeout': 1,
+     'tolfun': 1,
+     'worker_dir': 'mock'
+    }
+
+
 def test_AdvancedPositionWidget_bad_status(qtbot, mock_shell):
     
     window = AdvancedPositionWidget(None, mock_shell, {})
@@ -167,6 +270,68 @@ def test_AdvancedPositionWidget_settings_open(qtbot, tmp_path, hydro_shell):
     
     assert window.tabWidget.isTabEnabled(1)
     assert window.tabWidget.isTabEnabled(2)
+
+
+def test_AdvancedPositionWidget_with_config(qtbot, hydro_shell, config):
+    
+    window = AdvancedPositionWidget(None, hydro_shell, config)
+    window.show()
+    qtbot.addWidget(window)
+    
+    def settings_tab_enabled(): assert  window.tabWidget.isTabEnabled(1)
+    
+    qtbot.waitUntil(settings_tab_enabled)
+    
+    assert window.tabWidget.isTabEnabled(1)
+    assert window.tabWidget.isTabEnabled(2)
+    assert float(window.penaltySpinBox.value()) == config['base_penalty']
+    assert not window.cleanDirCheckBox.isChecked()
+    assert int(window.maxNoiseSpinBox.value()) == config['min_evals']
+    assert int(window.maxResamplesComboBox.currentIndex()) == 0
+    assert int(window.maxResamplesSpinBox.value()) == \
+                                                config['max_resample_factor']
+    assert int(window.abortXSpinBox.value()) == config['max_simulations']
+    assert window.costVarCheckBox.isChecked() is config['maximise']
+    assert not window.minNoiseCheckBox.isChecked()
+    assert int(window.minNoiseSpinBox.value()) == config['min_evals']
+    assert str(window.costVarBox.currentText()) == \
+                                        "Array Annual Energy Production (MWh)"
+    assert not window.populationCheckBox.isChecked()
+    assert int(window.populationSpinBox.value()) == config['popsize']
+    assert int(window.abortTimeSpinBox.value()) == config['timeout']
+    assert float(window.toleranceSpinBox.value()) == config['tolfun']
+    assert str(window.workDirLineEdit.text()) == config['worker_dir']
+
+
+def test_AdvancedPositionWidget_with_config_alt(qtbot,
+                                                hydro_shell,
+                                                config_alt):
+    
+    window = AdvancedPositionWidget(None, hydro_shell, config_alt)
+    window.show()
+    qtbot.addWidget(window)
+    
+    def settings_tab_enabled(): assert  window.tabWidget.isTabEnabled(1)
+    
+    qtbot.waitUntil(settings_tab_enabled)
+    
+    assert window.tabWidget.isTabEnabled(1)
+    assert window.tabWidget.isTabEnabled(2)
+    assert float(window.penaltySpinBox.value()) == config_alt['base_penalty']
+    assert not window.cleanDirCheckBox.isChecked()
+    assert int(window.maxNoiseSpinBox.value()) == config_alt['max_evals']
+    assert int(window.maxResamplesComboBox.currentIndex()) == 1
+    assert int(window.maxResamplesSpinBox.value()) == \
+                                    int(config_alt['max_resample_factor'][-1])
+    assert int(window.abortXSpinBox.value()) == config_alt['max_simulations']
+    assert window.costVarCheckBox.isChecked() is config_alt['maximise']
+    assert window.minNoiseCheckBox.isChecked()
+    assert str(window.costVarBox.currentText()) == \
+                                        "Array Annual Energy Production (MWh)"
+    assert window.populationCheckBox.isChecked()
+    assert int(window.abortTimeSpinBox.value()) == config_alt['timeout']
+    assert float(window.toleranceSpinBox.value()) == config_alt['tolfun']
+    assert str(window.workDirLineEdit.text()) == config_alt['worker_dir']
 
 
 def test_AdvancedPositionWidget_fixed_combo_slot_uncheck(qtbot,
