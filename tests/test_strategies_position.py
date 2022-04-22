@@ -818,7 +818,6 @@ def test_AdvancedPositionWidget_range_type_slot_fixed(qtbot,
                 "parameters"]["delta_row"]["range"]["type"] == "fixed"
 
 
-
 def test_AdvancedPositionWidget_generic_range_slot(qtbot,
                                                    tmp_path,
                                                    hydro_shell):
@@ -838,14 +837,3 @@ def test_AdvancedPositionWidget_generic_range_slot(qtbot,
     delta_row["range.box.max"].setValue(2)
     
     assert window._config["parameters"]["delta_row"]["range"]["max"] == 2
-
-
-def test_AdvancedPositionWidget_with_config(qtbot, hydro_shell, config):
-    
-    window = AdvancedPositionWidget(None, hydro_shell, config)
-    window.show()
-    qtbot.addWidget(window)
-    
-    def settings_tab_enabled(): assert  window.tabWidget.isTabEnabled(1)
-    
-    qtbot.waitUntil(settings_tab_enabled)
