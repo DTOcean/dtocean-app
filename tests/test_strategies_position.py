@@ -15,15 +15,16 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-
 import pytest
-
 pytest.importorskip("dtocean_hydro")
+
+import os
+
+from PyQt4 import QtCore, QtGui
 
 from dtocean_app.core import GUICore
 from dtocean_app.main import Shell
-from dtocean_app.strategies.position import (AdvancedPositionWidget,
-                                             GUIAdvancedPosition)
+from dtocean_app.strategies.position import AdvancedPositionWidget
 from dtocean_core.interfaces import ModuleInterface
 from dtocean_core.menu import ModuleMenu, ProjectMenu
 from dtocean_core.pipeline import Tree
@@ -151,7 +152,7 @@ def config():
      'max_simulations': 10,
      'maximise': True,
      'min_evals': 3,
-     'n_threads': 1,
+     'n_threads': 7,
      'objective': 'project.annual_energy',
      'parameters': {'delta_col': 
                        {'range': {'max_multiplier': 2.0,
@@ -204,7 +205,7 @@ def config_alt():
      'max_simulations': 1,
      'maximise': False,
      'min_evals': None,
-     'n_threads': 1,
+     'n_threads': 9,
      'objective': 'project.annual_energy',
      'parameters': {'delta_col': 
                        {'fixed': 1},
@@ -272,7 +273,14 @@ def test_AdvancedPositionWidget_settings_open(qtbot, tmp_path, hydro_shell):
     assert window.tabWidget.isTabEnabled(2)
 
 
-def test_AdvancedPositionWidget_with_config(qtbot, hydro_shell, config):
+def test_AdvancedPositionWidget_with_config(mocker,
+                                            qtbot,
+                                            hydro_shell,
+                                            config):
+    
+    max_cpu = 8
+    mocker.patch("dtocean_app.strategies.position.multiprocessing.cpu_count",
+                 return_value=max_cpu)
     
     window = AdvancedPositionWidget(None, hydro_shell, config)
     window.show()
@@ -294,6 +302,8 @@ def test_AdvancedPositionWidget_with_config(qtbot, hydro_shell, config):
     assert window.costVarCheckBox.isChecked() is config['maximise']
     assert not window.minNoiseCheckBox.isChecked()
     assert int(window.minNoiseSpinBox.value()) == config['min_evals']
+    assert int(window.maxNoiseSpinBox.minimum()) == config['min_evals']
+    assert int(window.nThreadSpinBox.value()) == config['n_threads']
     assert str(window.costVarBox.currentText()) == \
                                         "Array Annual Energy Production (MWh)"
     assert not window.populationCheckBox.isChecked()
@@ -303,9 +313,14 @@ def test_AdvancedPositionWidget_with_config(qtbot, hydro_shell, config):
     assert str(window.workDirLineEdit.text()) == config['worker_dir']
 
 
-def test_AdvancedPositionWidget_with_config_alt(qtbot,
+def test_AdvancedPositionWidget_with_config_alt(mocker,
+                                                qtbot,
                                                 hydro_shell,
                                                 config_alt):
+    
+    max_cpu = 8
+    mocker.patch("dtocean_app.strategies.position.multiprocessing.cpu_count",
+                 return_value=max_cpu)
     
     window = AdvancedPositionWidget(None, hydro_shell, config_alt)
     window.show()
@@ -326,12 +341,335 @@ def test_AdvancedPositionWidget_with_config_alt(qtbot,
     assert int(window.abortXSpinBox.value()) == config_alt['max_simulations']
     assert window.costVarCheckBox.isChecked() is config_alt['maximise']
     assert window.minNoiseCheckBox.isChecked()
+    assert int(window.maxNoiseSpinBox.minimum()) == 1
+    assert int(window.nThreadSpinBox.value()) == max_cpu
     assert str(window.costVarBox.currentText()) == \
                                         "Array Annual Energy Production (MWh)"
     assert window.populationCheckBox.isChecked()
     assert int(window.abortTimeSpinBox.value()) == config_alt['timeout']
     assert float(window.toleranceSpinBox.value()) == config_alt['tolfun']
     assert str(window.workDirLineEdit.text()) == config_alt['worker_dir']
+
+
+def test_AdvancedPositionWidget_import_config(mocker,
+                                              qtbot,
+                                              mock_shell,
+                                              config):
+    
+    mocker.patch.object(QtGui.QFileDialog,
+                        'getOpenFileName',
+                        return_value="mock")
+    mocker.patch("dtocean_app.strategies.position."
+                 "GUIAdvancedPosition.load_config",
+                 return_value=config)
+    
+    window = AdvancedPositionWidget(None, mock_shell, {})
+    window.show()
+    qtbot.addWidget(window)
+    
+    qtbot.mouseClick(window.importConfigButton, QtCore.Qt.LeftButton)
+    
+    assert window.tabWidget.isTabEnabled(1)
+    assert window.tabWidget.isTabEnabled(2)
+
+
+def test_AdvancedPositionWidget_export_config(mocker,
+                                              qtbot,
+                                              tmp_path,
+                                              mock_shell,
+                                              config):
+    
+    f = tmp_path / "config.yaml"
+    mocker.patch.object(QtGui.QFileDialog,
+                        'getSaveFileName',
+                        return_value=str(f))
+    
+    window = AdvancedPositionWidget(None, mock_shell, config)
+    window.show()
+    qtbot.addWidget(window)
+    
+    qtbot.mouseClick(window.exportConfigButton, QtCore.Qt.LeftButton)
+    
+    assert f.is_file()
+
+
+def test_AdvancedPositionWidget_reset_worker_dir(qtbot,
+                                                 mock_shell,
+                                                 config):
+    
+    window = AdvancedPositionWidget(None, mock_shell, config)
+    window.show()
+    qtbot.addWidget(window)
+    
+    window.workDirLineEdit.insert('not_mock')
+    window.workDirLineEdit.editingFinished.emit()
+    
+    assert str(window.workDirLineEdit.text()) == config['worker_dir']
+
+
+def test_AdvancedPositionWidget_reset_worker_dir_none(qtbot,
+                                                      mock_shell):
+    
+    window = AdvancedPositionWidget(None, mock_shell, {})
+    window.show()
+    qtbot.addWidget(window)
+    
+    window.workDirLineEdit.insert('not_mock')
+    window.workDirLineEdit.editingFinished.emit()
+    
+    assert str(window.workDirLineEdit.text()) == ""
+
+
+def test_AdvancedPositionWidget_select_worker_dir(mocker,
+                                                  qtbot,
+                                                  mock_shell,
+                                                  config):
+    
+    mock = mocker.patch.object(QtGui.QFileDialog,
+                               'getExistingDirectory',
+                               return_value="another_mock")
+    
+    window = AdvancedPositionWidget(None, mock_shell, config)
+    window.show()
+    qtbot.addWidget(window)
+    
+    qtbot.mouseClick(window.workDirToolButton, QtCore.Qt.LeftButton)
+    
+    assert mock.call_args.args[2] == config['worker_dir']
+    assert str(window.workDirLineEdit.text()) == "another_mock"
+
+
+def test_AdvancedPositionWidget_select_worker_dir_none(mocker,
+                                                       qtbot,
+                                                       mock_shell):
+    
+    mock = mocker.patch.object(QtGui.QFileDialog,
+                               'getExistingDirectory',
+                               return_value="another_mock")
+    
+    window = AdvancedPositionWidget(None, mock_shell, {})
+    window.show()
+    qtbot.addWidget(window)
+    
+    qtbot.mouseClick(window.workDirToolButton, QtCore.Qt.LeftButton)
+    
+    assert mock.call_args.args[2] == os.path.expanduser("~")
+    assert str(window.workDirLineEdit.text()) == "another_mock"
+
+
+@pytest.mark.parametrize("toggles, expected", [(1, True), (2, False)])
+def test_AdvancedPositionWidget_update_clean_existing_dir(qtbot,
+                                                          hydro_shell,
+                                                          toggles,
+                                                          expected):
+    
+    window = AdvancedPositionWidget(None, hydro_shell, {})
+    window.show()
+    qtbot.addWidget(window)
+    
+    for _ in range(toggles): window.cleanDirCheckBox.toggle()
+    assert window.get_configuration()["clean_existing_dir"] is expected
+
+
+def test_AdvancedPositionWidget_update_objective(qtbot,
+                                                 tmp_path,
+                                                 hydro_shell):
+    
+    window = AdvancedPositionWidget(None, hydro_shell, {})
+    window.show()
+    qtbot.addWidget(window)
+    
+    window.workDirLineEdit.insert(str(tmp_path))
+    window.workDirLineEdit.returnPressed.emit()
+    
+    def settings_tab_enabled(): assert  window.tabWidget.isTabEnabled(1)
+    
+    qtbot.waitUntil(settings_tab_enabled)
+    
+    window.costVarBox.setCurrentIndex(1)
+    
+    assert str(window.penaltyUnitsLabel.text()) == "MWh"
+    assert str(window.toleranceUnitsLabel.text()) == "MWh"
+    
+    window.costVarBox.setCurrentIndex(2)
+    
+    assert str(window.penaltyUnitsLabel.text()) == ""
+    assert str(window.toleranceUnitsLabel.text()) == ""
+
+
+@pytest.mark.parametrize("toggles, expected", [(1, True), (2, False)])
+def test_AdvancedPositionWidget_update_maximise(qtbot,
+                                                tmp_path,
+                                                hydro_shell,
+                                                toggles,
+                                                expected):
+    
+    window = AdvancedPositionWidget(None, hydro_shell, {})
+    window.show()
+    qtbot.addWidget(window)
+    
+    window.workDirLineEdit.insert(str(tmp_path))
+    window.workDirLineEdit.returnPressed.emit()
+    
+    def settings_tab_enabled(): assert  window.tabWidget.isTabEnabled(1)
+    
+    qtbot.waitUntil(settings_tab_enabled)
+    
+    for _ in range(toggles): window.costVarCheckBox.toggle()
+    assert window.get_configuration()["maximise"] is expected
+
+
+def test_AdvancedPositionWidget_update_max_simulations(qtbot,
+                                                       tmp_path,
+                                                       hydro_shell):
+    
+    window = AdvancedPositionWidget(None, hydro_shell, {})
+    window.show()
+    qtbot.addWidget(window)
+    
+    window.workDirLineEdit.insert(str(tmp_path))
+    window.workDirLineEdit.returnPressed.emit()
+    
+    def settings_tab_enabled(): assert  window.tabWidget.isTabEnabled(1)
+    
+    qtbot.waitUntil(settings_tab_enabled)
+    
+    window.abortXSpinBox.setValue(1)
+    assert window.get_configuration()["max_simulations"] == 1
+    
+    window.abortXSpinBox.setValue(0)
+    assert window.get_configuration()["max_simulations"] is None
+
+
+def test_AdvancedPositionWidget_update_max_time(qtbot,
+                                                tmp_path,
+                                                hydro_shell):
+    
+    window = AdvancedPositionWidget(None, hydro_shell, {})
+    window.show()
+    qtbot.addWidget(window)
+    
+    window.workDirLineEdit.insert(str(tmp_path))
+    window.workDirLineEdit.returnPressed.emit()
+    
+    def settings_tab_enabled(): assert  window.tabWidget.isTabEnabled(1)
+    
+    qtbot.waitUntil(settings_tab_enabled)
+    
+    window.abortTimeSpinBox.setValue(1)
+    assert window.get_configuration()["timeout"] == 1
+    
+    window.abortTimeSpinBox.setValue(0)
+    assert window.get_configuration()["timeout"] is None
+
+
+def test_AdvancedPositionWidget_update_min_noise_auto(qtbot,
+                                                      tmp_path,
+                                                      hydro_shell):
+    
+    window = AdvancedPositionWidget(None, hydro_shell, {})
+    window.show()
+    qtbot.addWidget(window)
+    
+    window.workDirLineEdit.insert(str(tmp_path))
+    window.workDirLineEdit.returnPressed.emit()
+    
+    def settings_tab_enabled(): assert  window.tabWidget.isTabEnabled(1)
+    
+    qtbot.waitUntil(settings_tab_enabled)
+    
+    window.maxNoiseSpinBox.setMinimum(4)
+    window.minNoiseCheckBox.setChecked(False)
+    window.minNoiseCheckBox.toggle()
+    
+    assert window.get_configuration()["min_evals"] is None
+    assert not window.minNoiseSpinBox.isEnabled()
+    assert window.maxNoiseSpinBox.minimum() == 1
+    
+    window.minNoiseCheckBox.toggle()
+    
+    assert window.get_configuration()["min_evals"] == window._default_popsize
+    assert window.minNoiseSpinBox.isEnabled()
+
+
+def test_AdvancedPositionWidget_update_population_auto(qtbot,
+                                                       tmp_path,
+                                                       hydro_shell):
+    
+    window = AdvancedPositionWidget(None, hydro_shell, {})
+    window.show()
+    qtbot.addWidget(window)
+    
+    window.workDirLineEdit.insert(str(tmp_path))
+    window.workDirLineEdit.returnPressed.emit()
+    
+    def settings_tab_enabled(): assert  window.tabWidget.isTabEnabled(1)
+    
+    qtbot.waitUntil(settings_tab_enabled)
+    
+    window.populationCheckBox.setChecked(False)
+    window.populationCheckBox.toggle()
+    
+    assert window.get_configuration()["popsize"] is None
+    assert not window.populationSpinBox.isEnabled()
+    
+    window.populationCheckBox.toggle()
+    
+    assert window.get_configuration()["popsize"] == window._default_popsize
+    assert window.populationSpinBox.isEnabled()
+
+
+def test_AdvancedPositionWidget_update_max_resamples_algorithm(qtbot,
+                                                               tmp_path,
+                                                               hydro_shell):
+    
+    window = AdvancedPositionWidget(None, hydro_shell, {})
+    window.show()
+    qtbot.addWidget(window)
+    
+    window.workDirLineEdit.insert(str(tmp_path))
+    window.workDirLineEdit.returnPressed.emit()
+    
+    def settings_tab_enabled(): assert  window.tabWidget.isTabEnabled(1)
+    
+    qtbot.waitUntil(settings_tab_enabled)
+    
+    window.maxResamplesComboBox.setCurrentIndex(0)
+    
+    assert isinstance(window.get_configuration()["max_resample_factor"], int)
+    
+    window.maxResamplesComboBox.setCurrentIndex(1)
+    
+    assert "auto" in window.get_configuration()["max_resample_factor"]
+
+
+def test_AdvancedPositionWidget_update_max_resamples(qtbot,
+                                                     tmp_path,
+                                                     hydro_shell):
+    
+    window = AdvancedPositionWidget(None, hydro_shell, {})
+    window.show()
+    qtbot.addWidget(window)
+    
+    window.workDirLineEdit.insert(str(tmp_path))
+    window.workDirLineEdit.returnPressed.emit()
+    
+    def settings_tab_enabled(): assert  window.tabWidget.isTabEnabled(1)
+    
+    qtbot.waitUntil(settings_tab_enabled)
+    
+    value = 5
+    window.maxResamplesComboBox.setCurrentIndex(0)
+    window.maxResamplesSpinBox.setValue(value)
+    
+    assert window.get_configuration()["max_resample_factor"] == value
+    
+    value = 6
+    window.maxResamplesComboBox.setCurrentIndex(1)
+    window.maxResamplesSpinBox.setValue(value)
+    
+    auto_value = "auto{}".format(value)
+    assert window.get_configuration()["max_resample_factor"] == auto_value
 
 
 def test_AdvancedPositionWidget_fixed_combo_slot_uncheck(qtbot,
@@ -500,3 +838,14 @@ def test_AdvancedPositionWidget_generic_range_slot(qtbot,
     delta_row["range.box.max"].setValue(2)
     
     assert window._config["parameters"]["delta_row"]["range"]["max"] == 2
+
+
+def test_AdvancedPositionWidget_with_config(qtbot, hydro_shell, config):
+    
+    window = AdvancedPositionWidget(None, hydro_shell, config)
+    window.show()
+    qtbot.addWidget(window)
+    
+    def settings_tab_enabled(): assert  window.tabWidget.isTabEnabled(1)
+    
+    qtbot.waitUntil(settings_tab_enabled)

@@ -204,13 +204,13 @@ $ conda activate _dtocean_app
 Install pytest to the environment (one time only):
 
 ```
-$ conda install -y flaky mock pytest pytest-mock pytest-qt
+$ conda install -y mock pytest pytest-mock pytest-qt
 ```
 
 Run the tests:
 
 ``` 
-$ py.test -v tests
+$ python -m pytest -v tests
 ```
 
 Note, some tests require dtocean-hydrodynamics to be installed and will be

@@ -37,12 +37,12 @@ install:
   - conda install --file requirements-conda-dev.txt
   - python setup.py bootstrap
   - pip install -e .
-  - conda install flaky mock "pytest>=3.6,<4" pytest-cov pytest-mock pytest-qt
+  - conda install mock "pytest>=3.6,<4" pytest-cov pytest-mock pytest-qt
 
 build: off
 
 test_script:
-  - py.test -v --cov dtocean_app tests
+  - python -m pytest -v --cov dtocean_app tests
 
 after_test:
  - pip install codecov

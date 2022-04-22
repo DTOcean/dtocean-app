@@ -17,7 +17,6 @@
 
 import os
 
-from flaky import flaky
 import pytest
 from PyQt4 import QtCore, QtGui
 
@@ -1520,7 +1519,6 @@ def test_dump_load_database(qtbot, mocker, tmpdir, core):
     db_selector.close()
 
 
-@flaky
 def test_save_modify_close(qtbot, mocker, tmpdir, core):
     
     shell = Shell(core)
