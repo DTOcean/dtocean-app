@@ -991,15 +991,24 @@ class AdvancedPositionWidget(QtGui.QWidget,
                                                 color_map[config_status_code],
                                                 config_status_str)
             
-            for project_status_str in project_status_strs:
-                status_str += \
-                        status_template.format(color_map[project_status_code],
-                                               project_status_str)
-            
-            if worker_dir_status_str is not None:
+            if worker_dir_status_code == 0:
+                
                 status_str += \
                     status_template.format(color_map[worker_dir_status_code],
                                            worker_dir_status_str)
+            
+            else:
+                
+                if worker_dir_status_str is not None:
+                    status_str += \
+                        status_template.format(color_map[
+                                                        worker_dir_status_code],
+                                               worker_dir_status_str)
+                
+                for project_status_str in project_status_strs:
+                    status_str += \
+                        status_template.format(color_map[project_status_code],
+                                               project_status_str)
         
         else:
             
