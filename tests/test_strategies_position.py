@@ -19,7 +19,10 @@ import pytest
 pytest.importorskip("dtocean_hydro")
 
 import os
+import time
+from copy import deepcopy
 
+import pandas as pd
 from PyQt4 import QtCore, QtGui
 
 from dtocean_app.core import GUICore
@@ -280,7 +283,8 @@ def test_AdvancedPositionWidget_with_config(mocker,
     
     max_cpu = 8
     mocker.patch("dtocean_app.strategies.position.multiprocessing.cpu_count",
-                 return_value=max_cpu)
+                 return_value=max_cpu,
+                 autospec=True)
     
     window = AdvancedPositionWidget(None, hydro_shell, config)
     window.show()
@@ -320,7 +324,8 @@ def test_AdvancedPositionWidget_with_config_alt(mocker,
     
     max_cpu = 8
     mocker.patch("dtocean_app.strategies.position.multiprocessing.cpu_count",
-                 return_value=max_cpu)
+                 return_value=max_cpu,
+                 autospec=True)
     
     window = AdvancedPositionWidget(None, hydro_shell, config_alt)
     window.show()
@@ -356,12 +361,14 @@ def test_AdvancedPositionWidget_import_config(mocker,
                                               mock_shell,
                                               config):
     
+    from dtocean_app.strategies.position import GUIAdvancedPosition
+    
     mocker.patch.object(QtGui.QFileDialog,
                         'getOpenFileName',
                         return_value="mock")
-    mocker.patch("dtocean_app.strategies.position."
-                 "GUIAdvancedPosition.load_config",
-                 return_value=config)
+    mocker.patch.object(GUIAdvancedPosition,
+                        "load_config",
+                        return_value=config)
     
     window = AdvancedPositionWidget(None, mock_shell, {})
     window.show()
@@ -837,3 +844,433 @@ def test_AdvancedPositionWidget_generic_range_slot(qtbot,
     delta_row["range.box.max"].setValue(2)
     
     assert window._config["parameters"]["delta_row"]["range"]["max"] == 2
+
+
+@pytest.fixture
+def results_df():
+    
+    data = {'project.annual_energy': {0L: 28023.48059,
+                                      1L: 26643.27071,
+                                      2L: 26778.45299,
+                                      3L: 27814.33542,
+                                      4L: 26757.21522,
+                                      5L: 27764.08384,
+                                      6L: 26550.5673,
+                                      7L: 26514.06173,
+                                      8L: 26643.27087,
+                                      9L: 28023.47982,
+                                      10L: 27239.98945,
+                                      11L: 26806.925209999998,
+                                      12L: 27015.241060000004,
+                                      13L: 26902.301689999997,
+                                      14L: 27703.89522,
+                                      15L: 27592.686130000002,
+                                      16L: 27135.776339999997,
+                                      17L: 26920.497939999997,
+                                      18L: 26806.92582,
+                                      19L: 27239.98869},
+            'project.q_factor': {0L: 0.643158496,
+                                 1L: 0.623552046,
+                                 2L: 0.619544776,
+                                 3L: 0.638151372,
+                                 4L: 0.627739436,
+                                 5L: 0.639574664,
+                                 6L: 0.621381745,
+                                 7L: 0.6219333429999999,
+                                 8L: 0.623552048,
+                                 9L: 0.643158482,
+                                 10L: 0.628048709,
+                                 11L: 0.621347485,
+                                 12L: 0.624239722,
+                                 13L: 0.624158242,
+                                 14L: 0.6397536,
+                                 15L: 0.635736073,
+                                 16L: 0.626756041,
+                                 17L: 0.624501289,
+                                 18L: 0.6213474929999999,
+                                 19L: 0.6280486999999999},
+            'delta_col': {0L: 64.52022757,
+                          1L: 76.45367283,
+                          2L: 71.15118317,
+                          3L: 59.4973027,
+                          4L: 71.77538159,
+                          5L: 20.852555300000002,
+                          6L: 68.28236751,
+                          7L: 68.20489517,
+                          8L: 76.45367694,
+                          9L: 64.52023109,
+                          10L: 68.2075193,
+                          11L: 74.75166956,
+                          12L: 62.97270795,
+                          13L: 67.20068782,
+                          14L: 59.94350211,
+                          15L: 65.31181504,
+                          16L: 69.15202565,
+                          17L: 72.23155823,
+                          18L: 74.75166870000001,
+                          19L: 68.20752592},
+            'grid_orientation': {0L: 44.40745668,
+                                 1L: 33.37571009,
+                                 2L: 31.08369837,
+                                 3L: 44.20467039,
+                                 4L: 37.60163529,
+                                 5L: 314.2614026,
+                                 6L: 33.60661513,
+                                 7L: 35.39741359,
+                                 8L: 33.37571142,
+                                 9L: 44.40745683,
+                                 10L: 23.73700194,
+                                 11L: 27.35090955,
+                                 12L: 24.72097026,
+                                 13L: 37.02701777,
+                                 14L: 44.06050874,
+                                 15L: 43.03812177,
+                                 16L: 38.92446379,
+                                 17L: 35.23278284,
+                                 18L: 27.35090645,
+                                 19L: 23.73699979},
+            'n_nodes': {0L: 13L,
+                        1L: 13L,
+                        2L: 13L,
+                        3L: 13L,
+                        4L: 13L,
+                        5L: 13L,
+                        6L: 13L,
+                        7L: 13L,
+                        8L: 13L,
+                        9L: 13L,
+                        10L: 13L,
+                        11L: 13L,
+                        12L: 13L,
+                        13L: 13L,
+                        14L: 13L,
+                        15L: 13L,
+                        16L: 13L,
+                        17L: 13L,
+                        18L: 13L,
+                        19L: 13L},
+            'n_evals': {0L: 1L,
+                        1L: 1L,
+                        2L: 1L,
+                        3L: 1L,
+                        4L: 1L,
+                        5L: 1L,
+                        6L: 1L,
+                        7L: 1L,
+                        8L: 1L,
+                        9L: 1L,
+                        10L: 1L,
+                        11L: 1L,
+                        12L: 1L,
+                        13L: 1L,
+                        14L: 1L,
+                        15L: 1L,
+                        16L: 1L,
+                        17L: 1L,
+                        18L: 1L,
+                        19L: 1L},
+            'project.number_of_devices': {0L: 13L,
+                                          1L: 13L,
+                                          2L: 13L,
+                                          3L: 13L,
+                                          4L: 13L,
+                                          5L: 13L,
+                                          6L: 13L,
+                                          7L: 13L,
+                                          8L: 13L,
+                                          9L: 13L,
+                                          10L: 13L,
+                                          11L: 13L,
+                                          12L: 13L,
+                                          13L: 13L,
+                                          14L: 13L,
+                                          15L: 13L,
+                                          16L: 13L,
+                                          17L: 13L,
+                                          18L: 13L,
+                                          19L: 13L},
+            'delta_row': {0L: 22.92577303,
+                          1L: 20.88411836,
+                          2L: 20.69190282,
+                          3L: 20.42196081,
+                          4L: 20.18076208,
+                          5L: 65.57126996,
+                          6L: 20.17591929,
+                          7L: 22.60274014,
+                          8L: 20.88411952,
+                          9L: 22.92576718,
+                                10L: 20.30129026,
+                                11L: 21.357913,
+                                12L: 22.49606414,
+                                13L: 22.13374607,
+                                14L: 20.74594427,
+                                15L: 22.47424913,
+                                16L: 22.21391043,
+                                17L: 20.21319696,
+                                18L: 21.35790763,
+                                19L: 20.301297299999998},
+            'sim_number': {0L: 1L,
+                           1L: 2L,
+                           2L: 3L,
+                           3L: 4L,
+                           4L: 5L,
+                           5L: 8L,
+                           6L: 10L,
+                           7L: 11L,
+                           8L: 12L,
+                           9L: 13L,
+                           10L: 14L,
+                           11L: 15L,
+                           12L: 16L,
+                           13L: 18L,
+                           14L: 20L,
+                           15L: 21L,
+                           16L: 22L,
+                           17L: 23L,
+                           18L: 24L,
+                           19L: 25L},
+            't1': {0L: 0.5825523539999999,
+                   1L: 0.335333514,
+                   2L: 0.649960257,
+                   3L: 0.598152204,
+                   4L: 0.358674858,
+                   5L: 0.11531966099999999,
+                   6L: 0.7516376490000001,
+                   7L: 0.626618264,
+                   8L: 0.335333535,
+                   9L: 0.582552348,
+                   10L: 0.639915098,
+                   11L: 0.44859446299999994,
+                   12L: 0.440489291,
+                   13L: 0.68587213,
+                   14L: 0.599689381,
+                   15L: 0.685054472,
+                   16L: 0.879525573,
+                   17L: 0.521208095,
+                   18L: 0.448594492,
+                   19L: 0.639915119},
+            't2': {0L: 0.837202551,
+                   1L: 0.852131616,
+                   2L: 0.065172178,
+                   3L: 0.201124935,
+                   4L: 0.948168792,
+                   5L: 0.23561065399999997,
+                   6L: 0.222081996,
+                   7L: 0.20230825100000002,
+                   8L: 0.8521316290000001,
+                   9L: 0.8372025470000001,
+                   10L: 0.8775905009999999,
+                   11L: 0.859587812,
+                   12L: 0.778496615,
+                   13L: 0.8157775970000001,
+                   14L: 0.743709152,
+                   15L: 0.79916979,
+                   16L: 0.76798122,
+                   17L: 0.843732638,
+                   18L: 0.8595878240000001,
+                   19L: 0.8775905190000001}}
+    table_cols = ["sim_number",
+                  'project.annual_energy',
+                  "grid_orientation",
+                  "delta_row",
+                  "delta_col",
+                  "n_nodes",
+                  "t1",
+                  "t2",
+                  "n_evals",
+                  'project.number_of_devices']
+    
+    return pd.DataFrame(data, columns=table_cols)
+
+
+@pytest.fixture
+def window_results(mocker,
+                   tmp_path,
+                   hydro_shell,
+                   config,
+                   results_df):
+    
+    from dtocean_app.strategies.position import GUIAdvancedPosition
+    
+    status_str = "Project ready"
+    status_code = 1
+    mocker.patch.object(GUIAdvancedPosition,
+                        "get_project_status",
+                        return_value=(status_str, status_code))
+    
+    status_str = "Configuration complete"
+    status_code = 1
+    mocker.patch.object(GUIAdvancedPosition,
+                        "get_config_status",
+                        return_value=(status_str, status_code))
+    
+    status_str = "Worker directory contains files"
+    status_code = 0
+    mocker.patch.object(GUIAdvancedPosition,
+                        "get_worker_directory_status",
+                        return_value=(status_str, status_code))
+    
+    status_str = "Optimisation complete"
+    status_code = 1
+    mocker.patch.object(GUIAdvancedPosition,
+                        "get_optimiser_status",
+                        return_value=(status_str, status_code))
+    
+    config['worker_dir'] = str(tmp_path)
+    config['clean_existing_dir'] = True
+    side_effect = lambda *args: deepcopy(config)
+    mocker.patch.object(GUIAdvancedPosition,
+                        "load_config",
+                        side_effect=side_effect)
+    
+    mocker.patch.object(GUIAdvancedPosition,
+                        "get_all_results",
+                        return_value=results_df)
+    
+    return AdvancedPositionWidget(None, hydro_shell, config)
+
+
+
+def test_AdvancedPositionWidget_results_open(qtbot, window_results):
+    
+    window_results.show()
+    qtbot.addWidget(window_results)
+    
+    assert window_results.tabWidget.isTabEnabled(3)
+    assert window_results.tabWidget.isTabEnabled(4)
+
+
+def test_AdvancedPositionWidget_update_delete_sims(qtbot, window_results):
+    
+    window_results.show()
+    qtbot.addWidget(window_results)
+    
+    qtbot.mouseClick(window_results.deleteSimsBox, QtCore.Qt.LeftButton)
+    
+    assert not window_results._delete_sims
+    assert not window_results.protectDefaultBox.isEnabled()
+    
+    qtbot.mouseClick(window_results.deleteSimsBox, QtCore.Qt.LeftButton)
+    
+    assert window_results._delete_sims
+    assert window_results.protectDefaultBox.isEnabled()
+
+
+def test_AdvancedPositionWidget_update_protect_default(qtbot, window_results):
+    
+    window_results.show()
+    qtbot.addWidget(window_results)
+    
+    qtbot.mouseClick(window_results.protectDefaultBox, QtCore.Qt.LeftButton)
+    
+    assert not window_results._protect_default
+    
+    qtbot.mouseClick(window_results.protectDefaultBox, QtCore.Qt.LeftButton)
+    
+    assert window_results._protect_default
+
+
+@pytest.mark.parametrize("button, expected", [
+                        ("bestSimButton", [1]),
+                        ("worstSimButton", [11]),
+                        ("top5SimButton", [1, 13, 4, 8, 20]),
+                        ("bottom5SimButton", [11, 10, 2, 12, 5])])
+def test_AdvancedPositionWidget_select_sims_to_load(qtbot,
+                                                    window_results,
+                                                    button,
+                                                    expected):
+    
+    window_results.show()
+    qtbot.addWidget(window_results)
+    
+    window_results.tabWidget.setCurrentIndex(3)
+    
+    button = getattr(window_results, button)
+    qtbot.mouseClick(button, QtCore.Qt.LeftButton)
+    
+    assert window_results._sims_to_load == expected
+    assert not window_results.simsLabel.isEnabled()
+    assert not window_results.simSelectEdit.isEnabled()
+    assert not window_results.simHelpLabel.isEnabled()
+    assert window_results.simLoadButton.isEnabled()
+
+
+def test_AdvancedPositionWidget_select_sims_to_load_custom(qtbot,
+                                                           window_results):
+    
+    window_results.show()
+    qtbot.addWidget(window_results)
+    
+    window_results.tabWidget.setCurrentIndex(3)
+    
+    button = getattr(window_results, "customSimButton")
+    qtbot.mouseClick(button, QtCore.Qt.LeftButton)
+    
+    assert window_results._sims_to_load is None
+    assert window_results.simsLabel.isEnabled()
+    assert window_results.simSelectEdit.isEnabled()
+    assert window_results.simHelpLabel.isEnabled()
+    assert not window_results.simLoadButton.isEnabled()
+
+
+def test_AdvancedPositionWidget_update_custom_sims(qtbot,
+                                                   window_results):
+    
+    window_results.show()
+    qtbot.addWidget(window_results)
+    
+    window_results.tabWidget.setCurrentIndex(3)
+    
+    button = getattr(window_results, "customSimButton")
+    qtbot.mouseClick(button, QtCore.Qt.LeftButton)
+    
+    expected = [1, 2, 3, 4]
+    expected_str = ", ".join([str(x) for x in expected])
+    window_results.simSelectEdit.insert(expected_str)
+    window_results.simSelectEdit.returnPressed.emit()
+    
+    assert window_results._sims_to_load == expected
+    assert window_results.simLoadButton.isEnabled()
+
+
+def test_AdvancedPositionWidget_update_custom_sims_bad(qtbot,
+                                                       window_results):
+    
+    window_results.show()
+    qtbot.addWidget(window_results)
+    
+    window_results.tabWidget.setCurrentIndex(3)
+    
+    button = getattr(window_results, "customSimButton")
+    qtbot.mouseClick(button, QtCore.Qt.LeftButton)
+    
+    window_results.simSelectEdit.insert("1, two, 3")
+    window_results.simSelectEdit.returnPressed.emit()
+    
+    assert window_results._sims_to_load is None
+    assert not window_results.simLoadButton.isEnabled()
+
+
+def test_AdvancedPositionWidget_load_sims(qtbot,
+                                          mocker,
+                                          window_results):
+    
+#    from dtocean_app.strategies import position
+    
+    strategy = window_results._shell.strategy = mocker.MagicMock()
+    sleep = lambda *args: time.sleep(1)
+    strategy.load_simulation_ids.side_effect=sleep
+    
+    # Need to asser that the progress bar was shown
+#    spy = mocker.spy(position, "ProgressBar")
+    
+    window_results.show()
+    qtbot.addWidget(window_results)
+    
+    window_results.tabWidget.setCurrentIndex(3)
+    
+    button = getattr(window_results, "bestSimButton")
+    qtbot.mouseClick(button, QtCore.Qt.LeftButton)
+    qtbot.mouseClick(window_results.simLoadButton, QtCore.Qt.LeftButton)
+    
+    assert True
