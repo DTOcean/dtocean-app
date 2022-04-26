@@ -28,6 +28,7 @@ import shutil
 import logging
 import tarfile
 import tempfile
+import threading
 import traceback
 from collections import namedtuple
 
@@ -81,6 +82,9 @@ module_logger = logging.getLogger(__name__)
 # User home directory
 HOME = os.path.expanduser("~")
 
+# Check if running coverage
+RUNNING_COVERAGE = "coverage" in sys.modules
+
 
 class ThreadReadRaw(QtCore.QThread):
     
@@ -88,17 +92,24 @@ class ThreadReadRaw(QtCore.QThread):
     
     taskFinished = QtCore.pyqtSignal()
     error_detected =  QtCore.pyqtSignal(object, object, object)
-
+    
     def __init__(self, shell, variable, value):
         
         super(ThreadReadRaw, self).__init__()
         self._shell = shell
         self._variable = variable
         self._value = value
-                
+        
         return
     
     def run(self):
+        
+        if RUNNING_COVERAGE:
+            sys.settrace(threading._trace_hook)
+        
+        self._run()
+    
+    def _run(self):
         
         try:
         
@@ -113,7 +124,7 @@ class ThreadReadRaw(QtCore.QThread):
             etype, evalue, etraceback = sys.exc_info()
             self.error_detected.emit(etype, evalue, etraceback)
             self.taskFinished.emit()
-
+        
         return
 
 
@@ -136,6 +147,13 @@ class ThreadReadTest(QtCore.QThread):
     
     def run(self):
         
+        if RUNNING_COVERAGE:
+            sys.settrace(threading._trace_hook)
+        
+        self._run()
+    
+    def _run(self):
+        
         try:
         
             self.control._read_test_data(self.shell,
@@ -148,7 +166,7 @@ class ThreadReadTest(QtCore.QThread):
             etype, evalue, etraceback = sys.exc_info()
             self.error_detected.emit(etype, evalue, etraceback)
             self.taskFinished.emit()
-
+        
         return
 
 
@@ -158,7 +176,7 @@ class ThreadOpen(QtCore.QThread):
     
     taskFinished = QtCore.pyqtSignal()
     error_detected =  QtCore.pyqtSignal(object, object, object)
-
+    
     def __init__(self, core, file_path):
         
         super(ThreadOpen, self).__init__()
@@ -174,8 +192,15 @@ class ThreadOpen(QtCore.QThread):
     
     def run(self):
         
+        if RUNNING_COVERAGE:
+            sys.settrace(threading._trace_hook)
+        
+        self._run()
+    
+    def _run(self):
+        
         try:
-
+            
             load_path = str(self._file_path)
             dto_dir_path = None
             prj_file_path = None
@@ -258,7 +283,7 @@ class ThreadOpen(QtCore.QThread):
             self.error_detected.emit(etype, evalue, etraceback)
             
             self.taskFinished.emit()
-
+        
         return
 
 
@@ -287,6 +312,13 @@ class ThreadSave(QtCore.QThread):
         return
     
     def run(self):
+        
+        if RUNNING_COVERAGE:
+            sys.settrace(threading._trace_hook)
+        
+        self._run()
+    
+    def _run(self):
         
         try:
             
@@ -331,30 +363,30 @@ class ThreadSave(QtCore.QThread):
             
             # Dump the activated interfaces
             if self._activated_interfaces:
-            
+                
                 int_file_path = os.path.join(dto_dir_path, "interfaces.json")
                 
                 with open(int_file_path, 'wb') as json_file:
                     json.dump(self._activated_interfaces, json_file)
-            
+                    
                 # Set the standard archive contents
                 arch_files.append(int_file_path)
                 arch_paths.append("interfaces.json")
             
             # Dump the strategy (if there is one)
             if self._strategy is not None:
-            
+                
                 strategy_manager = GUIStrategyManager(None)
                 stg_file_path = os.path.join(dto_dir_path, "strategy.pkl")
                 strategy_manager.dump_strategy(self._strategy, stg_file_path)
                 
                 arch_files.append(stg_file_path)
                 arch_paths.append("strategy.pkl")
-                
+            
             # Now tar the files together
             dto_file_name = os.path.split(self._save_path)[1]
             tar_file_name = "{}.tar".format(dto_file_name)
-        
+            
             archive = tarfile.open(tar_file_name, "w")
             
             for arch_file, arch_path in zip(arch_files, arch_paths):
@@ -373,7 +405,7 @@ class ThreadSave(QtCore.QThread):
             self.error_detected.emit(etype, evalue, etraceback)
             
             self.taskFinished.emit()
-
+        
         return
 
 
@@ -383,7 +415,7 @@ class ThreadDataFlow(QtCore.QThread):
     
     taskFinished = QtCore.pyqtSignal()
     error_detected =  QtCore.pyqtSignal(object, object, object)
-
+    
     def __init__(self, pipeline, shell):
         
         super(ThreadDataFlow, self).__init__()
@@ -395,6 +427,13 @@ class ThreadDataFlow(QtCore.QThread):
         return
     
     def run(self):
+        
+        if RUNNING_COVERAGE:
+            sys.settrace(threading._trace_hook)
+        
+        self._run()
+    
+    def _run(self):
         
         try:
             
@@ -426,16 +465,16 @@ class ThreadDataFlow(QtCore.QThread):
             self.pipeline._read_auto(self.shell)
             
             self.taskFinished.emit()
-            
+        
         except: 
             
             etype, evalue, etraceback = sys.exc_info()
             self.error_detected.emit(etype, evalue, etraceback)
             self.taskFinished.emit()
-
+        
         return
-        
-        
+
+
 class ThreadCurrent(QtCore.QThread):
     
     """QThread for executing the current module"""
@@ -454,6 +493,13 @@ class ThreadCurrent(QtCore.QThread):
         return
     
     def run(self):
+        
+        if RUNNING_COVERAGE:
+            sys.settrace(threading._trace_hook)
+        
+        self._run()
+    
+    def _run(self):
         
         try:
             
@@ -478,17 +524,17 @@ class ThreadCurrent(QtCore.QThread):
             self._core.blockSignals(False)
             self._project.blockSignals(False)
             self.taskFinished.emit()
-
+        
         return
-        
-        
+
+
 class ThreadThemes(QtCore.QThread):
     
     """QThread for executing all themes"""
     
     taskFinished = QtCore.pyqtSignal()
     error_detected =  QtCore.pyqtSignal(object, object, object)
-
+    
     def __init__(self, core, project):
         
         super(ThreadThemes, self).__init__()
@@ -500,6 +546,13 @@ class ThreadThemes(QtCore.QThread):
         return
     
     def run(self):
+        
+        if RUNNING_COVERAGE:
+            sys.settrace(threading._trace_hook)
+        
+        self._run()
+    
+    def _run(self):
         
         try:
             
@@ -524,7 +577,7 @@ class ThreadThemes(QtCore.QThread):
             self._core.blockSignals(False)
             self._project.blockSignals(False)
             self.taskFinished.emit()
-
+        
         return
 
 
@@ -546,6 +599,13 @@ class ThreadStrategy(QtCore.QThread):
     
     def run(self):
         
+        if RUNNING_COVERAGE:
+            sys.settrace(threading._trace_hook)
+        
+        self._run()
+    
+    def _run(self):
+        
         try:
             
             # Block signals
@@ -564,15 +624,15 @@ class ThreadStrategy(QtCore.QThread):
             
             etype, evalue, etraceback = sys.exc_info()
             self.error_detected.emit(etype, evalue, etraceback)
-
+            
             # Reinstate signals and emit
             self._core.blockSignals(False)
             self._project.blockSignals(False)
             self.taskFinished.emit()
-
+        
         return
 
-        
+
 class ThreadTool(QtCore.QThread):
     
     """QThread for executing dtocean-wec"""
@@ -587,25 +647,32 @@ class ThreadTool(QtCore.QThread):
         self._project = project
         
         self._tool_manager = GUIToolManager()
-                
+        
         return
     
     def run(self):
         
+        if RUNNING_COVERAGE:
+            sys.settrace(threading._trace_hook)
+        
+        self._run()
+    
+    def _run(self):
+        
         try:
-                    
+            
             self._tool_manager.execute_tool(self._core,
                                             self._project,
                                             self._tool)
-                
-        except: 
+        
+        except:
             
             etype, evalue, etraceback = sys.exc_info()
             self.error_detected.emit(etype, evalue, etraceback)
-
+        
         return
-    
-    
+
+
 class ThreadDump(QtCore.QThread):
     
     """QThread for executing database dump"""
@@ -624,46 +691,53 @@ class ThreadDump(QtCore.QThread):
     
     def run(self):
         
+        if RUNNING_COVERAGE:
+            sys.settrace(threading._trace_hook)
+        
+        self._run()
+    
+    def _run(self):
+        
         try:
-                    
+            
             db = get_database(self._credentials, timeout=60)
             table_list = get_table_map()
-        
+            
             # Filter the table if required
             selected = str(self._selected).lower()
-    
+            
             if selected != "all":
                 filtered_dict = filter_map(table_list, selected)
                 table_list = [filtered_dict]
             
             # make a directory if required
             root_path = str(self._root_path)
-
+            
             if not os.path.exists(root_path): os.makedirs(root_path)
-                    
+            
             database_to_files(root_path,
                               table_list,
                               db,
                               print_function=module_logger.info)
             
             self.taskFinished.emit()
-                
+        
         except: 
             
             etype, evalue, etraceback = sys.exc_info()
             self.error_detected.emit(etype, evalue, etraceback)
             self.taskFinished.emit()
-
+            
         return
-    
-    
+
+
 class ThreadLoad(QtCore.QThread):
     
     """QThread for executing database dump"""
     
     taskFinished = QtCore.pyqtSignal()
     error_detected =  QtCore.pyqtSignal(object, object, object)
-
+    
     def __init__(self, credentials, root_path, selected):
         
         super(ThreadLoad, self).__init__()
@@ -675,8 +749,15 @@ class ThreadLoad(QtCore.QThread):
     
     def run(self):
         
+        if RUNNING_COVERAGE:
+            sys.settrace(threading._trace_hook)
+        
+        self._run()
+    
+    def _run(self):
+        
         try:
-                    
+            
             db = get_database(self._credentials, timeout=60)
             table_list = get_table_map()
             
@@ -693,7 +774,7 @@ class ThreadLoad(QtCore.QThread):
                                 print_function=module_logger.info)
             
             self.taskFinished.emit()
-            
+        
         except: 
             
             etype, evalue, etraceback = sys.exc_info()
@@ -721,6 +802,13 @@ class ThreadScope(QtCore.QThread):
     
     def run(self):
         
+        if RUNNING_COVERAGE:
+            sys.settrace(threading._trace_hook)
+        
+        self._run()
+    
+    def _run(self):
+        
         try:
             
             # Block signals
@@ -744,12 +832,12 @@ class ThreadScope(QtCore.QThread):
             
             etype, evalue, etraceback = sys.exc_info()
             self.error_detected.emit(etype, evalue, etraceback)
-
+            
             # Reinstate signals and emit
             self._core.blockSignals(False)
             self._project.blockSignals(False)
             self.taskFinished.emit()
-
+        
         return
 
 

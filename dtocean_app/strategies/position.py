@@ -20,6 +20,7 @@ import re
 import sys
 import types
 import logging
+import threading
 import traceback
 import multiprocessing
 from copy import deepcopy
@@ -76,6 +77,10 @@ module_logger = logging.getLogger(__name__)
 
 # User home directory
 HOME = os.path.expanduser("~")
+
+# Check if running coverage
+RUNNING_COVERAGE = "coverage" in sys.modules
+
 TITLE_MAP = {"sim_number": "Simulation #",
              "grid_orientation": "Grid Orientation",
              "delta_row": "Row Spacing",
@@ -110,6 +115,13 @@ class ThreadLoadSimulations(QtCore.QThread):
         return
     
     def run(self):
+        
+        if RUNNING_COVERAGE:
+            sys.settrace(threading._trace_hook)
+        
+        self._run()
+    
+    def _run(self):
         
         try:
             

@@ -21,7 +21,8 @@ from dtocean_app.widgets.display import get_current_figure_size
 
 
 def test_get_current_figure_size_no_figure():
-        
+    
+    plt.close('all')
     test = get_current_figure_size()
     
     assert test is None
