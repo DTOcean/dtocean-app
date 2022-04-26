@@ -23,6 +23,7 @@ import logging
 import traceback
 import multiprocessing
 from copy import deepcopy
+from functools import partial
 
 import sip
 import numpy as np
@@ -556,7 +557,8 @@ class AdvancedPositionWidget(QtGui.QWidget,
         
         self._shell.project.sims_updated.connect(self._update_status)
         self._shell.strategy_selected.connect(self._update_status)
-        self.destroyed.connect(lambda: _close_plot(self.plotWidget))
+        self.destroyed.connect(partial(AdvancedPositionWidget._on_destroyed,
+                                       self.plotWidget))
         
         self._update_status(init=True)
         
@@ -1788,6 +1790,10 @@ class AdvancedPositionWidget(QtGui.QWidget,
         QtGui.QMessageBox.critical(self, "ERROR", errMsg)
         
         return
+    
+    @staticmethod
+    def _on_destroyed(widget):
+        _close_plot(widget)
     
     def get_configuration(self):
         
