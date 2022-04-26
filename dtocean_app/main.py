@@ -1390,6 +1390,10 @@ class Shell(QtCore.QObject):
     @QtCore.pyqtSlot()
     def _finalize_open_project(self):
         
+        if self._active_thread._project is None:
+            self._clear_active_thread()
+            return
+        
         self.project = self._active_thread._project
         self.project_path = self._active_thread._project_path
         self.activated_interfaces = self._active_thread._activated_interfaces
@@ -3089,6 +3093,9 @@ class DTOceanWindow(MainWindow):
         
     @QtCore.pyqtSlot()
     def _open_project_finalize(self):
+        
+        if self._shell.project is None:
+            return
         
         self._active_project_ui_switch()
         self._active_pipeline_ui_switch()
