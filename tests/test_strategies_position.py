@@ -19,10 +19,12 @@ import pytest
 pytest.importorskip("dtocean_hydro")
 
 import os
+import sys
 import time
 from copy import deepcopy
 
 import pandas as pd
+from PIL import Image
 from PyQt4 import QtCore, QtGui
 
 from dtocean_app.core import GUICore
@@ -144,7 +146,7 @@ def hydro_shell(core, project):
     return shell
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture()
 def config():
     
     return {
@@ -197,7 +199,7 @@ def config():
     }
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture()
 def config_alt():
     
     return {
@@ -268,7 +270,7 @@ def test_AdvancedPositionWidget_settings_open(qtbot, tmp_path, hydro_shell):
     window.workDirLineEdit.insert(str(tmp_path))
     window.workDirLineEdit.returnPressed.emit()
     
-    def settings_tab_enabled(): assert  window.tabWidget.isTabEnabled(1)
+    def settings_tab_enabled(): assert window.tabWidget.isTabEnabled(1)
     
     qtbot.waitUntil(settings_tab_enabled)
     
@@ -290,7 +292,7 @@ def test_AdvancedPositionWidget_with_config(mocker,
     window.show()
     qtbot.addWidget(window)
     
-    def settings_tab_enabled(): assert  window.tabWidget.isTabEnabled(1)
+    def settings_tab_enabled(): assert window.tabWidget.isTabEnabled(1)
     
     qtbot.waitUntil(settings_tab_enabled)
     
@@ -331,7 +333,7 @@ def test_AdvancedPositionWidget_with_config_alt(mocker,
     window.show()
     qtbot.addWidget(window)
     
-    def settings_tab_enabled(): assert  window.tabWidget.isTabEnabled(1)
+    def settings_tab_enabled(): assert window.tabWidget.isTabEnabled(1)
     
     qtbot.waitUntil(settings_tab_enabled)
     
@@ -374,6 +376,7 @@ def test_AdvancedPositionWidget_import_config(mocker,
     window.show()
     qtbot.addWidget(window)
     
+    window.cleanDirCheckBox.setChecked(True)
     qtbot.mouseClick(window.importConfigButton, QtCore.Qt.LeftButton)
     
     assert window.tabWidget.isTabEnabled(1)
@@ -489,7 +492,7 @@ def test_AdvancedPositionWidget_update_objective(qtbot,
     window.workDirLineEdit.insert(str(tmp_path))
     window.workDirLineEdit.returnPressed.emit()
     
-    def settings_tab_enabled(): assert  window.tabWidget.isTabEnabled(1)
+    def settings_tab_enabled(): assert window.tabWidget.isTabEnabled(1)
     
     qtbot.waitUntil(settings_tab_enabled)
     
@@ -518,7 +521,7 @@ def test_AdvancedPositionWidget_update_maximise(qtbot,
     window.workDirLineEdit.insert(str(tmp_path))
     window.workDirLineEdit.returnPressed.emit()
     
-    def settings_tab_enabled(): assert  window.tabWidget.isTabEnabled(1)
+    def settings_tab_enabled(): assert window.tabWidget.isTabEnabled(1)
     
     qtbot.waitUntil(settings_tab_enabled)
     
@@ -537,7 +540,7 @@ def test_AdvancedPositionWidget_update_max_simulations(qtbot,
     window.workDirLineEdit.insert(str(tmp_path))
     window.workDirLineEdit.returnPressed.emit()
     
-    def settings_tab_enabled(): assert  window.tabWidget.isTabEnabled(1)
+    def settings_tab_enabled(): assert window.tabWidget.isTabEnabled(1)
     
     qtbot.waitUntil(settings_tab_enabled)
     
@@ -559,7 +562,7 @@ def test_AdvancedPositionWidget_update_max_time(qtbot,
     window.workDirLineEdit.insert(str(tmp_path))
     window.workDirLineEdit.returnPressed.emit()
     
-    def settings_tab_enabled(): assert  window.tabWidget.isTabEnabled(1)
+    def settings_tab_enabled(): assert window.tabWidget.isTabEnabled(1)
     
     qtbot.waitUntil(settings_tab_enabled)
     
@@ -581,7 +584,7 @@ def test_AdvancedPositionWidget_update_min_noise_auto(qtbot,
     window.workDirLineEdit.insert(str(tmp_path))
     window.workDirLineEdit.returnPressed.emit()
     
-    def settings_tab_enabled(): assert  window.tabWidget.isTabEnabled(1)
+    def settings_tab_enabled(): assert window.tabWidget.isTabEnabled(1)
     
     qtbot.waitUntil(settings_tab_enabled)
     
@@ -610,7 +613,7 @@ def test_AdvancedPositionWidget_update_population_auto(qtbot,
     window.workDirLineEdit.insert(str(tmp_path))
     window.workDirLineEdit.returnPressed.emit()
     
-    def settings_tab_enabled(): assert  window.tabWidget.isTabEnabled(1)
+    def settings_tab_enabled(): assert window.tabWidget.isTabEnabled(1)
     
     qtbot.waitUntil(settings_tab_enabled)
     
@@ -637,7 +640,7 @@ def test_AdvancedPositionWidget_update_max_resamples_algorithm(qtbot,
     window.workDirLineEdit.insert(str(tmp_path))
     window.workDirLineEdit.returnPressed.emit()
     
-    def settings_tab_enabled(): assert  window.tabWidget.isTabEnabled(1)
+    def settings_tab_enabled(): assert window.tabWidget.isTabEnabled(1)
     
     qtbot.waitUntil(settings_tab_enabled)
     
@@ -661,7 +664,7 @@ def test_AdvancedPositionWidget_update_max_resamples(qtbot,
     window.workDirLineEdit.insert(str(tmp_path))
     window.workDirLineEdit.returnPressed.emit()
     
-    def settings_tab_enabled(): assert  window.tabWidget.isTabEnabled(1)
+    def settings_tab_enabled(): assert window.tabWidget.isTabEnabled(1)
     
     qtbot.waitUntil(settings_tab_enabled)
     
@@ -690,7 +693,7 @@ def test_AdvancedPositionWidget_fixed_combo_slot_uncheck(qtbot,
     window.workDirLineEdit.insert(str(tmp_path))
     window.workDirLineEdit.returnPressed.emit()
     
-    def settings_tab_enabled(): assert  window.tabWidget.isTabEnabled(1)
+    def settings_tab_enabled(): assert window.tabWidget.isTabEnabled(1)
     
     qtbot.waitUntil(settings_tab_enabled)
     
@@ -716,7 +719,7 @@ def test_AdvancedPositionWidget_fixed_combo_slot_check(qtbot,
     window.workDirLineEdit.insert(str(tmp_path))
     window.workDirLineEdit.returnPressed.emit()
     
-    def settings_tab_enabled(): assert  window.tabWidget.isTabEnabled(1)
+    def settings_tab_enabled(): assert window.tabWidget.isTabEnabled(1)
     
     qtbot.waitUntil(settings_tab_enabled)
     
@@ -749,7 +752,7 @@ def test_AdvancedPositionWidget_fixed_value_slot(qtbot,
     window.workDirLineEdit.insert(str(tmp_path))
     window.workDirLineEdit.returnPressed.emit()
     
-    def settings_tab_enabled(): assert  window.tabWidget.isTabEnabled(1)
+    def settings_tab_enabled(): assert window.tabWidget.isTabEnabled(1)
     
     qtbot.waitUntil(settings_tab_enabled)
     
@@ -929,26 +932,26 @@ def results_df():
                                  17L: 35.23278284,
                                  18L: 27.35090645,
                                  19L: 23.73699979},
-            'n_nodes': {0L: 13L,
-                        1L: 13L,
-                        2L: 13L,
-                        3L: 13L,
-                        4L: 13L,
-                        5L: 13L,
-                        6L: 13L,
-                        7L: 13L,
-                        8L: 13L,
-                        9L: 13L,
-                        10L: 13L,
-                        11L: 13L,
+            'n_nodes': {0L: 1L,
+                        1L: 3L,
+                        2L: 3L,
+                        3L: 4L,
+                        4L: 5L,
+                        5L: 6L,
+                        6L: 7L,
+                        7L: 8L,
+                        8L: 9L,
+                        9L: 10L,
+                        10L: 11L,
+                        11L: 12L,
                         12L: 13L,
-                        13L: 13L,
-                        14L: 13L,
-                        15L: 13L,
-                        16L: 13L,
-                        17L: 13L,
-                        18L: 13L,
-                        19L: 13L},
+                        13L: 1L,
+                        14L: 2L,
+                        15L: 3L,
+                        16L: 4L,
+                        17L: 5L,
+                        18L: 6L,
+                        19L: 7L},
             'n_evals': {0L: 1L,
                         1L: 1L,
                         2L: 1L,
@@ -1255,14 +1258,12 @@ def test_AdvancedPositionWidget_load_sims(qtbot,
                                           mocker,
                                           window_results):
     
-#    from dtocean_app.strategies import position
-    
     strategy = window_results._shell.strategy = mocker.MagicMock()
-    sleep = lambda *args: time.sleep(1)
+    sleep = lambda *args: time.sleep(0.5)
     strategy.load_simulation_ids.side_effect=sleep
     
-    # Need to asser that the progress bar was shown
-#    spy = mocker.spy(position, "ProgressBar")
+    # Need to assert that the progress bar was shown
+    spy = mocker.spy(window_results, "_progress")
     
     window_results.show()
     qtbot.addWidget(window_results)
@@ -1273,4 +1274,298 @@ def test_AdvancedPositionWidget_load_sims(qtbot,
     qtbot.mouseClick(button, QtCore.Qt.LeftButton)
     qtbot.mouseClick(window_results.simLoadButton, QtCore.Qt.LeftButton)
     
-    assert True
+    def progress_closed(): assert spy.close.call_count == 1
+    qtbot.waitUntil(progress_closed, timeout=1500)
+    
+    assert spy.show.call_count == 1
+    assert spy.close.call_count == 1
+
+
+def test_AdvancedPositionWidget_export_data_table(mocker,
+                                                  qtbot,
+                                                  tmp_path,
+                                                  window_results):
+    
+    f = tmp_path / "mock.csv"
+    mocker.patch.object(QtGui.QFileDialog,
+                        'getSaveFileName',
+                        return_value=str(f))
+    
+    window_results.show()
+    qtbot.addWidget(window_results)
+    window_results.tabWidget.setCurrentIndex(3)
+    
+    qtbot.mouseClick(window_results.dataExportButton, QtCore.Qt.LeftButton)
+    
+    assert f.is_file()
+
+
+def test_AdvancedPositionWidget_set_plot(qtbot, window_results):
+    
+    window_results.show()
+    qtbot.addWidget(window_results)
+    window_results.tabWidget.setCurrentIndex(4)
+    
+    window_results.xAxisVarBox.setCurrentIndex(4)
+    window_results.yAxisVarBox.setCurrentIndex(2)
+    window_results.colorAxisVarBox.setCurrentIndex(6)
+    window_results.filterVarBox.setCurrentIndex(5)
+    
+    window_results.xAxisMinBox.setChecked(True)
+    window_results.xAxisMinSpinBox.setValue(20.5)
+    window_results.xAxisMaxBox.setChecked(True)
+    window_results.xAxisMaxSpinBox.setValue(22.5)
+    
+    window_results.yAxisMinBox.setChecked(True)
+    window_results.yAxisMinSpinBox.setValue(26800)
+    window_results.yAxisMaxBox.setChecked(True)
+    window_results.yAxisMaxSpinBox.setValue(27600)
+    
+    min_value = 3
+    max_value = 10
+    window_results.colorAxisMinBox.setChecked(True)
+    window_results.colorAxisMinSpinBox.setValue(min_value)
+    window_results.colorAxisMaxBox.setChecked(True)
+    window_results.colorAxisMaxSpinBox.setValue(max_value)
+    
+    window_results.filterVarMinBox.setChecked(True)
+    window_results.filterVarMinSpinBox.setValue(65)
+    window_results.filterVarMaxBox.setChecked(True)
+    window_results.filterVarMaxSpinBox.setValue(70)
+    
+    qtbot.mouseClick(window_results.plotButton, QtCore.Qt.LeftButton)
+    
+    assert window_results.plotExportButton.isEnabled()
+    
+    xlim =  window_results.plotWidget.figure.axes[0].get_xlim()
+    ylim =  window_results.plotWidget.figure.axes[0].get_ylim()
+    
+    assert xlim == (20.5, 22.5)
+    assert ylim == (26800.0, 27600.0)
+    
+    cb_yaxis = window_results.plotWidget.figure.axes[1].get_children()[8]
+    cb_ticks =  cb_yaxis.get_ticklabels()
+    
+    assert int(cb_ticks[0].get_text()) == min_value
+    assert int(cb_ticks[-1].get_text()) == max_value
+    
+    window_results.colorAxisMinBox.setChecked(False)
+    qtbot.mouseClick(window_results.plotButton, QtCore.Qt.LeftButton)
+    
+    cb_yaxis = window_results.plotWidget.figure.axes[1].get_children()[8]
+    cb_ticks =  cb_yaxis.get_ticklabels()
+    
+    assert int(cb_ticks[0].get_text()) != min_value
+    assert int(cb_ticks[-1].get_text()) == max_value
+    
+    window_results.colorAxisMinBox.setChecked(True)
+    window_results.colorAxisMaxBox.setChecked(False)
+    qtbot.mouseClick(window_results.plotButton, QtCore.Qt.LeftButton)
+    
+    cb_yaxis = window_results.plotWidget.figure.axes[1].get_children()[8]
+    cb_ticks =  cb_yaxis.get_ticklabels()
+    
+    assert int(cb_ticks[0].get_text()) == min_value
+    assert int(cb_ticks[-1].get_text()) != max_value
+    
+    window_results.colorAxisMinBox.setChecked(True)
+    window_results.colorAxisMinSpinBox.setValue(5)
+    window_results.colorAxisMaxBox.setChecked(True)
+    window_results.colorAxisMaxSpinBox.setValue(5)
+    
+    qtbot.mouseClick(window_results.plotButton, QtCore.Qt.LeftButton)
+    
+    assert len(window_results.plotWidget.figure.axes) == 1
+
+
+def test_AdvancedPositionWidget_export_plot(mocker,
+                                            qtbot,
+                                            tmp_path,
+                                            window_results):
+    
+    f = tmp_path / "mock.png"
+    mocker.patch.object(QtGui.QFileDialog,
+                        'getSaveFileName',
+                        return_value=str(f))
+    
+    window_results.show()
+    qtbot.addWidget(window_results)
+    window_results.tabWidget.setCurrentIndex(4)
+    
+    window_results.xAxisVarBox.setCurrentIndex(4)
+    window_results.yAxisVarBox.setCurrentIndex(2)
+    window_results.colorAxisVarBox.setCurrentIndex(6)
+    window_results.filterVarBox.setCurrentIndex(5)
+    
+    qtbot.mouseClick(window_results.plotButton, QtCore.Qt.LeftButton)
+    qtbot.mouseClick(window_results.customSizeBox, QtCore.Qt.LeftButton)
+    
+    window_results.customWidthSpinBox.setValue(6)
+    window_results.customHeightSpinBox.setValue(3)
+    
+    f = tmp_path / "mock1.png"
+    mocker.patch.object(QtGui.QFileDialog,
+                        'getSaveFileName',
+                        return_value=str(f))
+    
+    qtbot.mouseClick(window_results.plotExportButton, QtCore.Qt.LeftButton)
+    
+    assert f.is_file()
+    
+    im = Image.open(str(f))
+    width, height = im.size
+    
+    expected_width = 981
+    expected_height = 624
+    
+    assert width == expected_width
+    assert height == expected_height
+    
+    f = tmp_path / "mock2.png"
+    mocker.patch.object(QtGui.QFileDialog,
+                        'getSaveFileName',
+                        return_value=str(f))
+    
+    qtbot.mouseClick(window_results.customSizeBox, QtCore.Qt.LeftButton)
+    qtbot.mouseClick(window_results.plotExportButton, QtCore.Qt.LeftButton)
+    
+    assert f.is_file()
+    
+    im = Image.open(str(f))
+    width, height = im.size
+    
+    assert width != expected_width
+    assert height != expected_height
+
+
+def test_AdvancedPositionWidget_import_yaml(mocker, qtbot, mock_shell):
+    
+    mocker.patch.object(QtGui.QFileDialog,
+                        'getOpenFileName',
+                        return_value="mock")
+    
+    window = AdvancedPositionWidget(None, mock_shell, {})
+    mock = window._shell.strategy = mocker.MagicMock()
+    
+    window.show()
+    qtbot.addWidget(window)
+    window.tabWidget.setCurrentIndex(5)
+    qtbot.mouseClick(window.importYAMLButton, QtCore.Qt.LeftButton)
+    
+    assert mock.import_simulation_file.call_args.args[-1] == "mock"
+
+
+@pytest.mark.parametrize("article, etype", [
+                                    ("A", KeyError),
+                                    ("An", IOError)])
+def test_AdvancedPositionWidget_display_error(mocker,
+                                              qtbot,
+                                              mock_shell,
+                                              article,
+                                              etype):
+    
+    mock = mocker.patch.object(QtGui.QMessageBox,
+                               'critical')
+    
+    window = AdvancedPositionWidget(None, mock_shell, {})
+    window.show()
+    qtbot.addWidget(window)
+    
+    evalue = etype('mock')
+    _, _, etraceback = sys.exc_info()
+    window._display_error(etype, evalue, etraceback)
+    
+    expected_msg = "{} {} occurred: {}".format(article, etype.__name__, evalue)
+    assert mock.call_args.args[1] == 'ERROR'
+    assert mock.call_args.args[2] == expected_msg
+
+
+def test_AdvancedPositionWidget_set_configuration(mocker,
+                                                  qtbot,
+                                                  hydro_shell,
+                                                  config):
+    
+    window = AdvancedPositionWidget(None, hydro_shell, {})
+    window.show()
+    qtbot.addWidget(window)
+    
+    window.set_configuration(config)
+    
+    def settings_tab_enabled(): assert window.tabWidget.isTabEnabled(1)
+    
+    qtbot.waitUntil(settings_tab_enabled)
+    
+    assert window.tabWidget.isTabEnabled(1)
+    assert window.tabWidget.isTabEnabled(2)
+
+
+def test_AdvancedPositionWidget_set_configuration_has_stored(mocker,
+                                                             qtbot,
+                                                             hydro_shell,
+                                                             config,
+                                                             config_alt):
+    
+    window = AdvancedPositionWidget(None, hydro_shell, {})
+    mock = window._shell.strategy = mocker.MagicMock()
+    config['clean_existing_dir'] = None
+    mock._config = config
+    
+    window.show()
+    qtbot.addWidget(window)
+    
+    window.set_configuration(config_alt)
+    
+    assert window.tabWidget.isTabEnabled(1)
+    assert window.tabWidget.isTabEnabled(2)
+
+
+def test_AdvancedPositionWidget_optimiser_restart(mocker,
+                                                  qtbot,
+                                                  tmp_path,
+                                                  hydro_shell,
+                                                  config,
+                                                  results_df):
+    
+    from dtocean_app.strategies.position import GUIAdvancedPosition
+    
+    status_str = "Project ready"
+    status_code = 1
+    mocker.patch.object(GUIAdvancedPosition,
+                        "get_project_status",
+                        return_value=(status_str, status_code))
+    
+    status_str = "Configuration complete"
+    status_code = 1
+    mocker.patch.object(GUIAdvancedPosition,
+                        "get_config_status",
+                        return_value=(status_str, status_code))
+    
+    status_str = "Worker directory contains files"
+    status_code = 0
+    mocker.patch.object(GUIAdvancedPosition,
+                        "get_worker_directory_status",
+                        return_value=(status_str, status_code))
+    
+    status_str = "Optimisation incomplete (restart may be possible)"
+    status_code = 2
+    mocker.patch.object(GUIAdvancedPosition,
+                        "get_optimiser_status",
+                        return_value=(status_str, status_code))
+    
+    config['worker_dir'] = str(tmp_path)
+    config['clean_existing_dir'] = True
+    side_effect = lambda *args: deepcopy(config)
+    mocker.patch.object(GUIAdvancedPosition,
+                        "load_config",
+                        side_effect=side_effect)
+    
+    mocker.patch.object(GUIAdvancedPosition,
+                        "get_all_results",
+                        return_value=results_df)
+    
+    window = AdvancedPositionWidget(None, hydro_shell, config)
+    window.show()
+    qtbot.addWidget(window)
+    
+    assert not window.tabWidget.isTabEnabled(3)
+    assert not window.tabWidget.isTabEnabled(4)

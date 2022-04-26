@@ -664,6 +664,7 @@ class AdvancedPositionWidget(QtGui.QWidget,
             
             if self._config["clean_existing_dir"]:
                 
+                # I'm not sure if this can ever be triggered
                 if not self.cleanDirCheckBox.isChecked():
                     self.cleanDirCheckBox.toggle()
             
@@ -1480,7 +1481,7 @@ class AdvancedPositionWidget(QtGui.QWidget,
                                                       HOME,
                                                       extStr)
         
-        if not save_path:return
+        if not save_path: return
         
         self._results_df.to_csv(str(save_path), index=False)
         
@@ -1771,7 +1772,7 @@ class AdvancedPositionWidget(QtGui.QWidget,
         
         return
     
-    @QtCore.pyqtSlot(object, object, object)  
+    @QtCore.pyqtSlot(object, object, object)
     def _display_error(self, etype, evalue, etraceback):
         
         type_str = str(etype)
@@ -1783,7 +1784,7 @@ class AdvancedPositionWidget(QtGui.QWidget,
         else:
             article = "A"
         
-        errMsg = "{} {} occurred: {:s}".format(article, sane_type_str, evalue)
+        errMsg = "{} {} occurred: {!s}".format(article, sane_type_str, evalue)
         
         module_logger.critical(errMsg)
         module_logger.critical(''.join(traceback.format_tb(etraceback)))
