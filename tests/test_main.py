@@ -142,49 +142,44 @@ def test_close_open_dock(qtbot, mocker, core):
     qtbot.waitUntil(dock_is_open)
 
 
-def test_new_project(qtbot, mocker, core):
+@pytest.fixture
+def window_new_project(qtbot, core):
     
     shell = Shell(core)
     window = DTOceanWindow(shell, debug=True)
     window.show()
     qtbot.addWidget(window)
     
-    mocker.patch.object(QtGui.QMessageBox,
-                        'question',
-                        return_value=QtGui.QMessageBox.Yes)
-                      
     # Get the new project button and click it
     new_project_button = window.fileToolBar.widgetForAction(window.actionNew)
     qtbot.mouseClick(new_project_button, QtCore.Qt.LeftButton)
     
     assert window.windowTitle() == "DTOcean: Untitled project*"
     
+    yield window
+    
+    window.close()
+
+
+def test_new_project(window_new_project):
+    
     # Pick up the available pipeline item
-    test_var = window._pipeline_dock._find_controller(
+    test_var = window_new_project._pipeline_dock._find_controller(
                                     controller_title="Device Technology Type",
                                     controller_class=InputVarControl)
     
     assert test_var._id == "device.system_type"
 
 
-def test_click_section_twice(qtbot, mocker, core):
+def test_click_section_twice(qtbot, window_new_project):
     
-    shell = Shell(core)
-    window = DTOceanWindow(shell, debug=True)
-    window.show()
-    qtbot.addWidget(window)
-
-    # Get the new project button and click it
-    new_project_button = window.fileToolBar.widgetForAction(window.actionNew)
-    qtbot.mouseClick(new_project_button, QtCore.Qt.LeftButton)
-        
     # Pick up the available pipeline item
-    test_var = window._pipeline_dock._find_controller(
+    test_var = window_new_project._pipeline_dock._find_controller(
                                     controller_title="Configuration",
                                     controller_class=SectionControl)
     
     # obtain the rectangular coordinates of the child item
-    tree_view = window._pipeline_dock.treeView
+    tree_view = window_new_project._pipeline_dock.treeView
     index = test_var._get_index_from_address()
     proxy_index = test_var._proxy.mapFromSource(index)
     rect = tree_view.visualRect(proxy_index)
@@ -202,28 +197,326 @@ def test_click_section_twice(qtbot, mocker, core):
     assert True
 
 
-def test_set_device_type(qtbot, mocker, core):
+@pytest.fixture
+def db_selector(qtbot, window_new_project):
     
-    shell = Shell(core)
-    window = DTOceanWindow(shell, debug=True)
-    window.show()
-    qtbot.addWidget(window)
+    # Get the select database button and click it
+    database_button = \
+        window_new_project.scenarioToolBar.widgetForAction(
+                window_new_project.actionSelect_Database)
+    qtbot.mouseClick(database_button, QtCore.Qt.LeftButton)
+    
+    db_selector = window_new_project._db_selector
+    
+    def db_selector_visible(): assert db_selector.isVisible()
+    
+    qtbot.waitUntil(db_selector_visible)
+    
+    n_creds = db_selector.listWidget.count()
+    
+    # Press the add button
+    qtbot.mouseClick(db_selector.addButton,
+                     QtCore.Qt.LeftButton)
+    
+    def added_cred(): assert db_selector.listWidget.count() == n_creds + 1
+    
+    qtbot.waitUntil(added_cred)
+    
+    yield db_selector
+    
+    window_new_project.close()
+
+
+def test_credentials_add_delete(qtbot, mocker, db_selector):
     
     mocker.patch.object(QtGui.QMessageBox,
                         'question',
                         return_value=QtGui.QMessageBox.Yes)
-                      
-    # Get the new project button and click it
-    new_project_button = window.fileToolBar.widgetForAction(window.actionNew)
-    qtbot.mouseClick(new_project_button, QtCore.Qt.LeftButton)
+    
+    n_creds = db_selector.listWidget.count()
+    
+    # Add another credential
+    qtbot.mouseClick(db_selector.addButton,
+                     QtCore.Qt.LeftButton)
+    
+    def added_cred(): assert db_selector.listWidget.count() == n_creds + 1
+    
+    qtbot.waitUntil(added_cred)
+    
+    assert "unnamed-1" in db_selector._data_menu.get_available_databases()
+    
+    # Delete all credentials
+    while db_selector.listWidget.count() > 0:
         
+        # Select the last in the list and select
+        item = db_selector.listWidget.item(db_selector.listWidget.count() - 1)
+        rect = db_selector.listWidget.visualItemRect(item)
+        qtbot.mouseClick(db_selector.listWidget.viewport(),
+                         QtCore.Qt.LeftButton,
+                         pos=rect.center())
+                    
+        qtbot.mouseClick(db_selector.deleteButton,
+                         QtCore.Qt.LeftButton)
+        
+        def deleted_cred():
+            assert db_selector.listWidget.count() == n_creds
+        
+        qtbot.waitUntil(deleted_cred)
+        
+        n_creds -= 1
+    
+    db_selector.close()
+
+
+def test_select_database(qtbot, mocker, db_selector):
+    
+    mocker.patch('dtocean_app.main.DataMenu.select_database',
+                 autospec=True)
+    
+    # Select the first in the list and apply
+    db_selector.listWidget.setCurrentRow(0)
+    
+    item = db_selector.listWidget.item(0)
+    rect = db_selector.listWidget.visualItemRect(item)
+    qtbot.mouseClick(db_selector.listWidget.viewport(),
+                     QtCore.Qt.LeftButton,
+                     pos=rect.center())
+    
+    qtbot.mouseClick(
+            db_selector.buttonBox.button(QtGui.QDialogButtonBox.Apply),
+            QtCore.Qt.LeftButton)
+    
+    # Check for credentials
+    def has_credentials():
+        assert db_selector.topDynamicLabel.text() == item.text()
+    
+    qtbot.waitUntil(has_credentials)
+    
+    db_selector.close()
+
+
+def test_deselect_database(qtbot, mocker, db_selector):
+    
+    mocker.patch('dtocean_app.main.DataMenu.select_database',
+                 autospec=True)
+    
+    # Select the first in the list and apply
+    db_selector.listWidget.setCurrentRow(0)
+    
+    item = db_selector.listWidget.item(0)
+    rect = db_selector.listWidget.visualItemRect(item)
+    qtbot.mouseClick(db_selector.listWidget.viewport(),
+                     QtCore.Qt.LeftButton,
+                     pos=rect.center())
+    
+    qtbot.mouseClick(
+            db_selector.buttonBox.button(QtGui.QDialogButtonBox.Apply),
+            QtCore.Qt.LeftButton)
+    
+    # Check for credentials
+    def has_credentials():
+        assert db_selector.topDynamicLabel.text() == item.text()
+        
+    qtbot.waitUntil(has_credentials)
+    
+    # Press reset button
+    qtbot.mouseClick(
+            db_selector.buttonBox.button(QtGui.QDialogButtonBox.Reset),
+            QtCore.Qt.LeftButton)
+    
+    # Check for credentials
+    def has_not_credentials():
+        assert db_selector.topDynamicLabel.text() == "None"
+        
+    qtbot.waitUntil(has_not_credentials)
+    
+    db_selector.close()
+
+
+def test_credentials_rename(qtbot, mocker, db_selector):
+    
+    mocker.patch('dtocean_core.utils.database.UserDataDirectory',
+                 autospec=True)
+    
+    n_creds = db_selector.listWidget.count()
+    
+    # Press the add button
+    qtbot.mouseClick(db_selector.addButton,
+                     QtCore.Qt.LeftButton)
+    
+    def added_cred(): assert db_selector.listWidget.count() == n_creds + 1
+    
+    qtbot.waitUntil(added_cred)
+    
+    # Select the last in the list and chnage its name
+    db_selector.listWidget.setCurrentRow(db_selector.listWidget.count() - 1)
+    
+    editor = mocker.Mock()
+    editor.text.return_value = "bob"
+    
+    db_selector._rename_database(editor, None)
+    
+    def check_name():
+        assert "bob" in db_selector._data_menu.get_available_databases()
+    
+    qtbot.waitUntil(check_name)
+    
+    # Press the add button
+    n_creds += 1
+    
+    qtbot.mouseClick(db_selector.addButton,
+                     QtCore.Qt.LeftButton)
+    
+    def added_cred(): assert db_selector.listWidget.count() == n_creds + 1
+    
+    qtbot.waitUntil(added_cred)
+    
+    # Select the last in the list and change its name
+    db_selector.listWidget.setCurrentRow(db_selector.listWidget.count() - 1)
+    
+    editor = mocker.Mock()
+    editor.text.return_value = "bob"
+    
+    db_selector._rename_database(editor, None)
+    
+    def check_one_bob():
+        assert db_selector._data_menu.get_available_databases(
+                                                            ).count("bob") == 1
+    
+    qtbot.waitUntil(check_one_bob)
+    
+    db_selector.close()
+
+
+def test_credentials_save(qtbot, mocker, db_selector):
+    
+    mocker.patch('dtocean_core.utils.database.UserDataDirectory',
+                 autospec=True)
+    
+    old_count = db_selector.listWidget.count()
+    
+    # Press the add button
+    qtbot.mouseClick(db_selector.addButton,
+                     QtCore.Qt.LeftButton)
+    
+    def added_cred(): assert db_selector.listWidget.count() == old_count + 1
+    
+    qtbot.waitUntil(added_cred)
+    
+    # Select the last in the list and chnage its name
+    test_cred = db_selector.listWidget.item(
+                                            db_selector.listWidget.count() - 1)
+    
+    test_cred.setText("bob")
+    editor = mocker.Mock()
+    editor.text.return_value = "bob"
+    
+    qtbot.stop()
+    
+    db_selector._rename_database(editor, None)
+    
+    def check_name():
+        assert "bob" in db_selector._data_menu.get_available_databases()
+    
+    qtbot.waitUntil(check_name)
+    
+    item = QtGui.QTableWidgetItem(str("bob"))
+    db_selector.tableWidget.setItem(0, 1, item)
+    
+    def can_save(): assert db_selector.saveButton.isEnabled()
+    
+    qtbot.waitUntil(can_save)
+    
+    # Press the save button
+    qtbot.mouseClick(db_selector.saveButton,
+                     QtCore.Qt.LeftButton)
+    
+    def can_not_save(): assert not db_selector.saveButton.isEnabled()
+    
+    qtbot.waitUntil(can_not_save)
+    
+    db_selector.close()
+
+
+def test_dump_load_database(mocker,
+                            qtbot,
+                            tmpdir,
+                            window_new_project,
+                            db_selector):
+        
+    mocker.patch('dtocean_core.utils.database.UserDataDirectory',
+                 autospec=True)
+    
+    mocker.patch("dtocean_core.menu.check_host_port",
+                 return_value=(True, "Mock connection returned"))
+    
+    mocker.patch('dtocean_app.menu.QtGui.QFileDialog.getExistingDirectory',
+                 return_value=str(tmpdir))
+    
+    mocker.patch('dtocean_app.main.database_to_files',
+                 autospec=True)
+    
+    mocker.patch('dtocean_app.main.database_from_files',
+                 autospec=True)
+    
+    mocker.patch.object(QtGui.QMessageBox,
+                        'warning',
+                        return_value=QtGui.QMessageBox.Yes)
+    
+    # Select the first in the list and apply
+    db_selector.listWidget.setCurrentRow(0)
+    
+    item = db_selector.listWidget.item(0)
+    rect = db_selector.listWidget.visualItemRect(item)
+    qtbot.mouseClick(db_selector.listWidget.viewport(),
+                     QtCore.Qt.LeftButton,
+                     pos=rect.center())
+    
+    qtbot.mouseClick(
+            db_selector.buttonBox.button(QtGui.QDialogButtonBox.Apply),
+            QtCore.Qt.LeftButton)
+    
+    shell = window_new_project._shell
+    
+    # Check for credentials
+    def has_credentials():
+        assert shell.project.get_database_credentials() is not None
+        
+    qtbot.waitUntil(has_credentials)
+    
+    # Activate dump
+    qtbot.mouseClick(db_selector.dumpButton,
+                     QtCore.Qt.LeftButton)
+    
+    qtbot.waitSignal(shell.database_convert_complete)
+    
+    def dump_enabled(): assert db_selector.dumpButton.isEnabled()
+    
+    qtbot.waitUntil(dump_enabled)
+    
+    # Activate load
+    qtbot.mouseClick(db_selector.loadButton,
+                     QtCore.Qt.LeftButton)
+    
+    qtbot.waitSignal(shell.database_convert_complete)
+    
+    def load_enabled(): assert db_selector.loadButton.isEnabled()
+    
+    qtbot.waitUntil(load_enabled)
+    
+    db_selector.close()
+
+
+@pytest.fixture
+def window_floating_wave(qtbot, window_new_project):
+    
     # Pick up the available pipeline item
-    test_var = window._pipeline_dock._find_controller(
+    test_var = window_new_project._pipeline_dock._find_controller(
                                     controller_title="Device Technology Type",
                                     controller_class=InputVarControl)
     
     # obtain the rectangular coordinates of the child item
-    tree_view = window._pipeline_dock.treeView
+    tree_view = window_new_project._pipeline_dock.treeView
     index = test_var._get_index_from_address()
     proxy_index = test_var._proxy.mapFromSource(index)
     rect = tree_view.visualRect(proxy_index)
@@ -236,10 +529,11 @@ def test_set_device_type(qtbot, mocker, core):
     selected_index = tree_view.selectedIndexes()[0]
     
     assert selected_index == proxy_index
-    assert window._data_context._bottom_contents is not None
-    assert isinstance(window._data_context._bottom_contents, ListSelect)
+    assert window_new_project._data_context._bottom_contents is not None
+    assert isinstance(window_new_project._data_context._bottom_contents,
+                      ListSelect)
                                   
-    list_select = window._data_context._bottom_contents
+    list_select = window_new_project._data_context._bottom_contents
     
     # Set the combo box to "Wave Floating" anc click OK
     idx = list_select.comboBox.findText("Wave Floating",
@@ -253,76 +547,105 @@ def test_set_device_type(qtbot, mocker, core):
     def check_status():
         
         # Pick up pipeline item again as it's been rebuilt
-        test_var = window._pipeline_dock._find_controller(
+        test_var = window_new_project._pipeline_dock._find_controller(
                                     controller_title="Device Technology Type",
                                     controller_class=InputVarControl)
         
         assert test_var._status == "satisfied"
     
+    qtbot.waitUntil(check_status)
+    
+    return window_new_project
+
+
+def test_set_device_type(window_floating_wave):
+    
+    test_var = window_floating_wave._pipeline_dock._find_controller(
+                                    controller_title="Device Technology Type",
+                                    controller_class=InputVarControl)
+    
+    assert test_var._status == "satisfied"
+
+
+def test_export_data(qtbot, mocker, tmpdir, window_floating_wave):
+    
+    # File path
+    datastate_file_name = "my_datastate.dts"
+    datastate_file_path = os.path.join(str(tmpdir), datastate_file_name)
+                      
+    mocker.patch.object(QtGui.QFileDialog,
+                        'getSaveFileName',
+                        return_value=datastate_file_path)
+    
+    # Export data
+    menu_click(qtbot,
+               window_floating_wave,
+               window_floating_wave.menuData,
+               "actionExport")
+        
+    assert os.path.isfile(datastate_file_path)
+
+
+def test_import_data(qtbot, mocker, tmpdir, window_floating_wave):
+
+    # File path
+    datastate_file_name = "my_datastate.dts"
+    datastate_file_path = os.path.join(str(tmpdir), datastate_file_name)
+    
+    mocker.patch.object(QtGui.QFileDialog,
+                        'getSaveFileName',
+                        return_value=datastate_file_path)
+    
+    mocker.patch.object(QtGui.QFileDialog,
+                        'getOpenFileName',
+                        return_value=datastate_file_path)
+    
+    # Export data
+    menu_click(qtbot,
+               window_floating_wave,
+               window_floating_wave.menuData,
+               "actionExport")
+    
+    def file_saved(): assert os.path.isfile(datastate_file_path)
+    
+    qtbot.waitUntil(file_saved)
+    
+    # Open a new project
+    new_project_button = window_floating_wave.fileToolBar.widgetForAction(
+                                            window_floating_wave.actionNew)
+    qtbot.mouseClick(new_project_button, QtCore.Qt.LeftButton)
+    
+    # Import data
+    menu_click(qtbot,
+               window_floating_wave,
+               window_floating_wave.menuData,
+               "actionImport")
+    
+    def check_status():
+        
+        # Pick up pipeline item again as it's been rebuilt
+        test_var = window_floating_wave._pipeline_dock._find_controller(
+                                    controller_title="Device Technology Type",
+                                    controller_class=InputVarControl)
+        
+        assert test_var._status == "satisfied"
+    
+    # Check the test variable
     qtbot.waitUntil(check_status)
     
     assert True
 
 
-def test_initiate_pipeline(qtbot, mocker, core):
-    
-    shell = Shell(core)
-    window = DTOceanWindow(shell, debug=True)
-    window.show()
-    qtbot.addWidget(window)
-    
-    mocker.patch.object(QtGui.QMessageBox,
-                        'question',
-                        return_value=QtGui.QMessageBox.Yes)
-                      
-    # Get the new project button and click it
-    new_project_button = window.fileToolBar.widgetForAction(window.actionNew)
-    qtbot.mouseClick(new_project_button, QtCore.Qt.LeftButton)
-        
-    # Pick up the available pipeline item
-    test_var = window._pipeline_dock._find_controller(
-                                    controller_title="Device Technology Type",
-                                    controller_class=InputVarControl)
-    
-    # obtain the rectangular coordinates of the child item
-    tree_view = window._pipeline_dock.treeView
-    index = test_var._get_index_from_address()
-    proxy_index = test_var._proxy.mapFromSource(index)
-    rect = tree_view.visualRect(proxy_index)
-    
-    # simulate the mouse click within the button coordinates
-    qtbot.mouseClick(tree_view.viewport(),
-                     QtCore.Qt.LeftButton,
-                     pos=rect.topLeft())
-                                  
-    list_select = window._data_context._bottom_contents
-    
-    # Set the combo box to "Wave Floating" anc click OK
-    idx = list_select.comboBox.findText("Wave Floating",
-                                        QtCore.Qt.MatchFixedString)
-    list_select.comboBox.setCurrentIndex(idx)
-
-    qtbot.mouseClick(
-                list_select.buttonBox.button(QtGui.QDialogButtonBox.Ok),
-                QtCore.Qt.LeftButton)
-    
-    def check_status():
-        
-        # Pick up pipeline item again as it's been rebuilt
-        test_var = window._pipeline_dock._find_controller(
-                                    controller_title="Device Technology Type",
-                                    controller_class=InputVarControl)
-        
-        assert test_var._status == "satisfied"
-    
-    qtbot.waitUntil(check_status)
+@pytest.fixture
+def window_with_pipeline(qtbot, window_floating_wave):
     
     # Initiate the pipeline
     init_pipeline_button = \
-        window.scenarioToolBar.widgetForAction(window.actionInitiate_Pipeline)
+        window_floating_wave.scenarioToolBar.widgetForAction(
+                window_floating_wave.actionInitiate_Pipeline)
     qtbot.mouseClick(init_pipeline_button, QtCore.Qt.LeftButton)
     
-    data_check = window._data_check
+    data_check = window_floating_wave._data_check
     
     def data_check_visible(): assert data_check.isVisible()
     
@@ -331,173 +654,18 @@ def test_initiate_pipeline(qtbot, mocker, core):
     qtbot.mouseClick(data_check.buttonBox.button(QtGui.QDialogButtonBox.Ok),
                      QtCore.Qt.LeftButton)
     
-    def check_dataflow(): assert window.actionInitiate_Dataflow.isEnabled()
+    def check_dataflow():
+        assert window_floating_wave.actionInitiate_Dataflow.isEnabled()
     
     qtbot.waitUntil(check_dataflow)
     
-    assert True
+    return window_floating_wave
 
 
-def test_export_data(qtbot, mocker, tmpdir, core):
+def test_initiate_pipeline(window_with_pipeline):
+    assert window_with_pipeline.actionInitiate_Dataflow.isEnabled()
 
-    # File path
-    datastate_file_name = "my_datastate.dts"
-    datastate_file_path = os.path.join(str(tmpdir), datastate_file_name)
-    
-    mocker.patch.object(QtGui.QMessageBox,
-                        'question',
-                        return_value=QtGui.QMessageBox.Yes)
-                      
-    mocker.patch.object(QtGui.QFileDialog,
-                        'getSaveFileName',
-                        return_value=datastate_file_path)
-    
-    shell = Shell(core)
-    window = DTOceanWindow(shell, debug=True)
-    window.show()
-    qtbot.addWidget(window)
-                      
-    # Get the new project button and click it
-    new_project_button = window.fileToolBar.widgetForAction(window.actionNew)
-    qtbot.mouseClick(new_project_button, QtCore.Qt.LeftButton)
-        
-    # Pick up the available pipeline item
-    test_var = window._pipeline_dock._find_controller(
-                                    controller_title="Device Technology Type",
-                                    controller_class=InputVarControl)
-    
-    # obtain the rectangular coordinates of the child item
-    tree_view = window._pipeline_dock.treeView
-    index = test_var._get_index_from_address()
-    proxy_index = test_var._proxy.mapFromSource(index)
-    rect = tree_view.visualRect(proxy_index)
-    
-    # simulate the mouse click within the button coordinates
-    qtbot.mouseClick(tree_view.viewport(),
-                     QtCore.Qt.LeftButton,
-                     pos=rect.topLeft())
-                                  
-    list_select = window._data_context._bottom_contents
-    
-    # Set the combo box to "Wave Floating" anc click OK
-    idx = list_select.comboBox.findText("Wave Floating",
-                                        QtCore.Qt.MatchFixedString)
-    list_select.comboBox.setCurrentIndex(idx)
 
-    qtbot.mouseClick(
-                list_select.buttonBox.button(QtGui.QDialogButtonBox.Ok),
-                QtCore.Qt.LeftButton)
-    
-    def check_status():
-        
-        # Pick up pipeline item again as it's been rebuilt
-        test_var = window._pipeline_dock._find_controller(
-                                    controller_title="Device Technology Type",
-                                    controller_class=InputVarControl)
-        
-        assert test_var._status == "satisfied"
-    
-    qtbot.waitUntil(check_status)
-    
-    # Export data
-    menu_click(qtbot,
-               window,
-               window.menuData,
-               "actionExport")
-        
-    assert os.path.isfile(datastate_file_path)
-    
-    
-def test_import_data(qtbot, mocker, tmpdir, core):
-
-    # File path
-    datastate_file_name = "my_datastate.dts"
-    datastate_file_path = os.path.join(str(tmpdir), datastate_file_name)
-    
-    mocker.patch.object(QtGui.QMessageBox,
-                        'question',
-                        return_value=QtGui.QMessageBox.Yes)
-                      
-    mocker.patch.object(QtGui.QFileDialog,
-                        'getSaveFileName',
-                        return_value=datastate_file_path)
-                      
-    mocker.patch.object(QtGui.QFileDialog,
-                        'getOpenFileName',
-                        return_value=datastate_file_path)
-    
-    shell = Shell(core)
-    window = DTOceanWindow(shell, debug=True)
-    window.show()
-    qtbot.addWidget(window)
-                      
-    # Get the new project button and click it
-    new_project_button = window.fileToolBar.widgetForAction(window.actionNew)
-    qtbot.mouseClick(new_project_button, QtCore.Qt.LeftButton)
-        
-    # Pick up the available pipeline item
-    test_var = window._pipeline_dock._find_controller(
-                                    controller_title="Device Technology Type",
-                                    controller_class=InputVarControl)
-    
-    # obtain the rectangular coordinates of the child item
-    tree_view = window._pipeline_dock.treeView
-    index = test_var._get_index_from_address()
-    proxy_index = test_var._proxy.mapFromSource(index)
-    rect = tree_view.visualRect(proxy_index)
-    
-    # simulate the mouse click within the button coordinates
-    qtbot.mouseClick(tree_view.viewport(),
-                     QtCore.Qt.LeftButton,
-                     pos=rect.topLeft())
-                                  
-    list_select = window._data_context._bottom_contents
-    
-    # Set the combo box to "Wave Floating" anc click OK
-    idx = list_select.comboBox.findText("Wave Floating",
-                                        QtCore.Qt.MatchFixedString)
-    list_select.comboBox.setCurrentIndex(idx)
-
-    qtbot.mouseClick(
-                list_select.buttonBox.button(QtGui.QDialogButtonBox.Ok),
-                QtCore.Qt.LeftButton)
-    
-    def check_status():
-        
-        # Pick up pipeline item again as it's been rebuilt
-        test_var = window._pipeline_dock._find_controller(
-                                    controller_title="Device Technology Type",
-                                    controller_class=InputVarControl)
-        
-        assert test_var._status == "satisfied"
-    
-    qtbot.waitUntil(check_status)
-    
-    # Export data
-    menu_click(qtbot,
-               window,
-               window.menuData,
-               "actionExport")
-    
-    def file_saved(): assert os.path.isfile(datastate_file_path)
-    
-    qtbot.waitUntil(file_saved)
-    
-    # Open a new project
-    qtbot.mouseClick(new_project_button, QtCore.Qt.LeftButton)
-    
-    # Import data
-    menu_click(qtbot,
-               window,
-               window.menuData,
-               "actionImport")
-    
-    # Check the test variable
-    qtbot.waitUntil(check_status)
-    
-    assert True
-    
-    
 def test_initiate_dataflow(qtbot, mocker, core):
     
     shell = Shell(core)
@@ -978,545 +1146,6 @@ def test_simulation_clone_select(qtbot, mocker, core):
         assert window._shell.project.get_simulation_title() == "Default"
     
     qtbot.waitUntil(is_active_simulation)
-
-
-def test_credentials_add_delete(qtbot, mocker, tmpdir, core):
-    
-    # Make a source directory with some files
-    config_tmpdir = tmpdir.mkdir("config")
-    mock_dir = Directory(str(config_tmpdir))
-        
-    mocker.patch('dtocean_core.utils.database.UserDataDirectory',
-                 return_value=mock_dir,
-                 autospec=True)
-
-    mocker.patch.object(QtGui.QMessageBox,
-                        'question',
-                        return_value=QtGui.QMessageBox.Yes)
-                      
-    
-    shell = Shell(core)
-    window = DTOceanWindow(shell, debug=True)
-    window.show()
-    qtbot.addWidget(window)
-
-    # Get the new project button and click it
-    new_project_button = window.fileToolBar.widgetForAction(window.actionNew)
-    qtbot.mouseClick(new_project_button, QtCore.Qt.LeftButton)
-    
-    assert window.windowTitle() == "DTOcean: Untitled project*"
-    
-    # Pick up the available pipeline item
-    test_var = window._pipeline_dock._find_controller(
-                                    controller_title="Device Technology Type",
-                                    controller_class=InputVarControl)
-    
-    assert test_var._id == "device.system_type"
-    
-    # Get the select database button and click it
-    new_project_button = \
-        window.scenarioToolBar.widgetForAction(window.actionSelect_Database)
-    qtbot.mouseClick(new_project_button, QtCore.Qt.LeftButton)
-    
-    db_selector = window._db_selector
-    
-    def db_selector_visible(): assert db_selector.isVisible()
-    
-    qtbot.waitUntil(db_selector_visible)
-    
-    n_creds = db_selector.listWidget.count()
-    
-    # Press the add button
-    qtbot.mouseClick(db_selector.addButton,
-                     QtCore.Qt.LeftButton)
-    
-    def added_cred(): assert db_selector.listWidget.count() == n_creds + 1
-    
-    qtbot.waitUntil(added_cred)
-    
-    # Add another
-    n_creds += 1
-    
-    qtbot.mouseClick(db_selector.addButton,
-                     QtCore.Qt.LeftButton)
-    
-    def added_cred(): assert db_selector.listWidget.count() == n_creds + 1
-    
-    qtbot.waitUntil(added_cred)
-    
-    assert "unnamed-1" in db_selector._data_menu.get_available_databases()
-    
-    # Delete all credentials
-    while db_selector.listWidget.count() > 0:
-        
-        # Select the last in the list and select
-        item = db_selector.listWidget.item(db_selector.listWidget.count() - 1)
-        rect = db_selector.listWidget.visualItemRect(item)
-        qtbot.mouseClick(db_selector.listWidget.viewport(),
-                         QtCore.Qt.LeftButton,
-                         pos=rect.center())
-                    
-        qtbot.mouseClick(db_selector.deleteButton,
-                         QtCore.Qt.LeftButton)
-        
-        def deleted_cred():
-            assert db_selector.listWidget.count() == n_creds
-        
-        qtbot.waitUntil(deleted_cred)
-        
-        n_creds -= 1
-        
-    db_selector.close()
-
-
-def test_select_database(qtbot, mocker, tmpdir, core):
-
-    # Make a source directory with some files
-    config_tmpdir = tmpdir.mkdir("config")
-    mock_dir = Directory(str(config_tmpdir))
-        
-    mocker.patch('dtocean_core.utils.database.UserDataDirectory',
-                 return_value=mock_dir,
-                 autospec=True)
-    
-    mocker.patch('dtocean_app.main.DataMenu.select_database',
-                 autospec=True)
-    
-    mocker.patch.object(QtGui.QMessageBox,
-                        'question',
-                        return_value=QtGui.QMessageBox.Yes)
-    
-    
-    shell = Shell(core)
-    window = DTOceanWindow(shell, debug=True)
-    window.show()
-    qtbot.addWidget(window)
-
-    # Get the new project button and click it
-    new_project_button = window.fileToolBar.widgetForAction(window.actionNew)
-    qtbot.mouseClick(new_project_button, QtCore.Qt.LeftButton)
-    
-    assert window.windowTitle() == "DTOcean: Untitled project*"
-    
-    # Pick up the available pipeline item
-    test_var = window._pipeline_dock._find_controller(
-                                    controller_title="Device Technology Type",
-                                    controller_class=InputVarControl)
-    
-    assert test_var._id == "device.system_type"
-    
-    # Get the select database button and click it
-    new_project_button = \
-        window.scenarioToolBar.widgetForAction(window.actionSelect_Database)
-    qtbot.mouseClick(new_project_button, QtCore.Qt.LeftButton)
-    
-    db_selector = window._db_selector
-    
-    def db_selector_visible(): assert db_selector.isVisible()
-    
-    qtbot.waitUntil(db_selector_visible)
-    
-    n_creds = db_selector.listWidget.count()
-    
-    # Press the add button
-    qtbot.mouseClick(db_selector.addButton,
-                     QtCore.Qt.LeftButton)
-    
-    def added_cred(): assert db_selector.listWidget.count() == n_creds + 1
-    
-    qtbot.waitUntil(added_cred)
-    
-    # Select the first in the list and apply
-    db_selector.listWidget.setCurrentRow(0)
-    
-    item = db_selector.listWidget.item(0)
-    rect = db_selector.listWidget.visualItemRect(item)
-    qtbot.mouseClick(db_selector.listWidget.viewport(),
-                     QtCore.Qt.LeftButton,
-                     pos=rect.center())
-    
-    qtbot.mouseClick(
-            db_selector.buttonBox.button(QtGui.QDialogButtonBox.Apply),
-            QtCore.Qt.LeftButton)
-    
-    # Check for credentials
-    def has_credentials():
-        assert db_selector.topDynamicLabel.text() == item.text()
-        
-    qtbot.waitUntil(has_credentials)
-    
-    db_selector.close()
-
-
-def test_deselect_database(qtbot, mocker, tmpdir, core):
-    
-    # Make a source directory with some files
-    config_tmpdir = tmpdir.mkdir("config")
-    mock_dir = Directory(str(config_tmpdir))
-        
-    mocker.patch('dtocean_core.utils.database.UserDataDirectory',
-                 return_value=mock_dir,
-                 autospec=True)
-    
-    mocker.patch('dtocean_app.main.DataMenu.select_database',
-                 autospec=True)
-    
-    mocker.patch.object(QtGui.QMessageBox,
-                        'question',
-                        return_value=QtGui.QMessageBox.Yes)
-    
-    shell = Shell(core)
-    window = DTOceanWindow(shell, debug=True)
-    window.show()
-    qtbot.addWidget(window)
-    
-    # Get the new project button and click it
-    new_project_button = window.fileToolBar.widgetForAction(window.actionNew)
-    qtbot.mouseClick(new_project_button, QtCore.Qt.LeftButton)
-    
-    assert window.windowTitle() == "DTOcean: Untitled project*"
-    
-    # Pick up the available pipeline item
-    test_var = window._pipeline_dock._find_controller(
-                                    controller_title="Device Technology Type",
-                                    controller_class=InputVarControl)
-    
-    assert test_var._id == "device.system_type"
-    
-    # Get the select database button and click it
-    new_project_button = \
-        window.scenarioToolBar.widgetForAction(window.actionSelect_Database)
-    qtbot.mouseClick(new_project_button, QtCore.Qt.LeftButton)
-    
-    db_selector = window._db_selector
-    
-    def db_selector_visible(): assert db_selector.isVisible()
-    
-    qtbot.waitUntil(db_selector_visible)
-    
-    n_creds = db_selector.listWidget.count()
-    
-    # Press the add button
-    qtbot.mouseClick(db_selector.addButton,
-                     QtCore.Qt.LeftButton)
-    
-    def added_cred(): assert db_selector.listWidget.count() == n_creds + 1
-    
-    qtbot.waitUntil(added_cred)
-    
-    # Select the first in the list and apply
-    db_selector.listWidget.setCurrentRow(0)
-    
-    item = db_selector.listWidget.item(0)
-    rect = db_selector.listWidget.visualItemRect(item)
-    qtbot.mouseClick(db_selector.listWidget.viewport(),
-                     QtCore.Qt.LeftButton,
-                     pos=rect.center())
-    
-    qtbot.mouseClick(
-            db_selector.buttonBox.button(QtGui.QDialogButtonBox.Apply),
-            QtCore.Qt.LeftButton)
-    
-    # Check for credentials
-    def has_credentials():
-        assert db_selector.topDynamicLabel.text() == item.text()
-        
-    qtbot.waitUntil(has_credentials)
-    
-    # Press reset button
-    qtbot.mouseClick(
-            db_selector.buttonBox.button(QtGui.QDialogButtonBox.Reset),
-            QtCore.Qt.LeftButton)
-    
-    # Check for credentials
-    def has_not_credentials():
-        assert db_selector.topDynamicLabel.text() == "None"
-        
-    qtbot.waitUntil(has_not_credentials)
-    
-    db_selector.close()
-
-
-def test_credentials_rename(qtbot, mocker, tmpdir, core):
-    
-    # Make a source directory with some files
-    config_tmpdir = tmpdir.mkdir("config")
-    mock_dir = Directory(str(config_tmpdir))
-        
-    mocker.patch('dtocean_core.utils.database.UserDataDirectory',
-                 return_value=mock_dir,
-                 autospec=True)
-
-    mocker.patch.object(QtGui.QMessageBox,
-                        'question',
-                        return_value=QtGui.QMessageBox.Yes)
-                      
-    
-    shell = Shell(core)
-    window = DTOceanWindow(shell, debug=True)
-    window.show()
-    qtbot.addWidget(window)
-
-    # Get the new project button and click it
-    new_project_button = window.fileToolBar.widgetForAction(window.actionNew)
-    qtbot.mouseClick(new_project_button, QtCore.Qt.LeftButton)
-    
-    assert window.windowTitle() == "DTOcean: Untitled project*"
-    
-    # Pick up the available pipeline item
-    test_var = window._pipeline_dock._find_controller(
-                                    controller_title="Device Technology Type",
-                                    controller_class=InputVarControl)
-    
-    assert test_var._id == "device.system_type"
-    
-    # Get the select database button and click it
-    new_project_button = \
-        window.scenarioToolBar.widgetForAction(window.actionSelect_Database)
-    qtbot.mouseClick(new_project_button, QtCore.Qt.LeftButton)
-    
-    db_selector = window._db_selector
-    
-    def db_selector_visible(): assert db_selector.isVisible()
-    
-    qtbot.waitUntil(db_selector_visible)
-    
-    n_creds = db_selector.listWidget.count()
-    
-    # Press the add button
-    qtbot.mouseClick(db_selector.addButton,
-                     QtCore.Qt.LeftButton)
-    
-    def added_cred(): assert db_selector.listWidget.count() == n_creds + 1
-    
-    qtbot.waitUntil(added_cred)
-    
-    # Select the last in the list and chnage its name
-    db_selector.listWidget.setCurrentRow(db_selector.listWidget.count() - 1)
-    
-    editor = mocker.Mock()
-    editor.text.return_value = "bob"
-    
-    db_selector._rename_database(editor, None)
-    
-    def check_name():
-        assert "bob" in db_selector._data_menu.get_available_databases()
-    
-    qtbot.waitUntil(check_name)
-    
-    # Press the add button
-    n_creds += 1
-    
-    qtbot.mouseClick(db_selector.addButton,
-                     QtCore.Qt.LeftButton)
-    
-    def added_cred(): assert db_selector.listWidget.count() == n_creds + 1
-    
-    qtbot.waitUntil(added_cred)
-    
-    # Select the last in the list and chnage its name
-    db_selector.listWidget.setCurrentRow(db_selector.listWidget.count() - 1)
-    
-    editor = mocker.Mock()
-    editor.text.return_value = "bob"
-    
-    db_selector._rename_database(editor, None)
-    
-    def check_one_bob():
-        assert db_selector._data_menu.get_available_databases(
-                                                            ).count("bob") == 1
-    
-    qtbot.waitUntil(check_one_bob)
-    
-    db_selector.close()
-
-
-def test_credentials_save(qtbot, mocker, tmpdir, core):
-    
-    # Make a source directory with some files
-    config_tmpdir = tmpdir.mkdir("config")
-    mock_dir = Directory(str(config_tmpdir))
-        
-    mocker.patch('dtocean_core.utils.database.UserDataDirectory',
-                 return_value=mock_dir,
-                 autospec=True)
-
-    mocker.patch.object(QtGui.QMessageBox,
-                        'question',
-                        return_value=QtGui.QMessageBox.Yes)
-                      
-    
-    shell = Shell(core)
-    window = DTOceanWindow(shell, debug=True)
-    window.show()
-    qtbot.addWidget(window)
-
-    # Get the new project button and click it
-    new_project_button = window.fileToolBar.widgetForAction(window.actionNew)
-    qtbot.mouseClick(new_project_button, QtCore.Qt.LeftButton)
-    
-    assert window.windowTitle() == "DTOcean: Untitled project*"
-    
-    # Pick up the available pipeline item
-    test_var = window._pipeline_dock._find_controller(
-                                    controller_title="Device Technology Type",
-                                    controller_class=InputVarControl)
-    
-    assert test_var._id == "device.system_type"
-    
-    # Get the select database button and click it
-    new_project_button = \
-        window.scenarioToolBar.widgetForAction(window.actionSelect_Database)
-    qtbot.mouseClick(new_project_button, QtCore.Qt.LeftButton)
-    
-    db_selector = window._db_selector
-    
-    def db_selector_visible(): assert db_selector.isVisible()
-    
-    qtbot.waitUntil(db_selector_visible)
-    
-    old_count = db_selector.listWidget.count()
-    
-    # Press the add button
-    qtbot.mouseClick(db_selector.addButton,
-                     QtCore.Qt.LeftButton)
-    
-    def added_cred(): assert db_selector.listWidget.count() == old_count + 1
-    
-    qtbot.waitUntil(added_cred)
-    
-    # Select the last in the list and chnage its name
-    test_cred = db_selector.listWidget.item(
-                                            db_selector.listWidget.count() - 1)
-    
-    test_cred.setText("bob")
-    editor = mocker.Mock()
-    editor.text.return_value = "bob"
-    
-    db_selector._rename_database(editor, None)
-    
-    def check_name():
-        assert "bob" in db_selector._data_menu.get_available_databases()
-    
-    qtbot.waitUntil(check_name)
-    
-    item = QtGui.QTableWidgetItem(str("bob"))
-    db_selector.tableWidget.setItem(0, 1, item)
-    
-    def can_save(): assert db_selector.saveButton.isEnabled()
-    
-    qtbot.waitUntil(can_save)
-    
-    # Press the save button
-    qtbot.mouseClick(db_selector.saveButton,
-                     QtCore.Qt.LeftButton)
-    
-    def can_not_save(): assert not db_selector.saveButton.isEnabled()
-    
-    qtbot.waitUntil(can_not_save)
-    
-    db_selector.close()
-
-
-def test_dump_load_database(qtbot, mocker, tmpdir, core):
-    
-    # Make a source directory with some files
-    config_tmpdir = tmpdir.mkdir("config")
-    mock_dir = Directory(str(config_tmpdir))
-        
-    mocker.patch('dtocean_core.utils.database.UserDataDirectory',
-                 return_value=mock_dir,
-                 autospec=True)
-    
-    mocker.patch("dtocean_core.menu.check_host_port",
-                 return_value=(True, "Mock connection returned"))
-    
-    mocker.patch('dtocean_app.menu.QtGui.QFileDialog.getExistingDirectory',
-                 return_value=str(tmpdir))
-    
-    mocker.patch('dtocean_app.main.database_to_files',
-                 autospec=True)
-    
-    mocker.patch('dtocean_app.main.database_from_files',
-                 autospec=True)
-    
-    mocker.patch.object(QtGui.QMessageBox,
-                        'question',
-                        return_value=QtGui.QMessageBox.Yes)
-    
-    mocker.patch.object(QtGui.QMessageBox,
-                        'warning',
-                        return_value=QtGui.QMessageBox.Yes)
-    
-    shell = Shell(core)
-    window = DTOceanWindow(shell, debug=True)
-    window.show()
-    qtbot.addWidget(window)
-    
-    # Get the new project button and click it
-    new_project_button = window.fileToolBar.widgetForAction(window.actionNew)
-    qtbot.mouseClick(new_project_button, QtCore.Qt.LeftButton)
-    
-    assert window.windowTitle() == "DTOcean: Untitled project*"
-    
-    # Pick up the available pipeline item
-    test_var = window._pipeline_dock._find_controller(
-                                    controller_title="Device Technology Type",
-                                    controller_class=InputVarControl)
-    
-    assert test_var._id == "device.system_type"
-    
-    # Get the select database button and click it
-    new_project_button = \
-        window.scenarioToolBar.widgetForAction(window.actionSelect_Database)
-    qtbot.mouseClick(new_project_button, QtCore.Qt.LeftButton)
-    
-    db_selector = window._db_selector
-    
-    def db_selector_visible(): assert db_selector.isVisible()
-    
-    qtbot.waitUntil(db_selector_visible)
-    
-    # Select the first in the list and apply
-    db_selector.listWidget.setCurrentRow(0)
-    
-    item = db_selector.listWidget.item(0)
-    rect = db_selector.listWidget.visualItemRect(item)
-    qtbot.mouseClick(db_selector.listWidget.viewport(),
-                     QtCore.Qt.LeftButton,
-                     pos=rect.center())
-    
-    qtbot.mouseClick(
-            db_selector.buttonBox.button(QtGui.QDialogButtonBox.Apply),
-            QtCore.Qt.LeftButton)
-    
-    # Check for credentials
-    def has_credentials():
-        assert shell.project.get_database_credentials() is not None
-        
-    qtbot.waitUntil(has_credentials)
-    
-    # Activate dump
-    qtbot.mouseClick(db_selector.dumpButton,
-                     QtCore.Qt.LeftButton)
-    
-    qtbot.waitSignal(shell.database_convert_complete)
-    
-    def dump_enabled(): assert db_selector.dumpButton.isEnabled()
-    
-    qtbot.waitUntil(dump_enabled)
-    
-    # Activate load
-    qtbot.mouseClick(db_selector.loadButton,
-                     QtCore.Qt.LeftButton)
-    
-    qtbot.waitSignal(shell.database_convert_complete)
-    
-    def load_enabled(): assert db_selector.loadButton.isEnabled()
-    
-    qtbot.waitUntil(load_enabled)
-    
-    db_selector.close()
 
 
 def test_save_modify_close(qtbot, mocker, tmpdir, core):

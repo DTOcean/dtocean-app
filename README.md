@@ -204,7 +204,7 @@ $ conda activate _dtocean_app
 Install pytest to the environment (one time only):
 
 ```
-$ conda install -y mock pytest pytest-mock pytest-qt
+$ conda install -y mock "pytest>=3.6,<4" pytest-cov pytest-mock pytest-qt
 ```
 
 Run the tests:
