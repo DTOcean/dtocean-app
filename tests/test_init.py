@@ -15,6 +15,7 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import os
 import logging
 import warnings
 
@@ -103,3 +104,16 @@ def test_start_logging_user(mocker, tmpdir):
     logdir = config_tmpdir.join("..", "logs")
     
     assert len(logdir.listdir()) == 1
+
+
+def test_cli(capfd):
+    
+    exit_status = os.system('dtocean-app --help')
+    
+    assert exit_status == 0
+    
+    captured = capfd.readouterr()
+    print captured.out
+    
+    assert "Run the DTOcean graphical application." in captured.out
+    assert "The DTOcean Developers (c) 2022." in captured.out

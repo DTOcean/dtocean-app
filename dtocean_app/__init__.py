@@ -239,7 +239,7 @@ def gui_interface():
         
     '''
     
-    epiStr = ('''The DTOcean Developers (c) 2020.''')
+    epiStr = ('''The DTOcean Developers (c) 2022.''')
     
     desStr = "Run the DTOcean graphical application."
     

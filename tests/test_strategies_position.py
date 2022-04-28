@@ -83,7 +83,7 @@ class MockModule(ModuleInterface):
         return
 
 
-@pytest.fixture
+@pytest.fixture(scope="module")
 def core():
     
     core = GUICore()
@@ -91,6 +91,9 @@ def core():
     core._create_control()
     core._create_sockets()
     core._init_plots()
+    
+    socket = core.control._sequencer.get_socket("ModuleInterface")
+    socket.add_interface(MockModule)
     
     return core
 
@@ -123,9 +126,6 @@ def project(core):
 def mock_shell(core, project):
     
     module_menu = ModuleMenu()
-    
-    socket = core.control._sequencer.get_socket("ModuleInterface")
-    socket.add_interface(MockModule)
     module_menu.activate(core, project, MockModule.get_name())
     
     shell = Shell(core)
