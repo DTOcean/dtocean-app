@@ -1088,6 +1088,7 @@ def results_df():
 
 @pytest.fixture
 def window_results(mocker,
+                   qtbot,
                    tmp_path,
                    hydro_shell,
                    config,
@@ -1130,23 +1131,24 @@ def window_results(mocker,
                         "get_all_results",
                         return_value=results_df)
     
-    return AdvancedPositionWidget(None, hydro_shell, config)
-
-
-
-def test_AdvancedPositionWidget_results_open(qtbot, window_results):
+    window = AdvancedPositionWidget(None, hydro_shell, config)
+    window.show()
+    qtbot.addWidget(window)
     
-    window_results.show()
-    qtbot.addWidget(window_results)
+    yield window
     
+    def no_load_sims_thread():
+        assert window._load_sims_thread is None
+    
+    qtbot.waitUntil(no_load_sims_thread)
+
+
+def test_AdvancedPositionWidget_results_open(window_results):
     assert window_results.tabWidget.isTabEnabled(3)
     assert window_results.tabWidget.isTabEnabled(4)
 
 
 def test_AdvancedPositionWidget_update_delete_sims(qtbot, window_results):
-    
-    window_results.show()
-    qtbot.addWidget(window_results)
     
     qtbot.mouseClick(window_results.deleteSimsBox, QtCore.Qt.LeftButton)
     
@@ -1160,9 +1162,6 @@ def test_AdvancedPositionWidget_update_delete_sims(qtbot, window_results):
 
 
 def test_AdvancedPositionWidget_update_protect_default(qtbot, window_results):
-    
-    window_results.show()
-    qtbot.addWidget(window_results)
     
     qtbot.mouseClick(window_results.protectDefaultBox, QtCore.Qt.LeftButton)
     
@@ -1183,9 +1182,6 @@ def test_AdvancedPositionWidget_select_sims_to_load(qtbot,
                                                     button,
                                                     expected):
     
-    window_results.show()
-    qtbot.addWidget(window_results)
-    
     window_results.tabWidget.setCurrentIndex(3)
     
     button = getattr(window_results, button)
@@ -1201,9 +1197,6 @@ def test_AdvancedPositionWidget_select_sims_to_load(qtbot,
 def test_AdvancedPositionWidget_select_sims_to_load_custom(qtbot,
                                                            window_results):
     
-    window_results.show()
-    qtbot.addWidget(window_results)
-    
     window_results.tabWidget.setCurrentIndex(3)
     
     button = getattr(window_results, "customSimButton")
@@ -1218,9 +1211,6 @@ def test_AdvancedPositionWidget_select_sims_to_load_custom(qtbot,
 
 def test_AdvancedPositionWidget_update_custom_sims(qtbot,
                                                    window_results):
-    
-    window_results.show()
-    qtbot.addWidget(window_results)
     
     window_results.tabWidget.setCurrentIndex(3)
     
@@ -1238,9 +1228,6 @@ def test_AdvancedPositionWidget_update_custom_sims(qtbot,
 
 def test_AdvancedPositionWidget_update_custom_sims_bad(qtbot,
                                                        window_results):
-    
-    window_results.show()
-    qtbot.addWidget(window_results)
     
     window_results.tabWidget.setCurrentIndex(3)
     
@@ -1265,9 +1252,6 @@ def test_AdvancedPositionWidget_load_sims(qtbot,
     # Need to assert that the progress bar was shown
     spy = mocker.spy(window_results, "_progress")
     
-    window_results.show()
-    qtbot.addWidget(window_results)
-    
     window_results.tabWidget.setCurrentIndex(3)
     
     button = getattr(window_results, "bestSimButton")
@@ -1291,10 +1275,7 @@ def test_AdvancedPositionWidget_export_data_table(mocker,
                         'getSaveFileName',
                         return_value=str(f))
     
-    window_results.show()
-    qtbot.addWidget(window_results)
     window_results.tabWidget.setCurrentIndex(3)
-    
     qtbot.mouseClick(window_results.dataExportButton, QtCore.Qt.LeftButton)
     
     assert f.is_file()
@@ -1302,8 +1283,6 @@ def test_AdvancedPositionWidget_export_data_table(mocker,
 
 def test_AdvancedPositionWidget_set_plot(qtbot, window_results):
     
-    window_results.show()
-    qtbot.addWidget(window_results)
     window_results.tabWidget.setCurrentIndex(4)
     
     window_results.xAxisVarBox.setCurrentIndex(4)
@@ -1388,8 +1367,6 @@ def test_AdvancedPositionWidget_export_plot(mocker,
                         'getSaveFileName',
                         return_value=str(f))
     
-    window_results.show()
-    qtbot.addWidget(window_results)
     window_results.tabWidget.setCurrentIndex(4)
     
     window_results.xAxisVarBox.setCurrentIndex(4)
