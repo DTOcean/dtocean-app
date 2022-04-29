@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-#    Copyright (C) 2016-2018 Mathew Topper
+#    Copyright (C) 2016-2022 Mathew Topper
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -20,7 +20,10 @@ import logging
 import warnings
 
 from polite.paths import Directory
-from dtocean_app import warn_with_traceback, start_logging
+from dtocean_app import (warn_with_traceback,
+                         start_logging,
+                         main,
+                         gui_interface)
 from dtocean_app.utils.config import init_config
 
 
@@ -106,6 +109,39 @@ def test_start_logging_user(mocker, tmpdir):
     assert len(logdir.listdir()) == 1
 
 
+def test_main(mocker, qtbot):
+    
+    # The qtbot fixture must be requested along with mocking QApplication and
+    # DTOceanWindow, or the teardown crashes test_main.py when it follows this 
+    # test file.
+    
+    import sys
+    import dtocean_app.main
+    
+    mocker.patch("dtocean_app.QtGui.QApplication", autospec=True)
+    mocker.patch.object(dtocean_app.main, "DTOceanWindow", autospec=True)
+    mocker.patch("dtocean_app.QtGui.QSplashScreen.finish")
+    sys_exit = mocker.patch.object(sys, 'exit')
+    
+    main()
+    
+    assert sys_exit.call_count == 1
+
+
+def test_gui_interface(mocker):
+    
+    import sys
+    
+    testargs = ["dtocean-app", "--debug", "--trace-warnings", "--quit"]
+    mocker.patch.object(sys, 'argv', testargs)
+    main = mocker.patch('dtocean_app.main')
+    
+    gui_interface()
+    
+    expected = {'debug': True, 'trace_warnings': True, 'force_quit': True}
+    assert main.call_args.kwargs == expected
+
+
 def test_cli(capfd):
     
     exit_status = os.system('dtocean-app --help')
@@ -113,7 +149,6 @@ def test_cli(capfd):
     assert exit_status == 0
     
     captured = capfd.readouterr()
-    print captured.out
     
     assert "Run the DTOcean graphical application." in captured.out
     assert "The DTOcean Developers (c) 2022." in captured.out
