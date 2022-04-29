@@ -114,7 +114,7 @@ class ThreadLoadSimulations(QtCore.QThread):
         
         return
     
-    def run(self):
+    def run(self): # pragma: no cover
         
         if RUNNING_COVERAGE:
             sys.settrace(threading._trace_hook)

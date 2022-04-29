@@ -102,7 +102,7 @@ class ThreadReadRaw(QtCore.QThread):
         
         return
     
-    def run(self):
+    def run(self): # pragma: no cover
         
         if RUNNING_COVERAGE:
             sys.settrace(threading._trace_hook)
@@ -145,7 +145,7 @@ class ThreadReadTest(QtCore.QThread):
         
         return
     
-    def run(self):
+    def run(self): # pragma: no cover
         
         if RUNNING_COVERAGE:
             sys.settrace(threading._trace_hook)
@@ -190,7 +190,7 @@ class ThreadOpen(QtCore.QThread):
         
         return
     
-    def run(self):
+    def run(self): # pragma: no cover
         
         if RUNNING_COVERAGE:
             sys.settrace(threading._trace_hook)
@@ -311,7 +311,7 @@ class ThreadSave(QtCore.QThread):
         
         return
     
-    def run(self):
+    def run(self): # pragma: no cover
         
         if RUNNING_COVERAGE:
             sys.settrace(threading._trace_hook)
@@ -426,7 +426,7 @@ class ThreadDataFlow(QtCore.QThread):
         
         return
     
-    def run(self):
+    def run(self): # pragma: no cover
         
         if RUNNING_COVERAGE:
             sys.settrace(threading._trace_hook)
@@ -492,7 +492,7 @@ class ThreadCurrent(QtCore.QThread):
         
         return
     
-    def run(self):
+    def run(self): # pragma: no cover
         
         if RUNNING_COVERAGE:
             sys.settrace(threading._trace_hook)
@@ -545,7 +545,7 @@ class ThreadThemes(QtCore.QThread):
         
         return
     
-    def run(self):
+    def run(self): # pragma: no cover
         
         if RUNNING_COVERAGE:
             sys.settrace(threading._trace_hook)
@@ -597,7 +597,7 @@ class ThreadStrategy(QtCore.QThread):
         
         return
     
-    def run(self):
+    def run(self): # pragma: no cover
         
         if RUNNING_COVERAGE:
             sys.settrace(threading._trace_hook)
@@ -650,7 +650,7 @@ class ThreadTool(QtCore.QThread):
         
         return
     
-    def run(self):
+    def run(self): # pragma: no cover
         
         if RUNNING_COVERAGE:
             sys.settrace(threading._trace_hook)
@@ -689,7 +689,7 @@ class ThreadDump(QtCore.QThread):
         
         return
     
-    def run(self):
+    def run(self): # pragma: no cover
         
         if RUNNING_COVERAGE:
             sys.settrace(threading._trace_hook)
@@ -747,7 +747,7 @@ class ThreadLoad(QtCore.QThread):
         
         return
     
-    def run(self):
+    def run(self): # pragma: no cover
         
         if RUNNING_COVERAGE:
             sys.settrace(threading._trace_hook)
@@ -800,7 +800,7 @@ class ThreadScope(QtCore.QThread):
         
         return
     
-    def run(self):
+    def run(self): # pragma: no cover
         
         if RUNNING_COVERAGE:
             sys.settrace(threading._trace_hook)
