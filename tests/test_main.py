@@ -97,22 +97,42 @@ def core():
     return core
 
 
-def test_close_open_dock(mocker, qtbot, tmp_path, core):
+@pytest.fixture
+def window(mocker, qtbot, tmp_path, core):
     
     mocker.patch('dtocean_core.utils.database.UserDataDirectory',
                  return_value=Directory(str(tmp_path)),
                  autospec=True)
     
+    mocker.patch('dtocean_app.main.Shell.get_available_modules',
+                 return_value=["Mock Module"],
+                 autospec=True)
+    
+    mocker.patch('dtocean_app.main.DTOceanWindow._project_close_warning',
+                 return_value=QtGui.QMessageBox.Discard,
+                 autospec=True)
+    
     shell = Shell(core)
+    socket = shell.core.control._sequencer.get_socket("ModuleInterface")
+    socket.add_interface(MockModule)
+    
     window = DTOceanWindow(shell)
     window.show()
-    
     qtbot.addWidget(window)
-    mocker.patch.object(QtGui.QMessageBox,
-                        'question',
-                        return_value=QtGui.QMessageBox.Yes)
     
+    yield window
+    
+    def no_active_thread():
+        assert shell._active_thread is None
+    
+    qtbot.waitUntil(no_active_thread)
+
+
+def test_window(window):
     assert window.windowTitle() == "DTOcean"
+
+
+def test_close_open_dock(qtbot, window):
     
     # Close the system dock
     window._system_dock.close()
@@ -130,10 +150,12 @@ def test_close_open_dock(mocker, qtbot, tmp_path, core):
     def dock_is_open(): assert window._system_dock.isVisible()
 
     qtbot.waitUntil(dock_is_open)
+    
+    assert window._system_dock.isVisible()
 
 
 @pytest.fixture
-def window(mocker, qtbot, tmp_path, core):
+def window_debug(mocker, qtbot, tmp_path, core):
     
     mocker.patch('dtocean_core.utils.database.UserDataDirectory',
                  return_value=Directory(str(tmp_path)),
@@ -163,20 +185,21 @@ def window(mocker, qtbot, tmp_path, core):
     qtbot.waitUntil(no_active_thread)
 
 
-def test_open_dtocean_window(mocker, window):
-    assert window.windowTitle() == "DTOcean"
+def test_window_debug(window_debug):
+    assert window_debug.windowTitle() == "DTOcean"
 
 
 @pytest.fixture
-def window_new_project(mocker, qtbot, window):
+def window_new_project(mocker, qtbot, window_debug):
     
     # Get the new project button and click it
-    new_project_button = window.fileToolBar.widgetForAction(window.actionNew)
+    new_project_button = window_debug.fileToolBar.widgetForAction(
+                                                        window_debug.actionNew)
     qtbot.mouseClick(new_project_button, QtCore.Qt.LeftButton)
     
-    assert window.windowTitle() == "DTOcean: Untitled project*"
+    assert window_debug.windowTitle() == "DTOcean: Untitled project*"
     
-    return window
+    return window_debug
 
 
 def test_new_project(window_new_project):
