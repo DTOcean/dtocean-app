@@ -781,6 +781,8 @@ def test_initiate_dataflow(window_with_dataflow):
         
     assert test_control is not None
 
+# These simulation dock tests below should probably be split into a separate
+# file, with the shell mocked to a useful state.
 
 def test_set_simulation_title(mocker, qtbot, window_with_dataflow):
     
@@ -811,7 +813,43 @@ def test_set_simulation_title(mocker, qtbot, window_with_dataflow):
     assert window_with_dataflow._shell.project.get_simulation_title() == "bob"
 
 
-def test_simulation_clone_select(mocker, qtbot, window_with_dataflow):
+def test_simulation_context_menu(mocker, qtbot, window_with_dataflow):
+    
+    menu = mocker.MagicMock()
+    mocker.patch('dtocean_app.simulation.QtGui.QMenu',
+                 return_value=menu)
+    
+    # Close the pipeline
+    window_with_dataflow._pipeline_dock.close()
+    
+    def pipeline_not_visible():
+        assert not window_with_dataflow._pipeline_dock.isVisible()
+    
+    qtbot.waitUntil(pipeline_not_visible)
+    
+    # Clone the simulation
+    simulation_dock = window_with_dataflow._simulation_dock
+    default_sim = simulation_dock.listWidget.item(0)
+    
+    rect = simulation_dock.listWidget.visualItemRect(default_sim)
+    event = QtGui.QContextMenuEvent(QtGui.QContextMenuEvent.Mouse, 
+                                    rect.center())
+    QtGui.QApplication.postEvent(simulation_dock.listWidget.viewport(),
+                                 event)
+    
+    def menu_exec_called():
+        assert menu.exec_.called
+    
+    qtbot.waitUntil(menu_exec_called)
+    
+    expected_actions = ['Clone', 'Delete']
+    actions = [x.args[0] for x in menu.addAction.call_args_list]
+    
+    assert actions == expected_actions
+
+
+@pytest.fixture
+def window_two_simulations(qtbot, window_with_dataflow):
     
     # Close the pipeline
     window_with_dataflow._pipeline_dock.close()
@@ -830,10 +868,23 @@ def test_simulation_clone_select(mocker, qtbot, window_with_dataflow):
     
     qtbot.waitUntil(has_two_simulations)
     
-    # Check the new simulation name
-    test_sim = simulation_dock.listWidget.item(1)
+    return window_with_dataflow
+
+
+def test_simulation_clone(qtbot, window_two_simulations):
     
-    assert test_sim._title == "Default Clone 1"
+    # Check the new simulation name
+    project = window_two_simulations._shell.project
+    
+    assert project.get_simulation_title() == "Default Clone 1"
+
+
+def test_simulation_clone_set_title_fail(mocker,
+                                         qtbot,
+                                         window_two_simulations):
+    
+    simulation_dock = window_two_simulations._simulation_dock
+    test_sim = simulation_dock.listWidget.item(1)
     
     # Try (and fail) to set the new simulation title to Default
     editor = mocker.Mock()
@@ -847,6 +898,13 @@ def test_simulation_clone_select(mocker, qtbot, window_with_dataflow):
     
     qtbot.waitUntil(check_name)
     
+    assert test_sim._title == "Default Clone 1"
+
+
+def test_simulation_clone_select(mocker, qtbot, window_two_simulations):
+    
+    simulation_dock = window_two_simulations._simulation_dock
+    
     # Select the default simulation
     item = simulation_dock.listWidget.item(0)
     rect = simulation_dock.listWidget.visualItemRect(item)
@@ -855,7 +913,7 @@ def test_simulation_clone_select(mocker, qtbot, window_with_dataflow):
                      QtCore.Qt.LeftButton,
                      pos=rect.center())
     
-    project = window_with_dataflow._shell.project
+    project = window_two_simulations._shell.project
     
     def is_active_simulation():
         assert project.get_simulation_title() == "Default"
@@ -863,6 +921,38 @@ def test_simulation_clone_select(mocker, qtbot, window_with_dataflow):
     qtbot.waitUntil(is_active_simulation)
     
     assert project.get_simulation_title() == "Default"
+
+
+def test_simulation_clone_delete(qtbot, window_two_simulations):
+    
+    simulation_dock = window_two_simulations._simulation_dock
+    simulation_dock.listWidget.setCurrentRow(1)
+    simulation_dock._delete_current(window_two_simulations._shell)
+    
+    def has_one_simulation():
+        assert simulation_dock.listWidget.count() == 1
+    
+    qtbot.waitUntil(has_one_simulation)
+    
+    project = window_two_simulations._shell.project
+    
+    assert project.get_simulation_title() == "Default"
+
+
+def test_simulation_clone_again(qtbot, window_two_simulations):
+    
+    simulation_dock = window_two_simulations._simulation_dock
+    simulation_dock.listWidget.setCurrentRow(1)
+    simulation_dock._clone_current(window_two_simulations._shell)
+    
+    def has_three_simulations():
+        assert simulation_dock.listWidget.count() == 3
+    
+    qtbot.waitUntil(has_three_simulations)
+    
+    test_sim = simulation_dock.listWidget.item(2)
+    
+    assert test_sim._title == "Default Clone 2"
 
 
 @pytest.mark.parametrize("ext", ["dto", "prj"])
