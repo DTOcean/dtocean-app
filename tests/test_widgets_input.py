@@ -322,6 +322,18 @@ def test_InputDataTable_edit_cols_get_result(qtbot):
     assert (test.columns.values == ["Test", "Test"]).all()
 
 
+def test_InputDataTable_get_dataframe_none():
+    
+    window = InputDataTable(None,
+                            ["Test", "Test [Brackets]"],
+                            units=["test", "test"],
+                            edit_cols=True)
+    df = window._get_dataframe(None, dtypes=["int", "int"])
+    
+    assert df.empty
+    assert (df.dtypes == ["int", "int"]).all()
+
+
 def test_InputLineTable(qtbot):
     
     window = InputLineTable(units=["test", "test"])
