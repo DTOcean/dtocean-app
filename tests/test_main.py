@@ -24,7 +24,9 @@ from polite.paths import Directory
 from dtocean_core.interfaces import ModuleInterface
 from dtocean_app.core import GUICore
 from dtocean_app.main import DTOceanWindow, Shell
-from dtocean_app.pipeline import InputVarControl, SectionControl
+from dtocean_app.pipeline import (InputBranchControl,
+                                  InputVarControl,
+                                  SectionControl)
 from dtocean_app.widgets.input import FloatSelect, ListSelect
 
 
@@ -781,8 +783,40 @@ def test_initiate_dataflow(window_with_dataflow):
         
     assert test_control is not None
 
-# These simulation dock tests below should probably be split into a separate
-# file, with the shell mocked to a useful state.
+
+# These dock tests below should probably be split into a separate files, with 
+# the shell mocked to a useful state.
+
+
+def test_pipeline_context_menu(mocker, qtbot, window_with_dataflow):
+    
+    menu = mocker.MagicMock()
+    mocker.patch('dtocean_app.pipeline.QtGui.QMenu',
+                 return_value=menu)
+    
+    pipeline_dock = window_with_dataflow._pipeline_dock
+    mod_control = pipeline_dock._find_controller(
+                                    controller_title="Mock Module",
+                                    controller_class=InputBranchControl)
+    
+    index = mod_control._get_index_from_address()
+    proxy_index = mod_control._proxy.mapFromSource(index)
+    rect = pipeline_dock.treeView.visualRect(proxy_index)
+    event = QtGui.QContextMenuEvent(QtGui.QContextMenuEvent.Mouse, 
+                                    rect.center())
+    QtGui.QApplication.postEvent(pipeline_dock.treeView.viewport(),
+                                 event)
+    
+    def menu_exec_called():
+        assert menu.exec_.called
+    
+    qtbot.waitUntil(menu_exec_called)
+    
+    expected_actions = ['Inspect', 'Reset', 'Load test data...']
+    actions = [x.args[0] for x in menu.addAction.call_args_list]
+    
+    assert actions == expected_actions
+
 
 def test_set_simulation_title(mocker, qtbot, window_with_dataflow):
     
