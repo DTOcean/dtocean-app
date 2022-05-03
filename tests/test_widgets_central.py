@@ -24,7 +24,4 @@ def test_FileManagerWidget(qtbot):
     widget.show()
     qtbot.addWidget(widget)
     
-    qtbot.stop()
-    
     assert True
-
