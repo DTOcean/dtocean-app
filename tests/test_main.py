@@ -61,7 +61,8 @@ class MockModule(ModuleInterface):
                       'device.system_type',
                       'device.power_rating',
                       'device.cut_in_velocity',
-                      'device.turbine_interdistance']
+                      'device.turbine_interdistance',
+                      'project.annual_energy_per_device']
         
         return input_list
 
@@ -89,7 +90,8 @@ class MockModule(ModuleInterface):
                   "dummy5": "project.layout",
                   "dummy6": "project.annual_energy",
                   "dummy7": "project.number_of_devices",
-                  "dummy8": "device.turbine_interdistance"}
+                  "dummy8": "device.turbine_interdistance",
+                  "dummy9": 'project.annual_energy_per_device'}
                   
         return id_map
                  
@@ -735,6 +737,25 @@ def test_export_data(qtbot, mocker, tmpdir, window_floating_wave):
     assert os.path.isfile(datastate_file_path)
 
 
+def test_export_data_mask(qtbot, mocker, tmpdir, window_floating_wave):
+    
+    # File path
+    datastate_file_name = "my_datastate.dts"
+    datastate_file_path = os.path.join(str(tmpdir), datastate_file_name)
+                      
+    mocker.patch.object(QtGui.QFileDialog,
+                        'getSaveFileName',
+                        return_value=datastate_file_path)
+    
+    # Export data
+    menu_click(qtbot,
+               window_floating_wave,
+               window_floating_wave.menuData,
+               "actionExport_mask")
+        
+    assert os.path.isfile(datastate_file_path)
+
+
 def test_import_data(qtbot, mocker, tmpdir, window_floating_wave):
 
     # File path
@@ -769,6 +790,56 @@ def test_import_data(qtbot, mocker, tmpdir, window_floating_wave):
                window_floating_wave,
                window_floating_wave.menuData,
                "actionImport")
+    
+    def check_status():
+        
+        # Pick up pipeline item again as it's been rebuilt
+        test_var = window_floating_wave._pipeline_dock._find_controller(
+                                    controller_title="Device Technology Type",
+                                    controller_class=InputVarControl)
+        
+        assert test_var._status == "satisfied"
+    
+    # Check the test variable
+    qtbot.waitUntil(check_status)
+    
+    assert True
+
+
+def test_import_data_skip(qtbot, mocker, tmpdir, window_floating_wave):
+
+    # File path
+    datastate_file_name = "my_datastate.dts"
+    datastate_file_path = os.path.join(str(tmpdir), datastate_file_name)
+    
+    mocker.patch.object(QtGui.QFileDialog,
+                        'getSaveFileName',
+                        return_value=datastate_file_path)
+    
+    mocker.patch.object(QtGui.QFileDialog,
+                        'getOpenFileName',
+                        return_value=datastate_file_path)
+    
+    # Export data
+    menu_click(qtbot,
+               window_floating_wave,
+               window_floating_wave.menuData,
+               "actionExport")
+    
+    def file_saved(): assert os.path.isfile(datastate_file_path)
+    
+    qtbot.waitUntil(file_saved)
+    
+    # Open a new project
+    new_project_button = window_floating_wave.fileToolBar.widgetForAction(
+                                            window_floating_wave.actionNew)
+    qtbot.mouseClick(new_project_button, QtCore.Qt.LeftButton)
+    
+    # Import data
+    menu_click(qtbot,
+               window_floating_wave,
+               window_floating_wave.menuData,
+               "actionImport_skip")
     
     def check_status():
         
@@ -1066,6 +1137,72 @@ def test_simulation_context_menu(mocker, qtbot, window_dataflow_module):
 
 
 @pytest.fixture
+def window_plot_context(qtbot, window_dataflow_module):
+    
+    controller = window_dataflow_module._pipeline_dock._find_controller(
+                    controller_title="Annual Energy Production Per Device",
+                    controller_class=InputVarControl)
+    
+    values = {"a": 5,
+              "b": 10}
+    window_dataflow_module._read_raw(controller._variable, values)
+    
+    # obtain the rectangular coordinates of the child item
+    tree_view = window_dataflow_module._pipeline_dock.treeView
+    index = controller._get_index_from_address()
+    proxy_index = controller._proxy.mapFromSource(index)
+    rect = tree_view.visualRect(proxy_index)
+    
+    # simulate the mouse click within the button coordinates
+    qtbot.mouseClick(tree_view.viewport(),
+                     QtCore.Qt.LeftButton,
+                     pos=rect.topLeft())
+    
+    def has_data_bottom_contents():
+        window_dataflow_module._data_context._bottom_contents is not None
+    
+    qtbot.waitUntil(has_data_bottom_contents)
+    
+    window_dataflow_module.actionPlots.trigger()
+    
+    def has_plot_bottom_contents():
+        window_dataflow_module._plot_context._bottom_contents is not None
+    
+    qtbot.waitUntil(has_plot_bottom_contents)
+    
+    return window_dataflow_module
+
+
+def test_plot_context_visible(window_plot_context):
+    assert window_plot_context._plot_context._bottom_contents is not None
+
+
+def test_plot_context_clear(qtbot, window_plot_context):
+    
+    controller = window_plot_context._pipeline_dock._find_controller(
+                    controller_title="Bathymetry",
+                    controller_class=InputVarControl)
+    
+    # obtain the rectangular coordinates of the child item
+    tree_view = window_plot_context._pipeline_dock.treeView
+    index = controller._get_index_from_address()
+    proxy_index = controller._proxy.mapFromSource(index)
+    rect = tree_view.visualRect(proxy_index)
+    
+    # simulate the mouse click within the button coordinates
+    qtbot.mouseClick(tree_view.viewport(),
+                     QtCore.Qt.LeftButton,
+                     pos=rect.topLeft())
+    
+    def clear_plot_bottom_contents():
+        window_plot_context._plot_context._bottom_contents is None
+    
+    qtbot.waitUntil(clear_plot_bottom_contents)
+    
+    assert window_plot_context._plot_context._bottom_contents is None
+
+
+@pytest.fixture
 def window_dataflow_theme(qtbot, window_with_pipeline):
     
     # Add a theme
@@ -1268,7 +1405,7 @@ def test_simulation_active_mods_warn(caplog,
     item = simulation_dock.listWidget.item(0)
     rect = simulation_dock.listWidget.visualItemRect(item)
     
-    with caplog_for_logger(caplog, 'dtocean_core'):
+    with caplog_for_logger(caplog, 'dtocean_app'):
         
         qtbot.mouseClick(simulation_dock.listWidget.viewport(),
                          QtCore.Qt.LeftButton,
@@ -1345,7 +1482,7 @@ def test_simulation_active_themes_warn(caplog,
     item = simulation_dock.listWidget.item(0)
     rect = simulation_dock.listWidget.visualItemRect(item)
     
-    with caplog_for_logger(caplog, 'dtocean_core'):
+    with caplog_for_logger(caplog, 'dtocean_app'):
         
         qtbot.mouseClick(simulation_dock.listWidget.viewport(),
                          QtCore.Qt.LeftButton,
@@ -1464,8 +1601,50 @@ def test_strategy_select(qtbot, window_dataflow_module):
     assert strategy_manager.isVisible()
 
 
+def test_strategy_no_modules(qtbot, window_dataflow_theme):
+    
+    strategy_manager = window_dataflow_theme._strategy_manager
+    
+    if "Basic" not in strategy_manager.get_available():
+        pytest.skip("Test requires Basic strategy")
+    
+    # Add a strategy
+    add_strategy_button = \
+                window_dataflow_theme.simulationToolBar.widgetForAction(
+                                    window_dataflow_theme.actionAdd_Strategy)
+    qtbot.mouseClick(add_strategy_button, QtCore.Qt.LeftButton)
+    
+    def strategy_manager_visible(): assert strategy_manager.isVisible()
+    
+    # Click on first strategy and apply
+    item = strategy_manager.listWidget.item(0)
+    rect = strategy_manager.listWidget.visualItemRect(item)
+    qtbot.mouseClick(strategy_manager.listWidget.viewport(),
+                     QtCore.Qt.LeftButton,
+                     pos=rect.center())
+    
+    def apply_enabled():
+        assert strategy_manager.applyButton.isEnabled()
+        
+    qtbot.waitUntil(apply_enabled)
+    
+    qtbot.mouseClick(strategy_manager.applyButton,
+                     QtCore.Qt.LeftButton)
+    
+    def strategy_set():
+        assert str(strategy_manager.topDynamicLabel.text()) == str(item.text())
+    
+    qtbot.waitUntil(strategy_set)
+    
+    # Close the dialog
+    qtbot.mouseClick(strategy_manager.closeButton,
+                     QtCore.Qt.LeftButton)
+    
+    assert not window_dataflow_theme.actionRun_Strategy.isEnabled()
+
+
 @pytest.fixture
-def strategy_manager_basic(mocker, qtbot, window_dataflow_module):
+def strategy_manager_basic(qtbot, window_dataflow_module):
     
     strategy_manager = window_dataflow_module._strategy_manager
     
