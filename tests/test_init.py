@@ -22,7 +22,7 @@ import warnings
 from polite.paths import Directory
 from dtocean_app import (warn_with_traceback,
                          start_logging,
-                         main,
+                         main_,
                          gui_interface)
 from dtocean_app.utils.config import init_config
 
@@ -123,7 +123,7 @@ def test_main(mocker, qtbot):
     mocker.patch("dtocean_app.QtGui.QSplashScreen.finish")
     sys_exit = mocker.patch.object(sys, 'exit')
     
-    main()
+    main_()
     
     assert sys_exit.call_count == 1
 
@@ -134,12 +134,12 @@ def test_gui_interface(mocker):
     
     testargs = ["dtocean-app", "--debug", "--trace-warnings", "--quit"]
     mocker.patch.object(sys, 'argv', testargs)
-    main = mocker.patch('dtocean_app.main')
+    main_ = mocker.patch('dtocean_app.main_')
     
     gui_interface()
     
     expected = {'debug': True, 'trace_warnings': True, 'force_quit': True}
-    assert main.call_args.kwargs == expected
+    assert main_.call_args.kwargs == expected
 
 
 def test_cli(capfd):

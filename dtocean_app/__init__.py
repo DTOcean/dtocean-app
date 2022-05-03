@@ -129,7 +129,7 @@ def get_log_dir():
 #                    "profile.stat")
 
 
-def main(debug=False, trace_warnings=False, force_quit=False):
+def main_(debug=False, trace_warnings=False, force_quit=False):
 
     """Run the DTOcean tool"""
     
@@ -259,6 +259,6 @@ def gui_interface():
     trace_warnings = args.trace_warnings
     force_quit = args.quit
     
-    main(debug=debug, trace_warnings=trace_warnings, force_quit=force_quit)
+    main_(debug=debug, trace_warnings=trace_warnings, force_quit=force_quit)
     
     return

@@ -1089,27 +1089,7 @@ def test_strategy_select(qtbot, window_with_dataflow):
     
     qtbot.waitUntil(strategy_manager_visible)
     
-    widget_id = id(strategy_manager.mainWidget)
-    
-    # Click on all strategies
-    for idx in xrange(strategy_manager.listWidget.count()):
-        
-        item = strategy_manager.listWidget.item(idx)
-        rect = strategy_manager.listWidget.visualItemRect(item)
-        qtbot.mouseClick(strategy_manager.listWidget.viewport(),
-                         QtCore.Qt.LeftButton,
-                         pos=rect.center())
-        
-        def widget_changed():
-            assert id(strategy_manager.mainWidget) != widget_id
-        
-        qtbot.waitUntil(widget_changed)
-        
-        widget_id = id(strategy_manager.mainWidget)
-    
-    # Close the dialog
-    qtbot.mouseClick(strategy_manager.closeButton,
-                     QtCore.Qt.LeftButton)
+    assert strategy_manager.isVisible()
 
 
 @pytest.fixture
@@ -1120,17 +1100,12 @@ def strategy_manager_basic(mocker, qtbot, window_with_dataflow):
     if "Basic" not in strategy_manager.get_available():
         pytest.skip("Test requires Basic strategy")
     
-    mocker.patch.object(strategy_manager,
-                        'get_available',
-                        return_value=["Basic"],
-                        autospec=True)
-    
     # Add a strategy
     add_strategy_button = \
                 window_with_dataflow.simulationToolBar.widgetForAction(
                                     window_with_dataflow.actionAdd_Strategy)
     qtbot.mouseClick(add_strategy_button, QtCore.Qt.LeftButton)
-
+    
     def strategy_manager_visible(): assert strategy_manager.isVisible()
     
     # Click on first strategy and apply
@@ -1158,20 +1133,6 @@ def strategy_manager_basic(mocker, qtbot, window_with_dataflow):
     # Close the dialog
     qtbot.mouseClick(strategy_manager.closeButton,
                      QtCore.Qt.LeftButton)
-
-
-def test_strategy_apply(strategy_manager_basic):
-    assert str(strategy_manager_basic.topDynamicLabel.text()) == "Basic"
-
-
-def test_strategy_reset(qtbot, strategy_manager_basic):
-    
-    # Reset the strategy
-    qtbot.mouseClick(
-            strategy_manager_basic.resetButton,
-            QtCore.Qt.LeftButton)
-    
-    assert str(strategy_manager_basic.topDynamicLabel.text()) == "None"
 
 
 def test_strategy_reload(qtbot, 
