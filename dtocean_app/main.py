@@ -239,24 +239,23 @@ class ThreadOpen(QtCore.QThread):
             
             # Load up the scope if one was found
             if sco_file_path is not None:
-            
+                
                 with open(sco_file_path, 'rb') as json_file:
                     self._current_scope = json.load(json_file)
-                    
+            
             else:
                 
                 self._current_scope = "global"
             
             # Load up the activated interfaces if found
             if int_file_path is not None:
-            
+                
                 with open(int_file_path, 'rb') as json_file:
                     self._activated_interfaces = json.load(json_file)
-                    
+            
             else:
                 
                 self._activated_interfaces = {}
-            
             
             # Load up the strategy if one was found
             if stg_file_path is not None:
@@ -264,11 +263,11 @@ class ThreadOpen(QtCore.QThread):
                 strategy_manager = GUIStrategyManager(None)
                 self._strategy = strategy_manager.load_strategy(stg_file_path,
                                                                 load_project)
-                
+            
             else:
                 
                 self._strategy = None
-                
+            
             # Record the path after a successful load
             self._project_path = load_path
             
@@ -2528,7 +2527,7 @@ class DTOceanWindow(MainWindow):
 
     @QtCore.pyqtSlot()
     def _set_assessment_shuttle(self):
-
+        
         self._assessment_shuttle._add_items_from_lists(
                                         self._shell.get_available_themes(),
                                         self._shell.get_active_themes())

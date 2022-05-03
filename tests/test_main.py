@@ -16,18 +16,30 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
+import logging
+import contextlib
 
 import pytest
 from PyQt4 import QtCore, QtGui
 
 from polite.paths import Directory
-from dtocean_core.interfaces import ModuleInterface
+from dtocean_core.interfaces import ModuleInterface, ThemeInterface
 from dtocean_app.core import GUICore
 from dtocean_app.main import DTOceanWindow, Shell
 from dtocean_app.pipeline import (InputBranchControl,
                                   InputVarControl,
                                   SectionControl)
 from dtocean_app.widgets.input import FloatSelect, ListSelect
+
+
+@contextlib.contextmanager
+def caplog_for_logger(caplog, logger_name, level=logging.DEBUG):
+    caplog.handler.records = []
+    logger = logging.getLogger(logger_name)
+    logger.addHandler(caplog.handler)
+    logger.setLevel(level)
+    yield
+    logger.removeHandler(caplog.handler)
 
 
 class MockModule(ModuleInterface):
@@ -87,6 +99,64 @@ class MockModule(ModuleInterface):
         return
 
 
+class MockTheme(ThemeInterface):
+    
+    @classmethod
+    def get_name(cls):
+        
+        return "Mock Theme"
+        
+    @classmethod
+    def declare_weight(cls):
+        
+        return 998
+
+    @classmethod
+    def declare_inputs(cls):
+        
+        input_list = ['bathymetry.layers',
+                      'device.system_type',
+                      'device.power_rating',
+                      'device.cut_in_velocity',
+                      'device.turbine_interdistance']
+        
+        return input_list
+
+    @classmethod
+    def declare_outputs(cls):
+        
+        output_list = ['project.layout',
+                       'project.annual_energy',
+                       'project.number_of_devices']
+        
+        return output_list
+        
+    @classmethod
+    def declare_optional(cls):
+        
+        return None
+        
+    @classmethod
+    def declare_id_map(self):
+        
+        id_map = {"dummy1": "bathymetry.layers",
+                  "dummy2": "device.cut_in_velocity",
+                  "dummy3": "device.system_type",
+                  "dummy4": "device.power_rating",
+                  "dummy5": "project.layout",
+                  "dummy6": "project.annual_energy",
+                  "dummy7": "project.number_of_devices",
+                  "dummy8": "device.turbine_interdistance"}
+                  
+        return id_map
+                 
+    def connect(self, debug_entry=False,
+                      export_data=True):
+        
+        return
+
+
+
 @pytest.fixture
 def core():
     
@@ -110,13 +180,21 @@ def window(mocker, qtbot, tmp_path, core):
                  return_value=["Mock Module"],
                  autospec=True)
     
+    mocker.patch('dtocean_app.main.Shell.get_available_themes',
+                 return_value=["Mock Theme"],
+                 autospec=True)
+    
     mocker.patch('dtocean_app.main.DTOceanWindow._project_close_warning',
                  return_value=QtGui.QMessageBox.Discard,
                  autospec=True)
     
     shell = Shell(core)
+    
     socket = shell.core.control._sequencer.get_socket("ModuleInterface")
     socket.add_interface(MockModule)
+    
+    socket = shell.core.control._sequencer.get_socket("ThemeInterface")
+    socket.add_interface(MockTheme)
     
     window = DTOceanWindow(shell)
     window.show()
@@ -167,6 +245,10 @@ def window_debug(mocker, qtbot, tmp_path, core):
                  return_value=["Mock Module"],
                  autospec=True)
     
+    mocker.patch('dtocean_app.main.Shell.get_available_themes',
+                 return_value=["Mock Theme"],
+                 autospec=True)
+    
     mocker.patch('dtocean_app.main.DTOceanWindow._project_close_warning',
                  return_value=QtGui.QMessageBox.Discard,
                  autospec=True)
@@ -174,6 +256,9 @@ def window_debug(mocker, qtbot, tmp_path, core):
     shell = Shell(core)
     socket = shell.core.control._sequencer.get_socket("ModuleInterface")
     socket.add_interface(MockModule)
+    
+    socket = shell.core.control._sequencer.get_socket("ThemeInterface")
+    socket.add_interface(MockTheme)
     
     window = DTOceanWindow(shell, debug=True)
     window.show()
@@ -189,6 +274,32 @@ def window_debug(mocker, qtbot, tmp_path, core):
 
 def test_window_debug(window_debug):
     assert window_debug.windowTitle() == "DTOcean"
+
+
+def test_project_open_error(mocker, qtbot, tmp_path, window_debug):
+    
+    dto_file = tmp_path / "test.dto"
+    dto_file_path = str(dto_file)
+    
+    mocker.patch.object(QtGui.QFileDialog,
+                        'getOpenFileName',
+                        return_value=dto_file_path)
+    
+    mock = mocker.patch.object(QtGui.QMessageBox,
+                               'critical')
+    
+    # Open the project
+    open_button = window_debug.fileToolBar.widgetForAction(
+                                                    window_debug.actionOpen)
+    qtbot.mouseClick(open_button, QtCore.Qt.LeftButton)
+    
+    def mock_called(): assert mock.call_count == 1
+    
+    qtbot.waitUntil(mock_called)
+    
+    assert mock.call_args.args[1] == "ERROR"
+    assert "No such file or directory" in mock.call_args.args[2]
+    assert window_debug._shell._active_thread is None
 
 
 @pytest.fixture
@@ -705,7 +816,80 @@ def test_initiate_pipeline(window_with_pipeline):
 
 
 @pytest.fixture
-def window_with_dataflow(qtbot, window_with_pipeline):
+def window_dataflow_empty(qtbot, window_with_pipeline):
+    
+    # Initiate the dataflow
+    init_pipeline_button = \
+        window_with_pipeline.scenarioToolBar.widgetForAction(
+                            window_with_pipeline.actionInitiate_Dataflow)
+    qtbot.mouseClick(init_pipeline_button, QtCore.Qt.LeftButton)
+    
+    data_check = window_with_pipeline._data_check
+    
+    def data_check_visible(): assert data_check.isVisible()
+    
+    qtbot.waitUntil(data_check_visible)
+    
+    qtbot.mouseClick(data_check.buttonBox.button(QtGui.QDialogButtonBox.Ok),
+                     QtCore.Qt.LeftButton)
+    
+    def save_enabled():
+        assert window_with_pipeline.actionSave.isEnabled()
+    
+    qtbot.waitUntil(save_enabled)
+    
+    return window_with_pipeline
+
+
+def test_empty_project_reload(qtbot, 
+                              mocker,
+                              tmp_path,
+                              window_dataflow_empty):
+    
+    dto_file = tmp_path / "test.dto"
+    dto_file_path = str(dto_file)
+    
+    mocker.patch.object(QtGui.QFileDialog,
+                        'getSaveFileName',
+                        return_value=dto_file_path)
+    
+    mocker.patch.object(QtGui.QFileDialog,
+                        'getOpenFileName',
+                        return_value=dto_file_path)
+    
+    # Save the simulation
+    save_button = window_dataflow_empty.fileToolBar.widgetForAction(
+                                            window_dataflow_empty.actionSave)
+    qtbot.mouseClick(save_button, QtCore.Qt.LeftButton)
+    
+    def dto_file_saved():
+        assert dto_file.is_file()
+    
+    qtbot.waitUntil(dto_file_saved)
+    
+    # Close the project
+    close_button = window_dataflow_empty.fileToolBar.widgetForAction(
+                                            window_dataflow_empty.actionClose)
+    qtbot.mouseClick(close_button, QtCore.Qt.LeftButton)
+    
+    def close_button_not_enabled(): assert not close_button.isEnabled()
+    
+    qtbot.waitUntil(close_button_not_enabled)
+    
+    # Open the project
+    open_button = window_dataflow_empty.fileToolBar.widgetForAction(
+                                            window_dataflow_empty.actionOpen)
+    qtbot.mouseClick(open_button, QtCore.Qt.LeftButton)
+    
+    def close_button_enabled(): assert close_button.isEnabled()
+    
+    qtbot.waitUntil(close_button_enabled)
+    
+    assert close_button.isEnabled()
+
+
+@pytest.fixture
+def window_dataflow_module(qtbot, window_with_pipeline):
     
     # Add a module
     add_modules_button = \
@@ -777,10 +961,9 @@ def window_with_dataflow(qtbot, window_with_pipeline):
     return window_with_pipeline
 
 
-def test_initiate_dataflow(window_with_dataflow):
-    test_control = window_with_dataflow._pipeline_dock._find_controller(
+def test_dataflow_module(window_dataflow_module):
+    test_control = window_dataflow_module._pipeline_dock._find_controller(
                                             controller_title="Mock Module")
-        
     assert test_control is not None
 
 
@@ -788,13 +971,13 @@ def test_initiate_dataflow(window_with_dataflow):
 # the shell mocked to a useful state.
 
 
-def test_pipeline_context_menu(mocker, qtbot, window_with_dataflow):
+def test_pipeline_context_menu(mocker, qtbot, window_dataflow_module):
     
     menu = mocker.MagicMock()
     mocker.patch('dtocean_app.pipeline.QtGui.QMenu',
                  return_value=menu)
     
-    pipeline_dock = window_with_dataflow._pipeline_dock
+    pipeline_dock = window_dataflow_module._pipeline_dock
     mod_control = pipeline_dock._find_controller(
                                     controller_title="Mock Module",
                                     controller_class=InputBranchControl)
@@ -818,51 +1001,51 @@ def test_pipeline_context_menu(mocker, qtbot, window_with_dataflow):
     assert actions == expected_actions
 
 
-def test_set_simulation_title(mocker, qtbot, window_with_dataflow):
+def test_set_simulation_title(mocker, qtbot, window_dataflow_module):
     
     # Close the pipeline
-    window_with_dataflow._pipeline_dock.close()
+    window_dataflow_module._pipeline_dock.close()
     
     def pipeline_not_visible():
-        assert not window_with_dataflow._pipeline_dock.isVisible()
+        assert not window_dataflow_module._pipeline_dock.isVisible()
     
     qtbot.waitUntil(pipeline_not_visible)
     
     # Fake change of simulation name
-    window_with_dataflow._simulation_dock.listWidget.setCurrentRow(0)
+    window_dataflow_module._simulation_dock.listWidget.setCurrentRow(0)
     editor = mocker.Mock()
     editor.text.return_value = "bob"
     
-    window_with_dataflow._simulation_dock._catch_edit(editor, None)
+    window_dataflow_module._simulation_dock._catch_edit(editor, None)
     
     def check_name():
     
         # Pick up the default simulation
-        test_sim = window_with_dataflow._simulation_dock.listWidget.item(0)
+        test_sim = window_dataflow_module._simulation_dock.listWidget.item(0)
         
         assert test_sim._title == "bob"
     
     qtbot.waitUntil(check_name)
     
-    assert window_with_dataflow._shell.project.get_simulation_title() == "bob"
+    assert window_dataflow_module._shell.project.get_simulation_title() == "bob"
 
 
-def test_simulation_context_menu(mocker, qtbot, window_with_dataflow):
+def test_simulation_context_menu(mocker, qtbot, window_dataflow_module):
     
     menu = mocker.MagicMock()
     mocker.patch('dtocean_app.simulation.QtGui.QMenu',
                  return_value=menu)
     
     # Close the pipeline
-    window_with_dataflow._pipeline_dock.close()
+    window_dataflow_module._pipeline_dock.close()
     
     def pipeline_not_visible():
-        assert not window_with_dataflow._pipeline_dock.isVisible()
+        assert not window_dataflow_module._pipeline_dock.isVisible()
     
     qtbot.waitUntil(pipeline_not_visible)
     
     # Clone the simulation
-    simulation_dock = window_with_dataflow._simulation_dock
+    simulation_dock = window_dataflow_module._simulation_dock
     default_sim = simulation_dock.listWidget.item(0)
     
     rect = simulation_dock.listWidget.visualItemRect(default_sim)
@@ -883,26 +1066,107 @@ def test_simulation_context_menu(mocker, qtbot, window_with_dataflow):
 
 
 @pytest.fixture
-def window_two_simulations(qtbot, window_with_dataflow):
+def window_dataflow_theme(qtbot, window_with_pipeline):
+    
+    # Add a theme
+    add_themes_button = \
+        window_with_pipeline.simulationToolBar.widgetForAction(
+                                window_with_pipeline.actionAdd_Assessment)
+    qtbot.mouseClick(add_themes_button, QtCore.Qt.LeftButton)
+    
+    assessment_shuttle = window_with_pipeline._assessment_shuttle
+    
+    def add_themes_visible(): assert assessment_shuttle.isVisible()
+    
+    qtbot.waitUntil(add_themes_visible)
+    
+    # Fake click on last left item
+    assessment_shuttle._left_index = \
+                                assessment_shuttle._left_model.rowCount() - 1
+    
+    # Click "Add" then "OK"
+    qtbot.mouseClick(assessment_shuttle.addButton,
+                     QtCore.Qt.LeftButton)
+    
+    def module_on_right(): assert assessment_shuttle._get_right_data()
+    
+    qtbot.waitUntil(module_on_right)
+    
+    mod_ok_button = assessment_shuttle.buttonBox.button(
+                                                    QtGui.QDialogButtonBox.Ok)
+    qtbot.mouseClick(mod_ok_button, QtCore.Qt.LeftButton)
+    
+    def add_themes_not_visible(): assert not assessment_shuttle.isVisible()
+    
+    qtbot.waitUntil(add_themes_not_visible)
+    
+    # Reopen module shuttle and check module is still selected
+    qtbot.mouseClick(add_themes_button, QtCore.Qt.LeftButton)
+    qtbot.waitUntil(add_themes_visible)
+    qtbot.waitUntil(module_on_right)
+    qtbot.mouseClick(mod_ok_button, QtCore.Qt.LeftButton)
+    qtbot.waitUntil(add_themes_not_visible)
+    
+    # Initiate the dataflow
+    init_pipeline_button = \
+        window_with_pipeline.scenarioToolBar.widgetForAction(
+                            window_with_pipeline.actionInitiate_Dataflow)
+    qtbot.mouseClick(init_pipeline_button, QtCore.Qt.LeftButton)
+    
+    data_check = window_with_pipeline._data_check
+    
+    def data_check_visible(): assert data_check.isVisible()
+    
+    qtbot.waitUntil(data_check_visible)
+    
+    qtbot.mouseClick(data_check.buttonBox.button(QtGui.QDialogButtonBox.Ok),
+                     QtCore.Qt.LeftButton)
+    
+    def check_run_themes():
+        assert window_with_pipeline.actionRun_Themes.isEnabled()
+    
+    qtbot.waitUntil(check_run_themes)
+    
+    def check_theme_active():
+        
+        # Pick up pipeline item again as it's been rebuilt
+        test_control = window_with_pipeline._pipeline_dock._find_controller(
+                                            controller_title="Mock Theme")
+        
+        assert test_control is not None
+    
+    qtbot.waitUntil(check_theme_active)
+    
+    return window_with_pipeline
+
+
+def test_dataflow_theme(window_dataflow_theme):
+    test_control = window_dataflow_theme._pipeline_dock._find_controller(
+                                            controller_title="Mock Theme")
+    assert test_control is not None
+
+
+@pytest.fixture
+def window_two_simulations(qtbot, window_dataflow_module):
     
     # Close the pipeline
-    window_with_dataflow._pipeline_dock.close()
+    window_dataflow_module._pipeline_dock.close()
     
     def pipeline_not_visible():
-        assert not window_with_dataflow._pipeline_dock.isVisible()
+        assert not window_dataflow_module._pipeline_dock.isVisible()
     
     qtbot.waitUntil(pipeline_not_visible)
     
     # Fake clone the simulation
-    simulation_dock = window_with_dataflow._simulation_dock
-    simulation_dock._clone_current(window_with_dataflow._shell)
+    simulation_dock = window_dataflow_module._simulation_dock
+    simulation_dock._clone_current(window_dataflow_module._shell)
     
     def has_two_simulations():
         assert simulation_dock.listWidget.count() == 2
     
     qtbot.waitUntil(has_two_simulations)
     
-    return window_with_dataflow
+    return window_dataflow_module
 
 
 def test_simulation_clone(qtbot, window_two_simulations):
@@ -935,7 +1199,7 @@ def test_simulation_clone_set_title_fail(mocker,
     assert test_sim._title == "Default Clone 1"
 
 
-def test_simulation_clone_select(mocker, qtbot, window_two_simulations):
+def test_simulation_clone_select(qtbot, window_two_simulations):
     
     simulation_dock = window_two_simulations._simulation_dock
     
@@ -989,8 +1253,116 @@ def test_simulation_clone_again(qtbot, window_two_simulations):
     assert test_sim._title == "Default Clone 2"
 
 
+def test_simulation_active_mods_warn(caplog,
+                                     mocker,
+                                     qtbot,
+                                     window_two_simulations):
+    
+    mocker.patch("dtocean_app.main.ModuleMenu.get_active",
+                 return_value=["mock"],
+                 autospec=True)
+    
+    simulation_dock = window_two_simulations._simulation_dock
+    
+    # Select the default simulation
+    item = simulation_dock.listWidget.item(0)
+    rect = simulation_dock.listWidget.visualItemRect(item)
+    
+    with caplog_for_logger(caplog, 'dtocean_core'):
+        
+        qtbot.mouseClick(simulation_dock.listWidget.viewport(),
+                         QtCore.Qt.LeftButton,
+                         pos=rect.center())
+        
+        project = window_two_simulations._shell.project
+        
+        def is_active_simulation():
+            assert project.get_simulation_title() == "Default"
+        
+        qtbot.waitUntil(is_active_simulation)
+    
+    assert "differ from those originally selected" in caplog.text
+
+
+@pytest.fixture
+def window_two_theme_simulations(qtbot, window_dataflow_theme):
+    
+    # Close the pipeline
+    window_dataflow_theme._pipeline_dock.close()
+    
+    def pipeline_not_visible():
+        assert not window_dataflow_theme._pipeline_dock.isVisible()
+    
+    qtbot.waitUntil(pipeline_not_visible)
+    
+    # Fake clone the simulation
+    simulation_dock = window_dataflow_theme._simulation_dock
+    simulation_dock._clone_current(window_dataflow_theme._shell)
+    
+    def has_two_simulations():
+        assert simulation_dock.listWidget.count() == 2
+    
+    qtbot.waitUntil(has_two_simulations)
+    
+    return window_dataflow_theme
+
+
+def test_theme_simulation_clone_select(qtbot,
+                                       window_two_theme_simulations):
+    
+    simulation_dock = window_two_theme_simulations._simulation_dock
+    
+    # Select the default simulation
+    item = simulation_dock.listWidget.item(0)
+    rect = simulation_dock.listWidget.visualItemRect(item)
+    
+    qtbot.mouseClick(simulation_dock.listWidget.viewport(),
+                     QtCore.Qt.LeftButton,
+                     pos=rect.center())
+    
+    project = window_two_theme_simulations._shell.project
+    
+    def is_active_simulation():
+        assert project.get_simulation_title() == "Default"
+    
+    qtbot.waitUntil(is_active_simulation)
+    
+    assert project.get_simulation_title() == "Default"
+
+
+def test_simulation_active_themes_warn(caplog,
+                                       mocker,
+                                       qtbot,
+                                       window_two_theme_simulations):
+    
+    mocker.patch("dtocean_app.main.ThemeMenu.get_active",
+                 return_value=["mock"],
+                 autospec=True)
+    
+    simulation_dock = window_two_theme_simulations._simulation_dock
+    
+    # Select the default simulation
+    item = simulation_dock.listWidget.item(0)
+    rect = simulation_dock.listWidget.visualItemRect(item)
+    
+    with caplog_for_logger(caplog, 'dtocean_core'):
+        
+        qtbot.mouseClick(simulation_dock.listWidget.viewport(),
+                         QtCore.Qt.LeftButton,
+                         pos=rect.center())
+        
+        project = window_two_theme_simulations._shell.project
+        
+        def is_active_simulation():
+            assert project.get_simulation_title() == "Default"
+        
+        qtbot.waitUntil(is_active_simulation)
+    
+    assert "differ from those originally selected" in caplog.text
+
+
 @pytest.mark.parametrize("ext", ["dto", "prj"])
-def test_file_save(qtbot, mocker, tmp_path, window_with_dataflow, ext):
+def test_project_save(qtbot, mocker, tmp_path, window_dataflow_module, ext):
     
     dto_file = tmp_path / "test.{}".format(ext)
     mocker.patch.object(QtGui.QFileDialog,
@@ -998,8 +1370,8 @@ def test_file_save(qtbot, mocker, tmp_path, window_with_dataflow, ext):
                         return_value=str(dto_file))
     
     # Save the simulation
-    save_button = window_with_dataflow.fileToolBar.widgetForAction(
-                                            window_with_dataflow.actionSave)
+    save_button = window_dataflow_module.fileToolBar.widgetForAction(
+                                            window_dataflow_module.actionSave)
     qtbot.mouseClick(save_button, QtCore.Qt.LeftButton)
 
     def dto_file_saved():
@@ -1010,11 +1382,11 @@ def test_file_save(qtbot, mocker, tmp_path, window_with_dataflow, ext):
     assert dto_file.is_file()
 
 
-def test_file_close(qtbot, window_with_dataflow):
+def test_project_close(qtbot, window_dataflow_module):
     
     # Close the project
-    close_button = window_with_dataflow.fileToolBar.widgetForAction(
-                                            window_with_dataflow.actionClose)
+    close_button = window_dataflow_module.fileToolBar.widgetForAction(
+                                            window_dataflow_module.actionClose)
     qtbot.mouseClick(close_button, QtCore.Qt.LeftButton)
     
     def close_button_not_enabled(): assert not close_button.isEnabled()
@@ -1024,15 +1396,15 @@ def test_file_close(qtbot, window_with_dataflow):
     assert not close_button.isEnabled()
 
 
-def test_modify_variable(qtbot, window_with_dataflow):
+def test_modify_variable(qtbot, window_dataflow_module):
     
     # Modify a variable
-    test_var = window_with_dataflow._pipeline_dock._find_controller(
+    test_var = window_dataflow_module._pipeline_dock._find_controller(
                                     controller_title="Device Rated Power",
                                     controller_class=InputVarControl)
     
     # obtain the rectangular coordinates of the child item
-    tree_view = window_with_dataflow._pipeline_dock.treeView
+    tree_view = window_dataflow_module._pipeline_dock.treeView
     index = test_var._get_index_from_address()
     proxy_index = test_var._proxy.mapFromSource(index)
     rect = tree_view.visualRect(proxy_index)
@@ -1043,12 +1415,12 @@ def test_modify_variable(qtbot, window_with_dataflow):
                      pos=rect.topLeft())
     
     def is_float_select():
-        assert isinstance(window_with_dataflow._data_context._bottom_contents,
+        assert isinstance(window_dataflow_module._data_context._bottom_contents,
                           FloatSelect)
     
     qtbot.waitUntil(is_float_select)
     
-    float_select = window_with_dataflow._data_context._bottom_contents
+    float_select = window_dataflow_module._data_context._bottom_contents
     
     # Set the value to 1 and click OK
     float_select.doubleSpinBox.setValue(1)
@@ -1060,7 +1432,7 @@ def test_modify_variable(qtbot, window_with_dataflow):
     def check_status_two():
         
         # Pick up pipeline item again as it's been rebuilt
-        test_var = window_with_dataflow._pipeline_dock._find_controller(
+        test_var = window_dataflow_module._pipeline_dock._find_controller(
                                     controller_title="Device Rated Power",
                                     controller_class=InputVarControl)
         
@@ -1068,22 +1440,22 @@ def test_modify_variable(qtbot, window_with_dataflow):
     
     qtbot.waitUntil(check_status_two)
     
-    def title_unsaved(): assert "*" in window_with_dataflow.windowTitle()
+    def title_unsaved(): assert "*" in window_dataflow_module.windowTitle()
     
     qtbot.waitUntil(title_unsaved)
     
-    assert "*" in window_with_dataflow.windowTitle()
+    assert "*" in window_dataflow_module.windowTitle()
 
 
-def test_strategy_select(qtbot, window_with_dataflow):
+def test_strategy_select(qtbot, window_dataflow_module):
     
     # Add a strategy
     add_strategy_button = \
-                window_with_dataflow.simulationToolBar.widgetForAction(
-                                    window_with_dataflow.actionAdd_Strategy)
+                window_dataflow_module.simulationToolBar.widgetForAction(
+                                    window_dataflow_module.actionAdd_Strategy)
     qtbot.mouseClick(add_strategy_button, QtCore.Qt.LeftButton)
     
-    strategy_manager = window_with_dataflow._strategy_manager
+    strategy_manager = window_dataflow_module._strategy_manager
     
     def strategy_manager_visible(): assert strategy_manager.isVisible()
     
@@ -1093,17 +1465,17 @@ def test_strategy_select(qtbot, window_with_dataflow):
 
 
 @pytest.fixture
-def strategy_manager_basic(mocker, qtbot, window_with_dataflow):
+def strategy_manager_basic(mocker, qtbot, window_dataflow_module):
     
-    strategy_manager = window_with_dataflow._strategy_manager
+    strategy_manager = window_dataflow_module._strategy_manager
     
     if "Basic" not in strategy_manager.get_available():
         pytest.skip("Test requires Basic strategy")
     
     # Add a strategy
     add_strategy_button = \
-                window_with_dataflow.simulationToolBar.widgetForAction(
-                                    window_with_dataflow.actionAdd_Strategy)
+                window_dataflow_module.simulationToolBar.widgetForAction(
+                                    window_dataflow_module.actionAdd_Strategy)
     qtbot.mouseClick(add_strategy_button, QtCore.Qt.LeftButton)
     
     def strategy_manager_visible(): assert strategy_manager.isVisible()
@@ -1138,7 +1510,7 @@ def strategy_manager_basic(mocker, qtbot, window_with_dataflow):
 def test_strategy_reload(qtbot, 
                          mocker,
                          tmp_path,
-                         window_with_dataflow,
+                         window_dataflow_module,
                          strategy_manager_basic):
     
     dto_file = tmp_path / "test.dto"
@@ -1157,8 +1529,8 @@ def test_strategy_reload(qtbot,
                      QtCore.Qt.LeftButton)
     
     # Save the simulation
-    save_button = window_with_dataflow.fileToolBar.widgetForAction(
-                                            window_with_dataflow.actionSave)
+    save_button = window_dataflow_module.fileToolBar.widgetForAction(
+                                            window_dataflow_module.actionSave)
     qtbot.mouseClick(save_button, QtCore.Qt.LeftButton)
     
     def dto_file_saved():
@@ -1167,8 +1539,8 @@ def test_strategy_reload(qtbot,
     qtbot.waitUntil(dto_file_saved)
     
     # Close the project
-    close_button = window_with_dataflow.fileToolBar.widgetForAction(
-                                            window_with_dataflow.actionClose)
+    close_button = window_dataflow_module.fileToolBar.widgetForAction(
+                                            window_dataflow_module.actionClose)
     qtbot.mouseClick(close_button, QtCore.Qt.LeftButton)
     
     def close_button_not_enabled(): assert not close_button.isEnabled()
@@ -1176,8 +1548,8 @@ def test_strategy_reload(qtbot,
     qtbot.waitUntil(close_button_not_enabled)
     
     # Open the project
-    open_button = window_with_dataflow.fileToolBar.widgetForAction(
-                                            window_with_dataflow.actionOpen)
+    open_button = window_dataflow_module.fileToolBar.widgetForAction(
+                                            window_dataflow_module.actionOpen)
     qtbot.mouseClick(open_button, QtCore.Qt.LeftButton)
     
     def close_button_enabled(): assert close_button.isEnabled()
@@ -1186,8 +1558,8 @@ def test_strategy_reload(qtbot,
     
     # Reopen strategy manager and check value
     add_strategy_button = \
-                window_with_dataflow.simulationToolBar.widgetForAction(
-                                    window_with_dataflow.actionAdd_Strategy)
+                window_dataflow_module.simulationToolBar.widgetForAction(
+                                    window_dataflow_module.actionAdd_Strategy)
     qtbot.mouseClick(add_strategy_button, QtCore.Qt.LeftButton)
     
     def strategy_manager_visible():
