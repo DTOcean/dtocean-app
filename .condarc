@@ -1,5 +1,6 @@
 pinned_packages:
   - python=2
+  - decorator<5
   - ipykernel=4.7.0
   - pyqt=4.11.4=py27_5
 

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-#    Copyright (C) 2016-2020 Mathew Topper
+#    Copyright (C) 2016-2022 Mathew Topper
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -51,7 +51,6 @@ class GUICableConstraintsTool(GUITool, CableConstraintsTool):
         return 2
     
     def has_widget(self):
-        
         return True
     
     def get_widget(self):
@@ -75,13 +74,10 @@ class GUICableConstraintsTool(GUITool, CableConstraintsTool):
         return widget
     
     def destroy_widget(self):
-        
         plt.close(self._fig)
-        
+        self._fig = None
         return
     
     def connect(self, **kwargs):
-                
         self._elec, self._constrained_lines = get_constraints(self.data)
-        
         return

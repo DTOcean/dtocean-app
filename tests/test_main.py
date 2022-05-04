@@ -19,16 +19,21 @@ import os
 import logging
 import contextlib
 
+import numpy as np
 import pytest
+import matplotlib.pyplot as plt
 from PyQt4 import QtCore, QtGui
 
 from polite.paths import Directory
 from dtocean_core.interfaces import ModuleInterface, ThemeInterface
+from dtocean_core.tools import Tool
 from dtocean_app.core import GUICore
 from dtocean_app.main import DTOceanWindow, Shell
 from dtocean_app.pipeline import (InputBranchControl,
                                   InputVarControl,
                                   SectionControl)
+from dtocean_app.tools import GUITool
+from dtocean_app.widgets.display import MPLWidget
 from dtocean_app.widgets.input import FloatSelect, ListSelect
 
 
@@ -158,9 +163,79 @@ class MockTheme(ThemeInterface):
         return
 
 
+class MockTool(GUITool, Tool):
+    
+    def __init__(self):
+        Tool.__init__(self)
+        GUITool.__init__(self)
+        self._fig = None
+    
+    @classmethod
+    def get_name(cls):
+        return "Mock Tool"
+        
+    @classmethod
+    def declare_inputs(cls):
+        return ["device.system_type"]
+    
+    @classmethod
+    def declare_outputs(cls):
+        return None
+
+    @classmethod
+    def declare_optional(cls):
+        return None
+    
+    @classmethod
+    def declare_id_map(cls):
+        return {'system_type': "device.system_type"}
+    
+    def get_weight(self):
+        return 999
+    
+    def has_widget(self):
+        return True
+    
+    def get_widget(self):
+        
+        # Data for plotting
+        t = np.arange(0.0, 2.0, 0.01)
+        s = 1 + np.sin(2 * np.pi * t)
+        
+        fig, ax = plt.subplots()
+        ax.plot(t, s)
+        
+        ax.set(xlabel='time (s)', ylabel='voltage (mV)',
+               title='About as simple as it gets, folks')
+        ax.grid()
+        
+        widget = MPLWidget(fig, self.parent)
+        self._fig = fig
+        
+        return widget
+    
+    def destroy_widget(self):
+        plt.close(self._fig)
+        self._fig = None
+        return
+    
+    def configure(self, kwargs=None):
+        return
+    
+    def connect(self, **kwargs):
+        return
+
 
 @pytest.fixture
-def core():
+def core(mocker):
+    
+    mocker.patch('dtocean_core.extensions.ToolManager._discover_classes',
+                 return_value={"MockTool": MockTool},
+                 autospec=True)
+    
+    mocker.patch('dtocean_core.extensions.ToolManager._discover_names',
+                 return_value={"Mock Tool": "MockTool"},
+                 autospec=True)
     
     core = GUICore()
     core._create_data_catalog()
@@ -173,6 +248,7 @@ def core():
 
 @pytest.fixture
 def window(mocker, qtbot, tmp_path, core):
+    
     
     mocker.patch('dtocean_core.utils.database.UserDataDirectory',
                  return_value=Directory(str(tmp_path)),
@@ -189,6 +265,7 @@ def window(mocker, qtbot, tmp_path, core):
     mocker.patch('dtocean_app.main.DTOceanWindow._project_close_warning',
                  return_value=QtGui.QMessageBox.Discard,
                  autospec=True)
+    
     
     shell = Shell(core)
     
@@ -302,6 +379,12 @@ def test_project_open_error(mocker, qtbot, tmp_path, window_debug):
     assert mock.call_args.args[1] == "ERROR"
     assert "No such file or directory" in mock.call_args.args[2]
     assert window_debug._shell._active_thread is None
+
+
+def test_tool_unvailable(window_debug):
+    action = window_debug.menuTools.actions()[1]
+    assert str(action.text()) == "Mock Tool"
+    assert not action.isEnabled()
 
 
 @pytest.fixture
@@ -854,6 +937,37 @@ def test_import_data_skip(qtbot, mocker, tmpdir, window_floating_wave):
     qtbot.waitUntil(check_status)
     
     assert True
+
+
+def test_tool_connect(mocker, qtbot, window_floating_wave):
+    
+    spy = mocker.spy(MockTool, "destroy_widget")
+    
+    def handle_dialog():
+        window_floating_wave._tool_widget.close()
+    
+    action = window_floating_wave.menuTools.actions()[1]
+    assert str(action.text()) == "Mock Tool"
+    assert action.isEnabled()
+    
+    QtCore.QTimer.singleShot(500, handle_dialog)
+    menu_click(qtbot,
+               window_floating_wave,
+               window_floating_wave.menuTools,
+               action.objectName())
+    
+    def no_thread_tool():
+        assert window_floating_wave._thread_tool is None
+    
+    qtbot.waitUntil(no_thread_tool)
+    
+    def no_tool_widget():
+        assert  window_floating_wave._tool_widget is None
+    
+    qtbot.waitUntil(no_tool_widget)
+    
+    assert window_floating_wave._tool_widget is None
+    assert spy.call_count == 1
 
 
 @pytest.fixture

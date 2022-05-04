@@ -1639,6 +1639,7 @@ class DTOceanWindow(MainWindow):
         
         # Tools
         self._tool_manager = None
+        self._tool_widget = None
         
         # Redirect excepthook
         if not debug: sys.excepthook = self._display_error
@@ -3791,6 +3792,7 @@ class DTOceanWindow(MainWindow):
                 widget.setWindowModality(QtCore.Qt.ApplicationModal)
                 widget.show()
                 widget.closing.connect(lambda: self._close_tool_widget(tool))
+                self._tool_widget = widget
         
         self._thread_tool = None
         
@@ -3798,9 +3800,8 @@ class DTOceanWindow(MainWindow):
     
     @QtCore.pyqtSlot(object)
     def _close_tool_widget(self, tool):
-        
+        self._tool_widget = None
         tool.destroy_widget()
-        
         return
     
     @QtCore.pyqtSlot()

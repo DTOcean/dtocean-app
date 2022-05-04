@@ -213,8 +213,8 @@ Run the tests:
 $ python -m pytest -v tests
 ```
 
-Note, some tests require dtocean-hydrodynamics to be installed and will be
-skipped if the module is not found.
+Note, some tests require dtocean-hydrodynamics and dtocean-electrical to be 
+installed and will be skipped if the modules are not found.
 
 ### Uninstall
 
