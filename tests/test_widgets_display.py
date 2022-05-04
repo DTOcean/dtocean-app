@@ -15,9 +15,62 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import numpy as np
+import pytest
 import matplotlib.pyplot as plt
 
-from dtocean_app.widgets.display import get_current_figure_size
+from dtocean_app.widgets.display import (MPLWidget,
+                                         save_current_figure,
+                                         get_current_figure_size)
+
+
+@pytest.fixture
+def figure():
+    
+    # Data for plotting
+    t = np.arange(0.0, 2.0, 0.01)
+    s = 1 + np.sin(2 * np.pi * t)
+    
+    fig, ax = plt.subplots()
+    ax.plot(t, s)
+    
+    ax.set(xlabel='time (s)', ylabel='voltage (mV)',
+           title='About as simple as it gets, folks')
+    ax.grid()
+    
+    yield fig
+    
+    plt.close(fig)
+
+
+@pytest.fixture
+def mpl_widget(qtbot, figure):
+    
+    widget = MPLWidget(figure)
+    widget.show()
+    qtbot.addWidget(widget)
+    
+    return widget
+
+
+def test_MPLWidget_init(mpl_widget):
+    assert mpl_widget.isVisible()
+
+
+def test_MPLWidget_closing(qtbot, mpl_widget):
+    
+    with qtbot.waitSignal(mpl_widget.closing, timeout=10000) as blocker:
+        mpl_widget.close()
+    
+    assert blocker.signal_triggered
+
+
+def test_save_current_figure(tmp_path, figure):
+    
+    p = tmp_path / "mock.png"
+    save_current_figure(str(p))
+    
+    assert p.is_file()
 
 
 def test_get_current_figure_size_no_figure():

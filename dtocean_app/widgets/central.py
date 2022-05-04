@@ -213,9 +213,9 @@ class FileManagerWidget(QtGui.QWidget, Ui_FileManagerWidget):
     
     load_file = QtCore.pyqtSignal(object, str, str)
     save_file = QtCore.pyqtSignal(object, str, str)
-
-    def __init__(self, parent):
-
+    
+    def __init__(self, parent=None):
+        
         QtGui.QWidget.__init__(self, parent)
         Ui_FileManagerWidget.__init__(self)
         self._load_ext_dict = None
@@ -226,9 +226,9 @@ class FileManagerWidget(QtGui.QWidget, Ui_FileManagerWidget):
         self._save_connected = False
         
         self._init_ui()
-
-        return
         
+        return
+    
     def _init_ui(self):
         
         self.setupUi(self)
@@ -244,7 +244,7 @@ class FileManagerWidget(QtGui.QWidget, Ui_FileManagerWidget):
                                                         self._emit_file_signal)
         
         return
-        
+    
     def _set_files(self, variable, load_ext_dict=None, save_ext_dict=None):
         
         self._variable = variable
@@ -263,7 +263,7 @@ class FileManagerWidget(QtGui.QWidget, Ui_FileManagerWidget):
             
             self.setDisabled(True)
             return
-            
+        
         else:
             
             self.setEnabled(True)
@@ -272,21 +272,21 @@ class FileManagerWidget(QtGui.QWidget, Ui_FileManagerWidget):
             
             self.loadButton.setEnabled(True)
             self._load_ext_dict = load_ext_dict
-            
+        
         if save_ext_dict is not None:
             
             self.saveButton.setEnabled(True)
             self._save_ext_dict = save_ext_dict
-                        
+        
         if load_ext_dict is not None:
             self.loadButton.setChecked(True)
             self._set_file_mode("load")
         else:
             self.saveButton.setChecked(True)
             self._set_file_mode("save")
-            
+        
         return
-
+    
     @QtCore.pyqtSlot(str)
     def _set_file_mode(self, file_mode):
         
@@ -299,10 +299,10 @@ class FileManagerWidget(QtGui.QWidget, Ui_FileManagerWidget):
         else:
             errStr = "Argument file_mode may only have values 'load' or 'save'"
             raise ValueError(errStr)
- 
-        return
         
-    @QtCore.pyqtSlot()    
+        return
+    
+    @QtCore.pyqtSlot()
     def _set_path(self):
         
         valid_exts = self._get_valid_exts()
@@ -310,7 +310,7 @@ class FileManagerWidget(QtGui.QWidget, Ui_FileManagerWidget):
         file_ext_str = " ".join(valid_ext_strs)
         name_filter =  "Supported formats ({})".format(file_ext_str)
         file_path = ""
-
+        
         if self._file_mode == "load":
             
             msg = "Select path to load"
@@ -324,7 +324,7 @@ class FileManagerWidget(QtGui.QWidget, Ui_FileManagerWidget):
             
             if dialog.exec_():
                 file_path = str(dialog.selectedFiles()[0])
-            
+        
         elif self._file_mode == "save":
             
             msg = "Select path for save"
@@ -334,8 +334,8 @@ class FileManagerWidget(QtGui.QWidget, Ui_FileManagerWidget):
             
             if dialog.exec_():
                 file_path = str(dialog.selectedFiles()[0])
-            
-        else:
+        
+        else: # pragma: no cover
             
             errStr = "There are children here somewhere. I can smell them."
             raise SystemError(errStr)
@@ -343,8 +343,8 @@ class FileManagerWidget(QtGui.QWidget, Ui_FileManagerWidget):
         self.pathEdit.setText(file_path)
         
         return
-        
-    @QtCore.pyqtSlot()    
+    
+    @QtCore.pyqtSlot()
     def _set_okay(self):
         
         valid_exts = self._get_valid_exts()
@@ -357,24 +357,23 @@ class FileManagerWidget(QtGui.QWidget, Ui_FileManagerWidget):
             self.buttonBox.button(QtGui.QDialogButtonBox.Ok).setDisabled(True)
             
         return
-        
-    @QtCore.pyqtSlot()    
+    
+    @QtCore.pyqtSlot()
     def _emit_file_signal(self):
         
         file_mode = self._file_mode
         file_path = str(self.pathEdit.text())
         file_ext = os.path.splitext(file_path)[1]
         
-        
         if file_mode == "load":
             
             if file_ext not in self._load_ext_dict.keys():
                 err_msg = "{} is not a valid extension".format(file_ext)
                 raise ValueError(err_msg)
-
+            
             interface_name = self._load_ext_dict[file_ext]
             self.load_file.emit(self._variable, interface_name, file_path)
-
+        
         elif file_mode == "save":
             
             if file_ext not in self._save_ext_dict.keys():
@@ -383,12 +382,12 @@ class FileManagerWidget(QtGui.QWidget, Ui_FileManagerWidget):
             
             interface_name = self._save_ext_dict[file_ext]
             self.save_file.emit(self._variable, interface_name, file_path)
-
+        
         else:
             
             errStr = "Don't cross the streams!"
             raise SystemError(errStr)
-            
+        
         self.pathEdit.clear()
         
         return
@@ -399,19 +398,20 @@ class FileManagerWidget(QtGui.QWidget, Ui_FileManagerWidget):
             valid_exts = self._load_ext_dict.keys()
         elif self._file_mode == "save":
             valid_exts = self._save_ext_dict.keys()
-        else:
-            errStr = "It must be on of those unidentified flying cupcakes"
+        else: # pragma: no cover
+            errStr = "It must be one of those unidentified flying cupcakes"
             raise SystemError(errStr)
-            
-        return valid_exts
         
+        return valid_exts
+
+
 class PlotManagerWidget(QtGui.QWidget, Ui_PlotManagerWidget):
     
     plot = QtCore.pyqtSignal(object, object)
     save = QtCore.pyqtSignal(object, str, object, object)
-
-    def __init__(self, parent):
-
+    
+    def __init__(self, parent=None):
+        
         QtGui.QWidget.__init__(self, parent)
         Ui_PlotManagerWidget.__init__(self)
         self._controller = None
@@ -420,9 +420,9 @@ class PlotManagerWidget(QtGui.QWidget, Ui_PlotManagerWidget):
         self._current_plot = None
         
         self._init_ui()
-
-        return
         
+        return
+    
     def _init_ui(self):
         
         self.setupUi(self)
@@ -447,7 +447,7 @@ class PlotManagerWidget(QtGui.QWidget, Ui_PlotManagerWidget):
         self.defaultButton.clicked.connect(self._emit_default_plot)
         
         return
-        
+    
     def _set_plots(self, controller, plot_list=None, plot_auto=False):
         
         self._controller = None
@@ -463,31 +463,31 @@ class PlotManagerWidget(QtGui.QWidget, Ui_PlotManagerWidget):
         
         self._controller = controller
         self._ext_types = get_current_filetypes()
-                
+        
         if not self._ext_types:
             
             self.saveButton.setDisabled(True)
             self.pathEdit.setDisabled(True)
-            
+        
         else:
             
             self.saveButton.setEnabled(True)
             self.pathEdit.setEnabled(True)
-
+        
         self._set_plot_list(plot_list, plot_auto)
         self._set_save()
-
-        return
         
+        return
+    
     def _set_plot_list(self, plot_list=None, plot_auto=False):
         
         self.plotBox.clear()
-                
+        
         if plot_list is None:
             
             self.plotBox.setDisabled(True)
             self.plotButton.setDisabled(True)
-            
+        
         else:
             
             self.plotBox.setEnabled(True)
@@ -495,7 +495,7 @@ class PlotManagerWidget(QtGui.QWidget, Ui_PlotManagerWidget):
             
             for item in plot_list:
                 self.plotBox.addItem(item)
-                
+        
         if plot_auto:
             self.defaultButton.setEnabled(True)
         else:
@@ -538,7 +538,7 @@ class PlotManagerWidget(QtGui.QWidget, Ui_PlotManagerWidget):
             self.saveButton.setEnabled(True)
         else:
             self.saveButton.setDisabled(True)
-            
+        
         return
     
     @QtCore.pyqtSlot()
@@ -553,30 +553,30 @@ class PlotManagerWidget(QtGui.QWidget, Ui_PlotManagerWidget):
             
             self.widthSpinBox.setEnabled(True)
             self.heightSpinBox.setEnabled(True)
-            
+        
         else:
             
             self.widthSpinBox.setDisabled(True)
             self.heightSpinBox.setDisabled(True)
-            
+        
         return
-
-    @QtCore.pyqtSlot()    
+    
+    @QtCore.pyqtSlot()
     def _emit_named_plot(self):
         
         plot_name = str(self.plotBox.currentText())
         self.plot.emit(self._controller, plot_name)
         self._current_plot = plot_name
-                
-        return
         
-    @QtCore.pyqtSlot()    
-    def _emit_default_plot(self):
+        return
     
+    @QtCore.pyqtSlot()
+    def _emit_default_plot(self):
+        
         self.plot.emit(self._controller, "auto")
         self._current_plot = None
-
-    @QtCore.pyqtSlot()    
+    
+    @QtCore.pyqtSlot()
     def _emit_save(self):
         
         figure_path = str(self.pathEdit.text())
