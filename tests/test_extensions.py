@@ -15,6 +15,7 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+# pylint: disable=redefined-outer-name,protected-access,no-self-use,unused-argument
 
 import pytest
 from PyQt4 import QtCore
@@ -75,7 +76,6 @@ class MockModule(ModuleInterface):
     
     def connect(self, debug_entry=False,
                       export_data=True):
-        
         return
 
 

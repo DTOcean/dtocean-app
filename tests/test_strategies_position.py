@@ -15,6 +15,8 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+# pylint: disable=redefined-outer-name,protected-access,unused-argument,wrong-import-order,wrong-import-position
+
 import pytest
 pytest.importorskip("dtocean_hydro")
 
@@ -1247,7 +1249,7 @@ def test_AdvancedPositionWidget_load_sims(qtbot,
     
     strategy = window_results._shell.strategy = mocker.MagicMock()
     sleep = lambda *args: time.sleep(0.5)
-    strategy.load_simulation_ids.side_effect=sleep
+    strategy.load_simulation_ids.side_effect = sleep
     
     # Need to assert that the progress bar was shown
     spy = mocker.spy(window_results, "_progress")
@@ -1316,8 +1318,8 @@ def test_AdvancedPositionWidget_set_plot(qtbot, window_results):
     
     assert window_results.plotExportButton.isEnabled()
     
-    xlim =  window_results.plotWidget.figure.axes[0].get_xlim()
-    ylim =  window_results.plotWidget.figure.axes[0].get_ylim()
+    xlim = window_results.plotWidget.figure.axes[0].get_xlim()
+    ylim = window_results.plotWidget.figure.axes[0].get_ylim()
     
     assert xlim == (20.5, 22.5)
     assert ylim == (26800.0, 27600.0)

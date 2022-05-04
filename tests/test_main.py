@@ -15,6 +15,8 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+# pylint: disable=redefined-outer-name,protected-access,unused-argument
+
 import os
 import logging
 import contextlib
@@ -816,7 +818,11 @@ def test_export_data(qtbot, mocker, tmpdir, window_floating_wave):
                window_floating_wave,
                window_floating_wave.menuData,
                "actionExport")
-        
+    
+    def file_saved(): assert os.path.isfile(datastate_file_path)
+    
+    qtbot.waitUntil(file_saved)
+    
     assert os.path.isfile(datastate_file_path)
 
 
@@ -835,7 +841,11 @@ def test_export_data_mask(qtbot, mocker, tmpdir, window_floating_wave):
                window_floating_wave,
                window_floating_wave.menuData,
                "actionExport_mask")
-        
+    
+    def file_saved(): assert os.path.isfile(datastate_file_path)
+    
+    qtbot.waitUntil(file_saved)
+    
     assert os.path.isfile(datastate_file_path)
 
 

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-#    Copyright (C) 2016-2018 Mathew Topper
+#    Copyright (C) 2016-2022 Mathew Topper
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -22,6 +22,7 @@ Created on Thu Apr 23 12:51:14 2015
 """
 
 import os
+import logging
 
 import pandas as pd
 import numpy as np
@@ -60,6 +61,9 @@ else:
     from ..designer.low.boolselect import Ui_BoolSelect
     from ..designer.low.pathselect import Ui_PathSelect
     from ..designer.low.dateselect import Ui_DateSelect
+
+# Set up logging
+module_logger = logging.getLogger(__name__)
 
 # User home directory
 HOME = os.path.expanduser("~")
@@ -816,8 +820,9 @@ class InputDataTable(QtGui.QWidget):
                     
                     try:
                         data[column] = data[column].astype(dtype)
-                    except:
-                        pass
+                    except Exception:
+                        module_logger.debug('Failed to assign column type',
+                                            exc_info=True)
         
         else:
             

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-#    Copyright (C) 2019-2021 Mathew Topper
+#    Copyright (C) 2019-2022 Mathew Topper
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -139,7 +139,7 @@ class ThreadLoadSimulations(QtCore.QThread):
                                                      self._shell.project,
                                                      self._sim_numbers)
         
-        except: 
+        except: # pylint: disable=bare-except
             
             etype, evalue, etraceback = sys.exc_info()
             self.error_detected.emit(etype, evalue, etraceback)
@@ -367,8 +367,8 @@ class AdvancedPositionWidget(QtGui.QWidget,
                                     box_class)
             self.paramsFrameLayout.addWidget(var_box["root"])
             
-            box_minimum = -sys.maxint
-            box_maximum = sys.maxint
+            box_minimum = -sys.maxint # pylint: disable=no-member
+            box_maximum = sys.maxint # pylint: disable=no-member
             set_box_min = False
             set_box_max = False
             param_limits = None
@@ -947,12 +947,13 @@ class AdvancedPositionWidget(QtGui.QWidget,
         # Replace the config with the saved version if the optimiser status
         # is completed or available for restart.
         has_stored_config = (self._shell.strategy is not None and
-                             self._shell.strategy._config is not None)
+                             self._shell.strategy.get_config() is not None)
         
         if optimiser_status_code >= 1:
             if has_stored_config:
+                shell_config = self._shell.strategy.get_config()
                 old_config['clean_existing_dir'] = \
-                            self._shell.strategy._config['clean_existing_dir']
+                                            shell_config['clean_existing_dir']
             self._config = self._init_config(old_config)
             init = True
         
@@ -963,12 +964,12 @@ class AdvancedPositionWidget(QtGui.QWidget,
         
         if has_stored_config:
             
+            shell_config = self._shell.strategy.get_config()
             copy_shell_config = {}
             
             for key in config_keys:
-                if key in (self._shell.strategy._config):
-                    copy_shell_config[key] = deepcopy(
-                                            self._shell.strategy._config[key])
+                if key in shell_config:
+                    copy_shell_config[key] = shell_config[key]
         
             if ('clean_existing_dir' in copy_shell_config and
                 copy_shell_config['clean_existing_dir'] is None):
@@ -1430,8 +1431,9 @@ class AdvancedPositionWidget(QtGui.QWidget,
             
             try:
                 sims_to_load = [int(x) for x in sims_to_load_strs]
-            except:
-                pass
+            except Exception:
+                module_logger.debug('Failed to translate simSelectEdit',
+                                    exc_info=True)
         
         self._sims_to_load = sims_to_load
         
@@ -2151,6 +2153,7 @@ def _make_fixed_combo_slot(that,
     
     @QtCore.pyqtSlot(object)
     def slot_function(that, checked_state):
+        # pylint: disable=protected-access
         
         range_group = that._param_boxes[param_name]["range.group"]
         
@@ -2184,6 +2187,7 @@ def _make_fixed_value_slot(that, param_name, param_type):
     
     @QtCore.pyqtSlot(object)
     def slot_function(that, value):
+        # pylint: disable=protected-access
         
         fixed_check_box = that._param_boxes[param_name]["fixed.check"]
         use_fixed = bool(fixed_check_box.isChecked())
@@ -2201,6 +2205,7 @@ def _make_range_type_slot(that, param_name, param_type, name_map):
     
     @QtCore.pyqtSlot(object)
     def slot_function(that, current_str):
+        # pylint: disable=protected-access
         
         current_str = str(current_str)
         range_var_box = that._param_boxes[param_name]["range.box.var"]
@@ -2230,6 +2235,7 @@ def _make_generic_range_slot(that, param_name, param_type, name_map):
     
     @QtCore.pyqtSlot(object)
     def slot_function(that, *args):
+        # pylint: disable=protected-access
         
         var_box_dict = that._param_boxes[param_name]
         var_box_values = _read_var_box_values(var_box_dict, param_type)

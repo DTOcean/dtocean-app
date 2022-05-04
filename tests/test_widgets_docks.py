@@ -15,6 +15,8 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+# pylint: disable=redefined-outer-name
+
 import pytest
 
 from dtocean_app.widgets.docks import LogDock
@@ -31,17 +33,17 @@ def log_dock_widget(qtbot):
     return widget
 
 
-def test_LogDock_init(qtbot, log_dock_widget):
+def test_LogDock_init(log_dock_widget):
     assert log_dock_widget.isVisible()
 
 
-def test_LogDock_stdout(capsys, qtbot, log_dock_widget):
+def test_LogDock_stdout(log_dock_widget):
     expected = "mock"
     XStream.stdout().write(expected)
     assert str(log_dock_widget._console.toPlainText()) == expected
 
 
-def test_LogDock_stderr(capsys, qtbot, log_dock_widget):
+def test_LogDock_stderr(log_dock_widget):
     expected = "mock"
     XStream.stderr().write(expected)
     assert str(log_dock_widget._console.toPlainText()) == expected

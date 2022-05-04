@@ -15,6 +15,8 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+# pylint: disable=redefined-outer-name,protected-access
+
 import pytest
 
 from PyQt4 import QtCore, QtGui
@@ -81,7 +83,7 @@ def test_FileManagerWidget_set_path_load(qtbot, mocker, fm_widget_both):
     qtbot.mouseClick(fm_widget_both.getPathButton, QtCore.Qt.LeftButton)
     
     def has_file_name():
-        assert len(str(fm_widget_both.pathEdit.text())) > 0
+        assert str(fm_widget_both.pathEdit.text())
     
     qtbot.waitUntil(has_file_name)
     
@@ -108,7 +110,7 @@ def test_FileManagerWidget_set_path_save(qtbot, mocker, fm_widget_both):
     qtbot.mouseClick(fm_widget_both.getPathButton, QtCore.Qt.LeftButton)
     
     def has_file_name():
-        assert len(str(fm_widget_both.pathEdit.text())) > 0
+        assert str(fm_widget_both.pathEdit.text())
     
     qtbot.waitUntil(has_file_name)
     
@@ -174,7 +176,7 @@ def test_PlotManagerWidget_set_path(mocker, qtbot, pm_widget_auto):
     qtbot.mouseClick(pm_widget_auto.getPathButton, QtCore.Qt.LeftButton)
     
     def has_file_name():
-        assert len(str(pm_widget_auto.pathEdit.text())) > 0
+        assert str(pm_widget_auto.pathEdit.text())
     
     qtbot.waitUntil(has_file_name)
     

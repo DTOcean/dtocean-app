@@ -33,7 +33,7 @@ class GUIStrategy(object):
         return NotImplementedError
 
     @abc.abstractmethod
-    def get_widget(self): # pragma: no cover
+    def get_widget(self, parent, shell): # pragma: no cover
 
         '''A method for getting the configuration widget of the strategy.
 

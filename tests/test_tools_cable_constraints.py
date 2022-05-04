@@ -15,6 +15,8 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+# pylint: disable=protected-access,wrong-import-position
+
 import pytest
 
 pytest.importorskip("dtocean_electrical")
