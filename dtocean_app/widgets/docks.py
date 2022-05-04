@@ -118,7 +118,7 @@ class ListDock(QtGui.QDockWidget, Ui_ListDock):
 
 class LogDock(QtGui.QDockWidget, Ui_SystemDock):
 
-    def __init__(self, parent, max_lines=1e5 - 1):
+    def __init__(self, parent=None, max_lines=1e5 - 1):
     
         QtGui.QDockWidget.__init__(self, "Dockable", parent)
         Ui_SystemDock.__init__(self)

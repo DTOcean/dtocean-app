@@ -28,12 +28,12 @@ class GUIStrategy(object):
     classes'''
     
     @abc.abstractmethod
-    def allow_run(self, core, project):
+    def allow_run(self, core, project): # pragma: no cover
         """Can the strategy be run"""
         return NotImplementedError
 
     @abc.abstractmethod
-    def get_widget(self):
+    def get_widget(self): # pragma: no cover
 
         '''A method for getting the configuration widget of the strategy.
 
@@ -44,7 +44,7 @@ class GUIStrategy(object):
         return
         
     @abc.abstractmethod
-    def get_weight(self):
+    def get_weight(self): # pragma: no cover
 
         '''A method for getting the order of priority of the strategy.
 
@@ -63,7 +63,7 @@ class StrategyWidget(object):
     classes'''
     
     @abc.abstractmethod
-    def get_configuration(self):
+    def get_configuration(self): # pragma: no cover
         
         '''A method for getting the dictionary to configure the strategy.
 
@@ -74,7 +74,7 @@ class StrategyWidget(object):
         return {}
 
     @abc.abstractmethod
-    def set_configuration(self, config_dict=None):
+    def set_configuration(self, config_dict=None): # pragma: no cover
         
         '''A method for displaying the configuration in the gui.
 

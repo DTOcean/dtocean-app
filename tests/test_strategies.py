@@ -18,6 +18,7 @@
 
 import pytest
 
+from dtocean_app.strategies import StrategyWidget
 from dtocean_app.strategies.sensitivity import GUIUnitSensitivity
 from dtocean_app.strategies.multi import GUIMultiSensitivity
 from dtocean_app.strategies.position import GUIAdvancedPosition
@@ -53,3 +54,13 @@ def test_GUIAdvancedPosition_allow_run(mocker):
     test._config = "mock"
     
     assert test.allow_run("mock", "mock") is True
+
+
+@pytest.mark.parametrize("raw_string_input, expected",[
+                            ("None", [None]),
+                            ("True, False", [True, False]),
+                            ("1, 1.", [1, 1.]),
+                            ("one, 2, 3.", ["one", 2, 3.])])
+def test_StrategyWidget_string2types(raw_string_input, expected):
+    results = StrategyWidget.string2types(raw_string_input)
+    assert results == expected
