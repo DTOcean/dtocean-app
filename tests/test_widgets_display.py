@@ -15,10 +15,13 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+# pylint: disable=redefined-outer-name
+
 import pytest
 import matplotlib.pyplot as plt
 
 from dtocean_app.widgets.display import (MPLWidget,
+                                         get_current_filetypes,
                                          save_current_figure,
                                          get_current_figure_size)
 
@@ -45,24 +48,52 @@ def test_MPLWidget_closing(qtbot, mpl_widget):
     assert blocker.signal_triggered
 
 
-def test_save_current_figure(tmp_path, figure):
+def test_get_current_filetypes():
     
+    plt.figure()
+    test = get_current_filetypes()
+    plt.close('all')
+    
+    assert 'png' in test
+
+
+def test_get_current_filetypes_no_figure():
+    plt.close('all')
+    test = get_current_filetypes()
+    assert not test
+
+
+def test_save_current_figure(tmp_path):
+    
+    plt.figure()
+    p = tmp_path / "mock.png"
+    save_current_figure(str(p))
+    plt.close('all')
+    
+    assert p.is_file()
+
+
+def test_save_current_figureno_figure(tmp_path):
+    
+    plt.close('all')
     p = tmp_path / "mock.png"
     save_current_figure(str(p))
     
-    assert p.is_file()
+    assert not p.is_file()
 
 
 def test_get_current_figure_size_no_figure():
     
     plt.close('all')
-    test = get_current_figure_size()
     
-    assert test is None
+    with pytest.raises(RuntimeError) as excinfo:
+        get_current_figure_size()
+    
+    assert "No open plots" in str(excinfo)
 
 
 def test_get_current_figure_size():
-        
+    
     plt.figure()
     test = get_current_figure_size()
     plt.close('all')

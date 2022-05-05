@@ -66,7 +66,7 @@ class MockModule(ModuleInterface):
         return None
     
     @classmethod
-    def declare_id_map(self):
+    def declare_id_map(cls):
         
         id_map = {"dummy1": "device.turbine_performance",
                   "dummy2": "device.cut_in_velocity",
@@ -175,7 +175,7 @@ def test_strategy_select(qtbot, mock_shell):
     widget_id = id(window.mainWidget)
     
     # Click on all strategies
-    for idx in xrange(window.listWidget.count()):
+    for idx in xrange(window.listWidget.count()): # pylint: disable=undefined-variable
         
         item = window.listWidget.item(idx)
         rect = window.listWidget.visualItemRect(item)

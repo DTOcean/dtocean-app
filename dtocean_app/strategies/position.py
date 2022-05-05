@@ -15,6 +15,8 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+# pylint: disable=protected-access
+
 import os
 import re
 import sys
@@ -52,11 +54,11 @@ from ..widgets.scientificselect import ScientificDoubleSpinBox
 
 if is_high_dpi():
     
-    from ..designer.high.advancedposition import Ui_AdvancedPositionWidget
+    from ..designer.high.advancedposition import Ui_AdvancedPositionWidget # pylint: disable=no-name-in-module
     
 else:
     
-    from ..designer.low.advancedposition import Ui_AdvancedPositionWidget
+    from ..designer.low.advancedposition import Ui_AdvancedPositionWidget # pylint: disable=no-name-in-module
 
 try:
     _fromUtf8 = QtCore.QString.fromUtf8
@@ -99,7 +101,7 @@ class ThreadLoadSimulations(QtCore.QThread):
     """QThread for loading simulations"""
     
     taskFinished = QtCore.pyqtSignal()
-    error_detected =  QtCore.pyqtSignal(object, object, object)
+    error_detected = QtCore.pyqtSignal(object, object, object)
     
     def __init__(self, shell,
                        sim_numbers,
@@ -207,7 +209,7 @@ class AdvancedPositionWidget(QtGui.QWidget,
         StrategyWidget.__init__(self)
         
         self._shell = shell
-        self._config = self._init_config(config)
+        self._config = _init_config(config)
         self._max_threads = multiprocessing.cpu_count()
         self._progress = None
         self._results_df = None
@@ -233,26 +235,10 @@ class AdvancedPositionWidget(QtGui.QWidget,
         self._default_max_resamples_algorithm = 1
         self._default_max_resamples = 2
         
+        self.plotWidget = None
         self._init_ui(parent)
         
         return
-    
-    def _init_config(cls, config):
-        
-        new_config = deepcopy(config)
-        
-        config_template = _load_config_template()
-        all_keys = config_template.keys()
-        
-        for key in all_keys:
-            if key not in config:
-                new_config[key] = None
-        
-        new_config["root_project_path"] = "worker.prj"
-        new_config["clean_existing_dir"] = False
-        if new_config["parameters"] is None: new_config["parameters"] = {}
-        
-        return new_config
     
     def _init_ui(self, parent):
         
@@ -415,7 +401,6 @@ class AdvancedPositionWidget(QtGui.QWidget,
                                                     self,
                                                     param_name,
                                                     param_type,
-                                                    param_limits,
                                                     self._var_id_to_title_map)
             
             attr_name = "fixed_combo_slot_{}".format(i)
@@ -954,7 +939,7 @@ class AdvancedPositionWidget(QtGui.QWidget,
                 shell_config = self._shell.strategy.get_config()
                 old_config['clean_existing_dir'] = \
                                             shell_config['clean_existing_dir']
-            self._config = self._init_config(old_config)
+            self._config = _init_config(old_config)
             init = True
         
         # Determine if the configuration has changed against the config
@@ -1068,7 +1053,7 @@ class AdvancedPositionWidget(QtGui.QWidget,
         if not file_path: return
         
         config = GUIAdvancedPosition.load_config(str(file_path))
-        self._config = self._init_config(config)
+        self._config = _init_config(config)
         
         self._update_status(init=True)
         
@@ -1141,14 +1126,9 @@ class AdvancedPositionWidget(QtGui.QWidget,
     
     @QtCore.pyqtSlot(object)
     def _update_clean_existing_dir(self, checked_state):
-        
-        if checked_state == QtCore.Qt.Checked:
-            self._config["clean_existing_dir"] = True
-        else:
-            self._config["clean_existing_dir"] = False
-        
+        self._config["clean_existing_dir"] = bool(
+                                            checked_state == QtCore.Qt.Checked)
         self._update_status()
-        
         return
     
     @QtCore.pyqtSlot(int)
@@ -1175,13 +1155,7 @@ class AdvancedPositionWidget(QtGui.QWidget,
     
     @QtCore.pyqtSlot(object)
     def _update_maximise(self, checked_state):
-        
-        if checked_state == QtCore.Qt.Checked:
-            self._config["maximise"] = True
-        else:
-            self._config["maximise"] = False
-        
-        return
+        self._config["maximise"] = bool(checked_state == QtCore.Qt.Checked)
     
     @QtCore.pyqtSlot(float)
     def _update_base_penalty(self, value):
@@ -1406,11 +1380,7 @@ class AdvancedPositionWidget(QtGui.QWidget,
             
             self._update_custom_sims()
         
-        if button_id == 5:
-            custom_enabled = True
-        else:
-            custom_enabled = False
-        
+        custom_enabled = bool(button_id == 5)
         self.simsLabel.setEnabled(custom_enabled)
         self.simSelectEdit.setEnabled(custom_enabled)
         self.simHelpLabel.setEnabled(custom_enabled)
@@ -1641,7 +1611,7 @@ class AdvancedPositionWidget(QtGui.QWidget,
         # Add a colorbar
         if color_axis_data is not None:
             
-            extend =  'neither'
+            extend = 'neither'
             
             if vmin is not None and vmax is not None:
                 extend = 'both'
@@ -1832,11 +1802,29 @@ class AdvancedPositionWidget(QtGui.QWidget,
         
         module_logger.debug("Setting configuration")
         
-        safe_config = self._init_config(config_dict)
+        safe_config = _init_config(config_dict)
         self._config = safe_config
         self._update_status(init=True)
         
         return
+
+
+def _init_config(config):
+    
+    new_config = deepcopy(config)
+    
+    config_template = _load_config_template()
+    all_keys = config_template.keys()
+    
+    for key in all_keys:
+        if key not in config:
+            new_config[key] = None
+    
+    new_config["root_project_path"] = "worker.prj"
+    new_config["clean_existing_dir"] = False
+    if new_config["parameters"] is None: new_config["parameters"] = {}
+    
+    return new_config
 
 
 def _make_var_box(widget, parent, object_name, group_title, box_class):
@@ -2148,12 +2136,10 @@ def _init_extended_combo_box(parent, name):
 def _make_fixed_combo_slot(that,
                            param_name,
                            param_type,
-                           param_limits,
                            name_map):
     
     @QtCore.pyqtSlot(object)
     def slot_function(that, checked_state):
-        # pylint: disable=protected-access
         
         range_group = that._param_boxes[param_name]["range.group"]
         
@@ -2187,7 +2173,6 @@ def _make_fixed_value_slot(that, param_name, param_type):
     
     @QtCore.pyqtSlot(object)
     def slot_function(that, value):
-        # pylint: disable=protected-access
         
         fixed_check_box = that._param_boxes[param_name]["fixed.check"]
         use_fixed = bool(fixed_check_box.isChecked())
@@ -2205,7 +2190,6 @@ def _make_range_type_slot(that, param_name, param_type, name_map):
     
     @QtCore.pyqtSlot(object)
     def slot_function(that, current_str):
-        # pylint: disable=protected-access
         
         current_str = str(current_str)
         range_var_box = that._param_boxes[param_name]["range.box.var"]
@@ -2234,8 +2218,7 @@ def _make_range_type_slot(that, param_name, param_type, name_map):
 def _make_generic_range_slot(that, param_name, param_type, name_map):
     
     @QtCore.pyqtSlot(object)
-    def slot_function(that, *args):
-        # pylint: disable=protected-access
+    def slot_function(that, *args): # pylint: disable=unused-argument
         
         var_box_dict = that._param_boxes[param_name]
         var_box_values = _read_var_box_values(var_box_dict, param_type)

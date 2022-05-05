@@ -15,7 +15,8 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-# pylint: disable=protected-access,wrong-import-position
+# pylint: disable=redefined-outer-name,protected-access,wrong-import-position
+# pylint: disable=unused-argument
 
 import pytest
 
@@ -46,7 +47,7 @@ def constraints_tool(mocker, figure):
     
     tool = GUICableConstraintsTool()
     tool._elec = mocker.MagicMock()
-    tool._constrained_lines =  mocker.MagicMock()
+    tool._constrained_lines = mocker.MagicMock()
     
     return tool
 

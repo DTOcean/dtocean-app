@@ -15,7 +15,8 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-# pylint: disable=redefined-outer-name,protected-access,unused-argument,wrong-import-order,wrong-import-position
+# pylint: disable=redefined-outer-name,protected-access,unused-argument
+# pylint: disable=no-self-use,wrong-import-order,wrong-import-position
 
 import pytest
 pytest.importorskip("dtocean_hydro")
@@ -71,7 +72,7 @@ class MockModule(ModuleInterface):
         return None
     
     @classmethod
-    def declare_id_map(self):
+    def declare_id_map(cls):
         
         id_map = {"dummy1": "device.turbine_performance",
                   "dummy2": "device.cut_in_velocity",
@@ -1325,7 +1326,7 @@ def test_AdvancedPositionWidget_set_plot(qtbot, window_results):
     assert ylim == (26800.0, 27600.0)
     
     cb_yaxis = window_results.plotWidget.figure.axes[1].get_children()[8]
-    cb_ticks =  cb_yaxis.get_ticklabels()
+    cb_ticks = cb_yaxis.get_ticklabels()
     
     assert int(cb_ticks[0].get_text()) == min_value
     assert int(cb_ticks[-1].get_text()) == max_value
@@ -1334,7 +1335,7 @@ def test_AdvancedPositionWidget_set_plot(qtbot, window_results):
     qtbot.mouseClick(window_results.plotButton, QtCore.Qt.LeftButton)
     
     cb_yaxis = window_results.plotWidget.figure.axes[1].get_children()[8]
-    cb_ticks =  cb_yaxis.get_ticklabels()
+    cb_ticks = cb_yaxis.get_ticklabels()
     
     assert int(cb_ticks[0].get_text()) != min_value
     assert int(cb_ticks[-1].get_text()) == max_value
@@ -1344,7 +1345,7 @@ def test_AdvancedPositionWidget_set_plot(qtbot, window_results):
     qtbot.mouseClick(window_results.plotButton, QtCore.Qt.LeftButton)
     
     cb_yaxis = window_results.plotWidget.figure.axes[1].get_children()[8]
-    cb_ticks =  cb_yaxis.get_ticklabels()
+    cb_ticks = cb_yaxis.get_ticklabels()
     
     assert int(cb_ticks[0].get_text()) == min_value
     assert int(cb_ticks[-1].get_text()) != max_value

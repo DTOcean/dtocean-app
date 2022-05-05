@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+# pylint: disable=wrong-import-order
+
 import os
 import sys
 import glob

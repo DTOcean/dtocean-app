@@ -15,7 +15,7 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-# pylint: disable=redefined-outer-name,protected-access,unused-argument
+# pylint: disable=redefined-outer-name,protected-access,no-self-use,unused-argument
 
 import os
 import logging
@@ -1283,14 +1283,16 @@ def window_plot_context(qtbot, window_dataflow_module):
                      pos=rect.topLeft())
     
     def has_data_bottom_contents():
-        window_dataflow_module._data_context._bottom_contents is not None
+        bottom_contents = window_dataflow_module._data_context._bottom_contents
+        assert bottom_contents is not None
     
     qtbot.waitUntil(has_data_bottom_contents)
     
     window_dataflow_module.actionPlots.trigger()
     
     def has_plot_bottom_contents():
-        window_dataflow_module._plot_context._bottom_contents is not None
+        bottom_contents = window_dataflow_module._plot_context._bottom_contents
+        assert bottom_contents is not None
     
     qtbot.waitUntil(has_plot_bottom_contents)
     
@@ -1319,7 +1321,7 @@ def test_plot_context_clear(qtbot, window_plot_context):
                      pos=rect.topLeft())
     
     def clear_plot_bottom_contents():
-        window_plot_context._plot_context._bottom_contents is None
+        assert window_plot_context._plot_context._bottom_contents is None
     
     qtbot.waitUntil(clear_plot_bottom_contents)
     
@@ -1739,6 +1741,8 @@ def test_strategy_no_modules(qtbot, window_dataflow_theme):
     qtbot.mouseClick(add_strategy_button, QtCore.Qt.LeftButton)
     
     def strategy_manager_visible(): assert strategy_manager.isVisible()
+    
+    qtbot.waitUntil(strategy_manager_visible)
     
     # Click on first strategy and apply
     item = strategy_manager.listWidget.item(0)

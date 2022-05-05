@@ -78,6 +78,6 @@ class GUICableConstraintsTool(GUITool, CableConstraintsTool):
         self._fig = None
         return
     
-    def connect(self, **kwargs):
+    def connect(self, **kwargs): # pylint: disable=unused-argument
         self._elec, self._constrained_lines = get_constraints(self.data)
         return

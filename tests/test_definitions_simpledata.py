@@ -15,7 +15,7 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-# pylint: disable=redefined-outer-name,protected-access
+# pylint: disable=redefined-outer-name,protected-access,unused-argument
 
 import pytest
 from attrdict import AttrDict
@@ -55,7 +55,7 @@ def test_SimpleData_input_valid_values(mocker, qtbot, structure):
     assert widget.return_value._set_value.call_args.args == (test_data,)
 
 
-def test_SimpleData_input_no_type(mocker, qtbot, structure):
+def test_SimpleData_input_no_type(qtbot, structure):
     
     meta = CoreMetaData({"identifier": "test",
                          "structure": "test",
@@ -174,7 +174,7 @@ def test_SimpleData_input_bool(mocker, qtbot, structure):
     assert widget.return_value._set_value.call_args.args == (test_data,)
 
 
-def test_SimpleData_input_unknown(mocker, qtbot, structure):
+def test_SimpleData_input_unknown(qtbot, structure):
     
     meta = CoreMetaData({"identifier": "test",
                          "structure": "test",

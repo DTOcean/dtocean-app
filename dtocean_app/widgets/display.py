@@ -153,7 +153,7 @@ class MPLWidget(FigureCanvas):
 
 def get_current_filetypes():
     
-    if not plt.get_fignums(): return
+    if not plt.get_fignums(): return {}
     
     fig = plt.gcf()
     filetypes = fig.canvas.get_supported_filetypes()
@@ -173,7 +173,8 @@ def save_current_figure(figure_path):
 
 def get_current_figure_size():
     
-    if not plt.get_fignums(): return
+    if not plt.get_fignums():
+        raise RuntimeError("No open plots")
     
     fig = plt.gcf()
     size_inches = fig.get_size_inches()

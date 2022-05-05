@@ -25,7 +25,7 @@ from dtocean_app.strategies.multi import GUIMultiSensitivity
 from dtocean_app.strategies.position import GUIAdvancedPosition
 
 
-@pytest.mark.parametrize("project, expected",[
+@pytest.mark.parametrize("project, expected", [
                             (["a"], True),
                             (["a", "b"], False)])
 def test_GUIUnitSensitivity_allow_run(project, expected):
@@ -33,7 +33,7 @@ def test_GUIUnitSensitivity_allow_run(project, expected):
     assert test.allow_run("mock", project) is expected
 
 
-@pytest.mark.parametrize("project, expected",[
+@pytest.mark.parametrize("project, expected", [
                             (["a"], True),
                             (["a", "b"], False)])
 def test_GUIMultiSensitivity_allow_run(project, expected):
