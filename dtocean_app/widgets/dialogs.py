@@ -379,37 +379,29 @@ class ProjProperties(QtGui.QDialog, Ui_ProjectProperties):
         self.setupUi(self)
 
         return
-        
-        
+
+
 class TestDataPicker(QtGui.QDialog, Ui_TestDataPicker):
     
+    __test__ = False
     path_set = QtCore.pyqtSignal(str)
-
-    def __init__(self, parent=None):
     
+    def __init__(self, parent=None):
         super(TestDataPicker, self).__init__(parent)
-
+        self.browseButton = None
         self._init_ui()
-
-        return
-
+    
     def _init_ui(self):
-
         self.setupUi(self)
-        button = self.buttonBox.addButton("Browse...",
+        self.browseButton = self.buttonBox.addButton("Browse...",
                                           QtGui.QDialogButtonBox.ActionRole)
-        button.clicked.connect(self._write_path)
-
-        return
-
-    @QtCore.pyqtSlot()    
+        self.browseButton.clicked.connect(self._write_path)
+    
+    @QtCore.pyqtSlot()
     def _write_path(self):
-        
         test_file_path = QtGui.QFileDialog.getOpenFileName(self,
                                                            directory=HOME)
         self.pathLineEdit.setText(test_file_path)
-        
-        return
 
 
 class ListTableEditor(QtGui.QDialog, Ui_ListTableEditor):
