@@ -1335,13 +1335,7 @@ class AdvancedPositionWidget(QtGui.QWidget,
     
     @QtCore.pyqtSlot(object)
     def _update_protect_default(self, checked_state):
-        
-        if checked_state == QtCore.Qt.Checked:
-            self._protect_default = True
-        else:
-            self._protect_default = False
-        
-        return
+        self._protect_default = bool(checked_state == QtCore.Qt.Checked)
     
     @QtCore.pyqtSlot(int)
     def _select_sims_to_load(self, button_id):

@@ -57,7 +57,7 @@ def test_GUIAdvancedPosition_allow_run(mocker):
     assert test.allow_run("mock", "mock") is True
 
 
-@pytest.mark.parametrize("raw_string_input, expected",[
+@pytest.mark.parametrize("raw_string_input, expected", [
                             ("None", [None]),
                             ("True, False", [True, False]),
                             ("1, 1.", [1, 1.]),

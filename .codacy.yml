@@ -1,7 +1,11 @@
 ---
 engines:
+ coverage:
+   enabled: false
+  duplication:
+    enabled: true
+    exclude_paths:
+      - 'tests/**'
  pylint:
    enabled: true
    python_version: 2
- coverage:
-   enabled: false

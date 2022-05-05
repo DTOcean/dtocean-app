@@ -1787,6 +1787,8 @@ def strategy_manager_basic(qtbot, window_dataflow_module):
     
     def strategy_manager_visible(): assert strategy_manager.isVisible()
     
+    qtbot.waitUntil(strategy_manager_visible)
+    
     # Click on first strategy and apply
     item = strategy_manager.listWidget.item(0)
     rect = strategy_manager.listWidget.visualItemRect(item)
