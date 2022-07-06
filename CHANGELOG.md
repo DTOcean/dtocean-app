@@ -9,21 +9,50 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Added
 
+-   Add advanced position strategy to available optimisation strategies. This
+    strategy can be used to optimise the layout of an array for a given cost
+    function, such as the LCOE.
+-   Allowed text selection of the value in PointSelect input widgets.
+-   Values added to DataTable structures must now conform to the given data 
+    type.
+-   Activated modules and themes are now checked against the active simulation 
+    to ensure they match (when loading a project, for instance).
+-   Added command line option to quit before the interface starts (for testing).
+-   Allowed maximum and minimum values to be set on SimpleData widgets.
+-   Added option to delete a simulation to the simulation dock context menu.
+
 ### Changed
 
 -   Added Loader and Dumper arguments to pyyaml calls as required by pyyaml 
     version 5.1 to improve safety.
-
-## Removed
+-   Prevented project closing when the database dialogue is open.
+-   All file dialogues now start in the user's home directory.
+-   The strategy manager window can now be maximised.
+-   Debug logging of figure numbers was improved.
+-   Moved responsibility for creating a pure Project object when saving to
+    dtocean_core.
+-   Added note in GUI that only a single simulation can exist when starting the 
+    sensitivity strategies.
 
 ## Fixed
+
+-   Fixed bug where the file extensions for variable file import were being 
+    used when exporting a variable.
+-   Widgets are now removed if a simulation is set active which doesn't contain 
+    the last selected variable.
+-   Fix a regression where the "Use Strategy" tick boxes in the comparison view
+    were not being enabled.
+-   Allow backwards compatibility for some older project files.
+-   Ensured tools with widgets are modal and destroy any plots they have when
+    closing.
+-   Prevented crash when project loading fails.
 
 ## [2.0.0] - 2019-03-12
 
 ### Added
 
--   Added high DPI scaling widgets which activate when Windows virtual DPI exceeds
-    100. Improves look and feel on high DPI displays.
+-   Added high DPI scaling widgets which activate when Windows virtual DPI 
+    exceeds 100. Improves look and feel on high DPI displays.
 -   Split high low and shared QtDesigner files into separate directories.
 -   Added dynamic generation of tools menu from plugins created in the tools
     module.
