@@ -1,6 +1,6 @@
 [![appveyor](https://ci.appveyor.com/api/projects/status/github/DTOcean/dtocean-app?branch=master&svg=true)](https://ci.appveyor.com/project/DTOcean/dtocean-app)
 [![codecov](https://codecov.io/gh/DTOcean/dtocean-app/branch/master/graph/badge.svg)](https://codecov.io/gh/DTOcean/dtocean-app)
-[![Codacy Badge](https://api.codacy.com/project/badge/Grade/d288d321cad84b79932f354ff8fe335e)](https://www.codacy.com/project/H0R5E/dtocean-app/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=DTOcean/dtocean-app&amp;utm_campaign=Badge_Grade_Dashboard&amp;branchId=11776109)
+[![Codacy Badge](https://app.codacy.com/project/badge/Grade/6466fab3dad14f0ea984ce2468bc0428)](https://www.codacy.com/gh/DTOcean/dtocean-app/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=DTOcean/dtocean-app&amp;utm_campaign=Badge_Grade)
 [![release](https://img.shields.io/github/release/DTOcean/dtocean-app.svg)](https://github.com/DTOcean/dtocean-app/releases/latest)
 
 **For the DTOcean wizard based installer please see the [dtocean](
@@ -18,7 +18,7 @@ installation instructions below, and the source code of any other DTOcean
 module they wish to develop. In this way, the impact of changes can be observed 
 in a graphical environment. 
 
-* For python 2.7 only.
+\* For python 2.7 only.
 
 ## Documentation
 
@@ -60,7 +60,15 @@ for dtocean-app, save it and copy it to the root of the environment. For
 $ copy .condarc %CONDA_PREFIX%
 ```
 
-Or for 32-bit:
+Note that in PowerShell the copy command would be:
+
+```
+$ copy .condarc $env:CONDA_PREFIX
+```
+
+Or for 32-bit, download the [`.condarc-32`](
+https://raw.githubusercontent.com/DTOcean/dtocean-app/master/.condarc-32) file
+and copy it:
 
 ```
 $ copy .condarc-32 %CONDA_PREFIX%\\.condarc
@@ -101,6 +109,19 @@ DTOcean modules:
 ```
 $ conda activate _dtocean_app
 $ copy .condarc %CONDA_PREFIX%
+```
+
+Note that in PowerShell the copy command would be:
+
+```
+$ copy .condarc $env:CONDA_PREFIX
+```
+
+For 32-bit systems:
+
+```
+$ conda activate _dtocean_app
+$ copy .condarc-32 %CONDA_PREFIX%\\.condarc
 ```
 
 Install [polite](https://github.com/DTOcean/polite), [aneris](
@@ -284,9 +305,9 @@ Please make sure to update tests as appropriate.
 This package was initially created as part of the [EU DTOcean project](
 https://www.dtoceanplus.eu/About-DTOceanPlus/History) by:
 
- * Mathew Topper at [TECNALIA](https://www.tecnalia.com)
- * Vincenzo Nava at [TECNALIA](https://www.tecnalia.com)
- * Rui Duarte at [France Energies Marines](https://www.france-energies-marines.org/)
+*   Mathew Topper at [TECNALIA](https://www.tecnalia.com)
+*   Vincenzo Nava at [TECNALIA](https://www.tecnalia.com)
+*   Rui Duarte at [France Energies Marines](https://www.france-energies-marines.org/)
 
 It is now maintained by Mathew Topper at [Data Only Greater](
 https://www.dataonlygreater.com/).
@@ -302,6 +323,6 @@ https://www.dataonlygreater.com/).
 The icons used with the graphical interface are source directly or derived from
 the following open source icon sets:
 
-* Crystal Clear ([LPGL-2.1](https://choosealicense.com/licenses/lgpl-2.1/)
+* Crystal Clear ([LPGL-2.1](https://choosealicense.com/licenses/lgpl-2.1/))
 * GNOME ([GPL-2.0](https://choosealicense.com/licenses/gpl-2.0/))
 * ScreenRuler Tango ([GPL-3.0](https://choosealicense.com/licenses/gpl-3.0/))
