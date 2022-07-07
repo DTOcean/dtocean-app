@@ -69,7 +69,7 @@ $ copy .condarc $env:CONDA_PREFIX
 To install dtocean-app into the environment:
 
 ```
-$ conda install dtocean-app
+$ conda install dtocean-app=2.1.0
 ```
 
 DTOcean modules for use with the GUI must be installed separately (See the 
