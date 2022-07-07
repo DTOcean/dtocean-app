@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-#    Copyright (C) 2016-2022 Mathew Topper
+#    Copyright (C) 2022 Mathew Topper
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -15,40 +15,25 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import abc
+import numpy as np
+import pytest
+import matplotlib.pyplot as plt
 
 
-class GUITool(object):
+@pytest.fixture
+def figure():
     
-    __metaclass__ = abc.ABCMeta
+    # Data for plotting
+    t = np.arange(0.0, 2.0, 0.01)
+    s = 1 + np.sin(2 * np.pi * t)
     
-    """Plugin Discovery"""
+    fig, ax = plt.subplots()
+    ax.plot(t, s)
     
-    def __init__(self):
-        
-        self.parent = None
-        
-        return
+    ax.set(xlabel='time (s)', ylabel='voltage (mV)',
+           title='About as simple as it gets, folks')
+    ax.grid()
     
-    @abc.abstractmethod
-    def get_weight(self):
-        
-        '''A method for getting the order of priority of the tool.
-        
-        Returns:
-          int
-        '''
-        
-        return
+    yield fig
     
-    @abc.abstractmethod
-    def has_widget(self):
-        
-        '''A method for indicating if the tool creates a widget
-        
-        Returns:
-          bool
-        '''
-        
-        return
-
+    plt.close(fig)

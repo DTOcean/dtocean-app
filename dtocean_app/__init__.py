@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-#    Copyright (C) 2016-2019 Mathew Topper
+#    Copyright (C) 2016-2022 Mathew Topper
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -30,11 +30,7 @@ from polite.paths import (Directory,
                           UserDataDirectory)
 from polite.configuration import Logger
 
-from ._build import BUILD
 from .utils.qtlog import QtHandler
-
-# Define build number for packaging test
-__build__ = BUILD
 
 module_path = os.path.realpath(__file__)
 
@@ -74,7 +70,7 @@ def start_logging(debug=False):
     # Get the logger configuration
     log = Logger(configdir)
     log_config_dict = log.read()
-
+    
     # Get Directory to place logs
     log_dir = get_log_dir()
     
@@ -90,12 +86,14 @@ def start_logging(debug=False):
     
     # Rotate any rotating file handlers
     for handler in logger.handlers:
+        
         if handler.__class__.__name__ == 'RotatingFileHandler':
+            
             try:
                 handler.doRollover()
             except WindowsError:
                 pass
-            
+    
     logger.info("Welcome to DTOcean")
     
     return
@@ -131,7 +129,7 @@ def get_log_dir():
 #                    "profile.stat")
 
 
-def main(debug=False, trace_warnings=False):
+def main_(debug=False, trace_warnings=False, force_quit=False):
 
     """Run the DTOcean tool"""
     
@@ -218,13 +216,15 @@ def main(debug=False, trace_warnings=False):
     main_window.show()
     
     splash.finish(main_window)
-    sys.exit(app.exec_())
+    
+    if not force_quit:
+        sys.exit(app.exec_())
     
     return
 
 
 def gui_interface():
-
+    
     '''Command line interface for dtocean-app.
     
     Example:
@@ -232,16 +232,16 @@ def gui_interface():
         For help::
         
             $ dtocean-app --help
-            
+        
     '''
     
-    epiStr = ('''Mathew Topper (c) 2018.''')
-              
+    epiStr = ('''The DTOcean Developers (c) 2022.''')
+    
     desStr = "Run the DTOcean graphical application."
-
+    
     parser = argparse.ArgumentParser(description=desStr,
                                      epilog=epiStr)
-
+    
     parser.add_argument("--debug",
                         help=("disable stream redirection"),
                         action='store_true')
@@ -249,12 +249,16 @@ def gui_interface():
     parser.add_argument("--trace-warnings",
                         help=("add stack trace to warnings"),
                         action='store_true')
-                                     
+    
+    parser.add_argument("--quit",
+                        help=("quit before interface opens"),
+                        action='store_true')
+    
     args = parser.parse_args()
     debug = args.debug
     trace_warnings = args.trace_warnings
-        
-    main(debug=debug, trace_warnings=trace_warnings)
-
+    force_quit = args.quit
+    
+    main_(debug=debug, trace_warnings=trace_warnings, force_quit=force_quit)
+    
     return
-

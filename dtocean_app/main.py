@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-#    Copyright (C) 2016-2018 Mathew Topper
+#    Copyright (C) 2016-2022 Mathew Topper
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -15,6 +15,8 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+# pylint: disable=protected-access
+
 """
 Created on Thu Apr 23 12:51:14 2015
 
@@ -28,6 +30,7 @@ import shutil
 import logging
 import tarfile
 import tempfile
+import threading
 import traceback
 from collections import namedtuple
 
@@ -78,6 +81,12 @@ from .widgets.docks import LogDock
 # Set up logging
 module_logger = logging.getLogger(__name__)
 
+# User home directory
+HOME = os.path.expanduser("~")
+
+# Check if running coverage
+RUNNING_COVERAGE = "coverage" in sys.modules
+
 
 class ThreadReadRaw(QtCore.QThread):
     
@@ -85,17 +94,24 @@ class ThreadReadRaw(QtCore.QThread):
     
     taskFinished = QtCore.pyqtSignal()
     error_detected =  QtCore.pyqtSignal(object, object, object)
-
+    
     def __init__(self, shell, variable, value):
         
         super(ThreadReadRaw, self).__init__()
         self._shell = shell
         self._variable = variable
         self._value = value
-                
+        
         return
     
-    def run(self):
+    def run(self): # pragma: no cover
+        
+        if RUNNING_COVERAGE:
+            sys.settrace(threading._trace_hook)
+        
+        self._run()
+    
+    def _run(self):
         
         try:
         
@@ -110,7 +126,7 @@ class ThreadReadRaw(QtCore.QThread):
             etype, evalue, etraceback = sys.exc_info()
             self.error_detected.emit(etype, evalue, etraceback)
             self.taskFinished.emit()
-
+        
         return
 
 
@@ -131,7 +147,14 @@ class ThreadReadTest(QtCore.QThread):
         
         return
     
-    def run(self):
+    def run(self): # pragma: no cover
+        
+        if RUNNING_COVERAGE:
+            sys.settrace(threading._trace_hook)
+        
+        self._run()
+    
+    def _run(self):
         
         try:
         
@@ -145,7 +168,7 @@ class ThreadReadTest(QtCore.QThread):
             etype, evalue, etraceback = sys.exc_info()
             self.error_detected.emit(etype, evalue, etraceback)
             self.taskFinished.emit()
-
+        
         return
 
 
@@ -155,7 +178,7 @@ class ThreadOpen(QtCore.QThread):
     
     taskFinished = QtCore.pyqtSignal()
     error_detected =  QtCore.pyqtSignal(object, object, object)
-
+    
     def __init__(self, core, file_path):
         
         super(ThreadOpen, self).__init__()
@@ -163,20 +186,29 @@ class ThreadOpen(QtCore.QThread):
         self._file_path = file_path
         self._project = None
         self._current_scope = None
+        self._activated_interfaces = None
         self._strategy = None
         self._project_path = None
         
         return
     
-    def run(self):
+    def run(self): # pragma: no cover
+        
+        if RUNNING_COVERAGE:
+            sys.settrace(threading._trace_hook)
+        
+        self._run()
+    
+    def _run(self):
         
         try:
-
+            
             load_path = str(self._file_path)
             dto_dir_path = None
             prj_file_path = None
             sco_file_path = None
             stg_file_path = None
+            int_file_path = None
             
             # Check the extension
             if os.path.splitext(load_path)[1] == ".dto":
@@ -188,8 +220,10 @@ class ThreadOpen(QtCore.QThread):
                 prj_file_path = os.path.join(dto_dir_path, "project.prj")
                 sco_file_path = os.path.join(dto_dir_path, "scope.json")
                 stg_file_path = os.path.join(dto_dir_path, "strategy.pkl")
+                int_file_path = os.path.join(dto_dir_path, "interfaces.json")
                 
                 if not os.path.isfile(stg_file_path): stg_file_path = None
+                if not os.path.isfile(int_file_path): int_file_path = None
                 
             elif os.path.splitext(load_path)[1] == ".prj":
                 
@@ -203,29 +237,39 @@ class ThreadOpen(QtCore.QThread):
                 
             # Load up the project
             load_project = self._core.load_project(prj_file_path)
-    
             self._project = load_project
             
             # Load up the scope if one was found
             if sco_file_path is not None:
-            
+                
                 with open(sco_file_path, 'rb') as json_file:
                     self._current_scope = json.load(json_file)
-                    
+            
             else:
                 
                 self._current_scope = "global"
+            
+            # Load up the activated interfaces if found
+            if int_file_path is not None:
                 
+                with open(int_file_path, 'rb') as json_file:
+                    self._activated_interfaces = json.load(json_file)
+            
+            else:
+                
+                self._activated_interfaces = {}
+            
             # Load up the strategy if one was found
             if stg_file_path is not None:
                 
-                strategy_manager = GUIStrategyManager()
-                self._strategy = strategy_manager.load_strategy(stg_file_path)
-                
+                strategy_manager = GUIStrategyManager(None)
+                self._strategy = strategy_manager.load_strategy(stg_file_path,
+                                                                load_project)
+            
             else:
                 
                 self._strategy = None
-                
+            
             # Record the path after a successful load
             self._project_path = load_path
             
@@ -240,7 +284,7 @@ class ThreadOpen(QtCore.QThread):
             self.error_detected.emit(etype, evalue, etraceback)
             
             self.taskFinished.emit()
-
+        
         return
 
 
@@ -255,6 +299,7 @@ class ThreadSave(QtCore.QThread):
                        project,
                        save_path,
                        current_scope,
+                       activated_interfaces,
                        strategy):
         
         super(ThreadSave, self).__init__()
@@ -262,11 +307,19 @@ class ThreadSave(QtCore.QThread):
         self._project = project
         self._save_path = save_path
         self._current_scope = current_scope
+        self._activated_interfaces = activated_interfaces
         self._strategy = strategy
         
         return
     
-    def run(self):
+    def run(self): # pragma: no cover
+        
+        if RUNNING_COVERAGE:
+            sys.settrace(threading._trace_hook)
+        
+        self._run()
+    
+    def _run(self):
         
         try:
             
@@ -309,20 +362,32 @@ class ThreadSave(QtCore.QThread):
             arch_files = [prj_file_path, sco_file_path]
             arch_paths = ["project.prj", "scope.json"]
             
+            # Dump the activated interfaces
+            if self._activated_interfaces:
+                
+                int_file_path = os.path.join(dto_dir_path, "interfaces.json")
+                
+                with open(int_file_path, 'wb') as json_file:
+                    json.dump(self._activated_interfaces, json_file)
+                    
+                # Set the standard archive contents
+                arch_files.append(int_file_path)
+                arch_paths.append("interfaces.json")
+            
             # Dump the strategy (if there is one)
             if self._strategy is not None:
-            
-                strategy_manager = GUIStrategyManager() 
+                
+                strategy_manager = GUIStrategyManager(None)
                 stg_file_path = os.path.join(dto_dir_path, "strategy.pkl")
                 strategy_manager.dump_strategy(self._strategy, stg_file_path)
                 
                 arch_files.append(stg_file_path)
                 arch_paths.append("strategy.pkl")
-                
+            
             # Now tar the files together
             dto_file_name = os.path.split(self._save_path)[1]
             tar_file_name = "{}.tar".format(dto_file_name)
-        
+            
             archive = tarfile.open(tar_file_name, "w")
             
             for arch_file, arch_path in zip(arch_files, arch_paths):
@@ -341,7 +406,7 @@ class ThreadSave(QtCore.QThread):
             self.error_detected.emit(etype, evalue, etraceback)
             
             self.taskFinished.emit()
-
+        
         return
 
 
@@ -351,7 +416,7 @@ class ThreadDataFlow(QtCore.QThread):
     
     taskFinished = QtCore.pyqtSignal()
     error_detected =  QtCore.pyqtSignal(object, object, object)
-
+    
     def __init__(self, pipeline, shell):
         
         super(ThreadDataFlow, self).__init__()
@@ -362,7 +427,14 @@ class ThreadDataFlow(QtCore.QThread):
         
         return
     
-    def run(self):
+    def run(self): # pragma: no cover
+        
+        if RUNNING_COVERAGE:
+            sys.settrace(threading._trace_hook)
+        
+        self._run()
+    
+    def _run(self):
         
         try:
             
@@ -394,16 +466,16 @@ class ThreadDataFlow(QtCore.QThread):
             self.pipeline._read_auto(self.shell)
             
             self.taskFinished.emit()
-            
+        
         except: 
             
             etype, evalue, etraceback = sys.exc_info()
             self.error_detected.emit(etype, evalue, etraceback)
             self.taskFinished.emit()
-
+        
         return
-        
-        
+
+
 class ThreadCurrent(QtCore.QThread):
     
     """QThread for executing the current module"""
@@ -421,7 +493,14 @@ class ThreadCurrent(QtCore.QThread):
         
         return
     
-    def run(self):
+    def run(self): # pragma: no cover
+        
+        if RUNNING_COVERAGE:
+            sys.settrace(threading._trace_hook)
+        
+        self._run()
+    
+    def _run(self):
         
         try:
             
@@ -446,17 +525,17 @@ class ThreadCurrent(QtCore.QThread):
             self._core.blockSignals(False)
             self._project.blockSignals(False)
             self.taskFinished.emit()
-
+        
         return
-        
-        
+
+
 class ThreadThemes(QtCore.QThread):
     
     """QThread for executing all themes"""
     
     taskFinished = QtCore.pyqtSignal()
     error_detected =  QtCore.pyqtSignal(object, object, object)
-
+    
     def __init__(self, core, project):
         
         super(ThreadThemes, self).__init__()
@@ -467,7 +546,14 @@ class ThreadThemes(QtCore.QThread):
         
         return
     
-    def run(self):
+    def run(self): # pragma: no cover
+        
+        if RUNNING_COVERAGE:
+            sys.settrace(threading._trace_hook)
+        
+        self._run()
+    
+    def _run(self):
         
         try:
             
@@ -492,7 +578,7 @@ class ThreadThemes(QtCore.QThread):
             self._core.blockSignals(False)
             self._project.blockSignals(False)
             self.taskFinished.emit()
-
+        
         return
 
 
@@ -512,7 +598,14 @@ class ThreadStrategy(QtCore.QThread):
         
         return
     
-    def run(self):
+    def run(self): # pragma: no cover
+        
+        if RUNNING_COVERAGE:
+            sys.settrace(threading._trace_hook)
+        
+        self._run()
+    
+    def _run(self):
         
         try:
             
@@ -532,15 +625,15 @@ class ThreadStrategy(QtCore.QThread):
             
             etype, evalue, etraceback = sys.exc_info()
             self.error_detected.emit(etype, evalue, etraceback)
-
+            
             # Reinstate signals and emit
             self._core.blockSignals(False)
             self._project.blockSignals(False)
             self.taskFinished.emit()
-
+        
         return
 
-        
+
 class ThreadTool(QtCore.QThread):
     
     """QThread for executing dtocean-wec"""
@@ -555,25 +648,32 @@ class ThreadTool(QtCore.QThread):
         self._project = project
         
         self._tool_manager = GUIToolManager()
-                
+        
         return
     
-    def run(self):
+    def run(self): # pragma: no cover
+        
+        if RUNNING_COVERAGE:
+            sys.settrace(threading._trace_hook)
+        
+        self._run()
+    
+    def _run(self):
         
         try:
-                    
+            
             self._tool_manager.execute_tool(self._core,
                                             self._project,
                                             self._tool)
-                
-        except: 
+        
+        except:
             
             etype, evalue, etraceback = sys.exc_info()
             self.error_detected.emit(etype, evalue, etraceback)
-
+        
         return
-    
-    
+
+
 class ThreadDump(QtCore.QThread):
     
     """QThread for executing database dump"""
@@ -590,48 +690,55 @@ class ThreadDump(QtCore.QThread):
         
         return
     
-    def run(self):
+    def run(self): # pragma: no cover
+        
+        if RUNNING_COVERAGE:
+            sys.settrace(threading._trace_hook)
+        
+        self._run()
+    
+    def _run(self):
         
         try:
-                    
+            
             db = get_database(self._credentials, timeout=60)
             table_list = get_table_map()
-        
+            
             # Filter the table if required
             selected = str(self._selected).lower()
-    
+            
             if selected != "all":
                 filtered_dict = filter_map(table_list, selected)
                 table_list = [filtered_dict]
             
             # make a directory if required
             root_path = str(self._root_path)
-
+            
             if not os.path.exists(root_path): os.makedirs(root_path)
-                    
+            
             database_to_files(root_path,
                               table_list,
                               db,
                               print_function=module_logger.info)
             
             self.taskFinished.emit()
-                
+        
         except: 
             
             etype, evalue, etraceback = sys.exc_info()
             self.error_detected.emit(etype, evalue, etraceback)
             self.taskFinished.emit()
-
+            
         return
-    
-    
+
+
 class ThreadLoad(QtCore.QThread):
     
     """QThread for executing database dump"""
     
     taskFinished = QtCore.pyqtSignal()
     error_detected =  QtCore.pyqtSignal(object, object, object)
-
+    
     def __init__(self, credentials, root_path, selected):
         
         super(ThreadLoad, self).__init__()
@@ -641,10 +748,17 @@ class ThreadLoad(QtCore.QThread):
         
         return
     
-    def run(self):
+    def run(self): # pragma: no cover
+        
+        if RUNNING_COVERAGE:
+            sys.settrace(threading._trace_hook)
+        
+        self._run()
+    
+    def _run(self):
         
         try:
-                    
+            
             db = get_database(self._credentials, timeout=60)
             table_list = get_table_map()
             
@@ -661,7 +775,7 @@ class ThreadLoad(QtCore.QThread):
                                 print_function=module_logger.info)
             
             self.taskFinished.emit()
-            
+        
         except: 
             
             etype, evalue, etraceback = sys.exc_info()
@@ -687,7 +801,14 @@ class ThreadScope(QtCore.QThread):
         
         return
     
-    def run(self):
+    def run(self): # pragma: no cover
+        
+        if RUNNING_COVERAGE:
+            sys.settrace(threading._trace_hook)
+        
+        self._run()
+    
+    def _run(self):
         
         try:
             
@@ -712,12 +833,12 @@ class ThreadScope(QtCore.QThread):
             
             etype, evalue, etraceback = sys.exc_info()
             self.error_detected.emit(etype, evalue, etraceback)
-
+            
             # Reinstate signals and emit
             self._core.blockSignals(False)
             self._project.blockSignals(False)
             self.taskFinished.emit()
-
+        
         return
 
 
@@ -742,8 +863,8 @@ class Shell(QtCore.QObject):
     dataflow_active = QtCore.pyqtSignal()
     module_executed = QtCore.pyqtSignal()
     themes_executed = QtCore.pyqtSignal()
+    strategy_selected = QtCore.pyqtSignal()
     strategy_executed = QtCore.pyqtSignal()
-    strategy_completed = QtCore.pyqtSignal()
     database_convert_active = QtCore.pyqtSignal()
     database_convert_complete = QtCore.pyqtSignal()
 
@@ -762,6 +883,7 @@ class Shell(QtCore.QObject):
         self.strategy = None
         self.queued_interfaces = {"modules": None,
                                   "themes": None}
+        self.activated_interfaces = {}
         self._active_thread = None
         self._current_scope = None
         
@@ -889,6 +1011,7 @@ class Shell(QtCore.QObject):
         
         # Relay active simulation change
         self.project.active_index_changed.connect(self._emit_update_pipeline)
+        self.project.active_index_changed.connect(self.check_active_simulation)
         self.project.active_index_changed.connect(
             lambda: self.reset_widgets.emit())
         self.project.active_index_changed.connect(
@@ -934,6 +1057,7 @@ class Shell(QtCore.QObject):
                                          self.project,
                                          save_path,
                                          self._current_scope,
+                                         self.activated_interfaces,
                                          self.strategy)
         self._active_thread.taskFinished.connect(self._finalize_save_project)
         self._active_thread.start()
@@ -994,11 +1118,49 @@ class Shell(QtCore.QObject):
         
         msg = "Setting simulation '{}' as active".format(title)
         module_logger.debug(msg)
-
+        
         self.project.set_active_index(title=title)
         
         return
+    
+    @QtCore.pyqtSlot()
+    def check_active_simulation(self):
         
+        if not self.activated_interfaces: return
+        
+        if ("modules" not in self.activated_interfaces or
+         self.activated_interfaces["modules"] is None):
+            activated_modules = []
+        else:
+            activated_modules = self.activated_interfaces["modules"]
+        
+        if ("themes" not in self.activated_interfaces or
+            self.activated_interfaces["themes"] is None):
+            activated_themes = []
+        else:
+            activated_themes = self.activated_interfaces["themes"]
+        
+        # Check modules and themes of the simulation
+        active_mods = self.module_menu.get_active(self.core, self.project)
+        active_themes = self.theme_menu.get_active(self.core, self.project)
+        
+        warn = False
+        
+        if set(activated_modules) != set(active_mods):
+            warn = True
+        
+        if set(activated_themes) != set(active_themes):
+            warn = True
+        
+        if warn:
+            
+            msg_str = ("The modules or themes of the active simulation "
+                       "differ from those originally selected. Unexpected "
+                       "behaviour may occur!")
+            module_logger.warning(msg_str)
+        
+        return
+    
     @QtCore.pyqtSlot(str, dict)
     def select_database(self, identifier, credentials):
         
@@ -1109,6 +1271,8 @@ class Shell(QtCore.QObject):
                                           self.project,
                                           module_name)
         
+        self.activated_interfaces["modules"] = \
+                                        self.queued_interfaces["modules"]
         self.queued_interfaces["modules"] = None
 
         return
@@ -1127,6 +1291,7 @@ class Shell(QtCore.QObject):
                                          self.project,
                                          theme_name)
 
+        self.activated_interfaces["themes"] = self.queued_interfaces["themes"]
         self.queued_interfaces["themes"] = None
 
         return
@@ -1151,12 +1316,13 @@ class Shell(QtCore.QObject):
             simulation.set_unavailable_variables(None)
         
         else:
-        
-            self.strategy.strategy_run = True
+            
             force_unavailable = self.strategy.get_variables()
             simulation.set_unavailable_variables(force_unavailable)
         
         self.core.set_interface_status(self.project)
+        
+        self.strategy_selected.emit()
         self.update_run_action.emit()
         
         return
@@ -1313,8 +1479,13 @@ class Shell(QtCore.QObject):
     @QtCore.pyqtSlot()
     def _finalize_open_project(self):
         
+        if self._active_thread._project is None:
+            self._clear_active_thread()
+            return
+        
         self.project = self._active_thread._project
         self.project_path = self._active_thread._project_path
+        self.activated_interfaces = self._active_thread._activated_interfaces
         self.strategy = self._active_thread._strategy
         self._current_scope = self._active_thread._current_scope
         
@@ -1322,6 +1493,7 @@ class Shell(QtCore.QObject):
         
         # Relay active simulation change
         self.project.active_index_changed.connect(self._emit_update_pipeline)
+        self.project.active_index_changed.connect(self.check_active_simulation)
         self.project.active_index_changed.connect(
             lambda: self.reset_widgets.emit())
         self.project.active_index_changed.connect(
@@ -1330,7 +1502,7 @@ class Shell(QtCore.QObject):
         # Relay strategy change
         if self.strategy is not None:
             self.strategy_loaded.emit(self.strategy)
-            
+        
         # Update the scope widget
         self.update_scope.emit(self._current_scope)
 
@@ -1363,15 +1535,12 @@ class Shell(QtCore.QObject):
             self.project.active_title_changed.emit(active_sim_title)
         
         # Assertain if the strategy can be released
-        self.strategy.strategy_run = self.strategy.allow_rerun
+        allow_run = self.strategy.allow_run(self.core, self.project)
         
         # If the strategy is no longer active release the hidden variables
-        if not self.strategy.strategy_run:
-            
+        if not allow_run:
             [sim.set_unavailable_variables()
                                         for sim in self.project._simulations]
-            
-            self.strategy_completed.emit()
         
         # Emit signals on core
         self._finalize_core()
@@ -1472,6 +1641,7 @@ class DTOceanWindow(MainWindow):
         
         # Tools
         self._tool_manager = None
+        self._tool_widget = None
         
         # Redirect excepthook
         if not debug: sys.excepthook = self._display_error
@@ -1511,6 +1681,7 @@ class DTOceanWindow(MainWindow):
         shell.bathymetry_active.connect(self._active_bathymetry_ui_switch)
         shell.filter_active.connect(self._active_filter_ui_switch)
         shell.dataflow_active.connect(self._active_dataflow_ui_switch)
+        shell.strategy_selected.connect(self._strategy_box_ui_switch)
         shell.update_run_action.connect(self._run_action_ui_switch)
         shell.module_executed.connect(self._run_action_ui_switch)
         shell.themes_executed.connect(self._run_action_ui_switch)
@@ -1568,7 +1739,7 @@ class DTOceanWindow(MainWindow):
         return
         
     def _init_dialogs(self):
-
+        
         # Set up project properties dialog
         self._project_properties = ProjProperties(self)
         self._project_properties.buttonBox.button(
@@ -1582,7 +1753,11 @@ class DTOceanWindow(MainWindow):
         self._db_selector.database_deselected.connect(
                                     self._shell.deselect_database)
         self._db_selector.database_dump.connect(self._dump_database)
-        self._db_selector.database_load.connect( self._load_database)
+        self._db_selector.database_load.connect(self._load_database)
+        self._db_selector.buttonBox.button(
+                QtGui.QDialogButtonBox.Close).clicked.connect(
+                        self._unset_database_properties)
+        
         self._shell.database_updated.connect(
                                     self._db_selector._update_current)
         self._shell.database_convert_active.connect(
@@ -1595,14 +1770,16 @@ class DTOceanWindow(MainWindow):
                         lambda: self.actionInitiate_Pipeline.setEnabled(True))
         
         # Set up the strategy manager
-        self._strategy_manager = GUIStrategyManager(self)
+        self._strategy_manager = GUIStrategyManager(self._shell, self)
+        self._strategy_manager.setWindowFlags(
+                                    self._strategy_manager.windowFlags() |
+                                    QtCore.Qt.WindowMaximizeButtonHint)
+        
         self._strategy_manager.strategy_selected.connect(
                                     self._shell.select_strategy)
         self._shell.strategy_loaded.connect(
                                     self._strategy_manager._load_strategy)
-        self._shell.strategy_completed.connect(
-                                    self._strategy_manager._complete_strategy)
-
+        
         # Set up the data check diaglog
         self._data_check = DataCheck(self)
         self._data_check.setModal(True)
@@ -1671,11 +1848,11 @@ class DTOceanWindow(MainWindow):
                     
         # Handle errors
         self._pipeline_dock.error_detected.connect(self._display_error)
-
+        
         return
-
+    
     def _init_simulation_dock(self):
-
+        
         # Simulation dock
         self._simulation_dock = SimulationDock(self)
         self._simulation_dock._showclose_filter._show.connect(
@@ -1897,11 +2074,19 @@ class DTOceanWindow(MainWindow):
         
     @QtCore.pyqtSlot()
     def _set_database_properties(self):
-
-        self._db_selector.show()
-
-        return
         
+        self.actionClose.setDisabled(True)
+        self._db_selector.show()
+        
+        return
+    
+    @QtCore.pyqtSlot()
+    def _unset_database_properties(self):
+        
+        self.actionClose.setEnabled(True)
+        
+        return
+    
     @QtCore.pyqtSlot()
     def _active_project_ui_switch(self):
         
@@ -2065,7 +2250,7 @@ class DTOceanWindow(MainWindow):
         self._data_file_manager.setParent(None)
         self._data_file_manager.deleteLater()
         self._data_file_manager = None
-
+        
         # Remove details widget from plot context
         self._plot_context._top_left_box.removeWidget(self._plot_details)
         self._plot_details.setParent(None)
@@ -2123,6 +2308,7 @@ class DTOceanWindow(MainWindow):
         
         # Close dialog
         self._db_selector.close()
+        self._unset_database_properties()
         
         # Disable Actions
         self.actionInitiate_Pipeline.setDisabled(True)
@@ -2188,16 +2374,8 @@ class DTOceanWindow(MainWindow):
         self._level_comparison._set_interfaces(self._shell)
         self._sim_comparison._set_interfaces(self._shell, include_str=True)
         
-        if self._shell.strategy is not None:
-            
-            self._level_comparison.strategyBox.setChecked(False)
-            self._level_comparison.strategyBox.setEnabled(True)
-            
-            self._sim_comparison.strategyBox.setChecked(False)
-            self._sim_comparison.strategyBox.setEnabled(True)
-        
         self.actionComparison.setEnabled(True)
-
+        
         # Enable Actions
         self.actionSave.setEnabled(True)
         self.actionSave_As.setEnabled(True)
@@ -2211,7 +2389,7 @@ class DTOceanWindow(MainWindow):
         self.actionInitiate_Bathymetry.setDisabled(True)
         
         return
-        
+    
     @QtCore.pyqtSlot(str)
     def _current_scope_ui_switch(self, scope):
         
@@ -2237,14 +2415,27 @@ class DTOceanWindow(MainWindow):
         modules_scheduled = self._shell.get_scheduled_modules()
         modules_completed = self._shell.get_completed_modules()
         themes_scheduled = self._shell.get_scheduled_themes()
+        strategy_run = False
+        
+        if self._shell.strategy is not None:
+            strategy_run = self._shell.strategy.allow_run(self._shell.core,
+                                                          self._shell.project)
         
         # Set the run action buttons
-        if (self._shell.strategy is None or
-                (self._shell.strategy is not None and 
-                 not self._shell.strategy.strategy_run)):
+        if strategy_run:
+            
+            self.actionRun_Current.setDisabled(True)
+            self.actionRun_Themes.setDisabled(True)
+            
+            if modules_scheduled:
+                self.actionRun_Strategy.setEnabled(True)
+            else:
+                self.actionRun_Strategy.setDisabled(True)
+        
+        else:
             
             self.actionRun_Strategy.setDisabled(True)
-                    
+            
             if modules_scheduled:
                 self.actionRun_Current.setEnabled(True)
             else:
@@ -2254,17 +2445,7 @@ class DTOceanWindow(MainWindow):
                 self.actionRun_Themes.setEnabled(True)
             else:
                 self.actionRun_Themes.setDisabled(True)
-      
-        else:
-            
-            self.actionRun_Current.setDisabled(True)
-            self.actionRun_Themes.setDisabled(True)
-            
-            if modules_scheduled:
-                self.actionRun_Strategy.setEnabled(True)
-            else:
-                self.actionRun_Strategy.setDisabled(True)
-                
+        
         # Set the pipeline title
         if not modules_completed and modules_scheduled:
             pipeline_msg = "Define simulation inputs..."
@@ -2285,9 +2466,28 @@ class DTOceanWindow(MainWindow):
             raise SystemError(errStr)
         
         self._pipeline_dock._set_title(pipeline_msg)
-
-        return
         
+        return
+    
+    @QtCore.pyqtSlot()
+    def _strategy_box_ui_switch(self):
+        
+        checked = True
+        enabled = False
+        
+        if self._shell.strategy is not None:
+            
+            checked = False
+            enabled = True
+        
+        self._level_comparison.strategyBox.setChecked(checked)
+        self._level_comparison.strategyBox.setEnabled(enabled)
+        
+        self._sim_comparison.strategyBox.setChecked(checked)
+        self._sim_comparison.strategyBox.setEnabled(enabled)
+        
+        return
+    
     @QtCore.pyqtSlot(int)
     def _sim_comparison_ui_switch(self, box_number):
         
@@ -2330,7 +2530,7 @@ class DTOceanWindow(MainWindow):
 
     @QtCore.pyqtSlot()
     def _set_assessment_shuttle(self):
-
+        
         self._assessment_shuttle._add_items_from_lists(
                                         self._shell.get_available_themes(),
                                         self._shell.get_active_themes())
@@ -2341,9 +2541,7 @@ class DTOceanWindow(MainWindow):
         
     @QtCore.pyqtSlot()
     def _set_strategy(self):
-
-        self._strategy_manager.show(self._shell)
-
+        self._strategy_manager.show()
         return
         
     @QtCore.pyqtSlot(object, int)
@@ -2573,15 +2771,22 @@ class DTOceanWindow(MainWindow):
             self._plot_manager._plot_connected = True
             
         return
-        
+    
     def _set_data_widget(self, controller):
-               
-        if controller is None: return
-
+        
+        if controller is None: 
+            
+            if self._data_context._bottom_contents is not None:
+                
+                self._clear_bottom_contents(self._data_context)
+                self._last_data_controller = None
+            
+            return
+        
         if (self._last_data_controller is not None and 
             controller._id == self._last_data_controller._id and
             type(controller) == type(self._last_data_controller)):
-
+            
             if (controller._status is not None and
                 controller._status != self._last_data_controller_status and
                 "unavailable" in controller._status):
@@ -2619,14 +2824,22 @@ class DTOceanWindow(MainWindow):
                 widget.setDisabled(True)
                 
         return
-        
+    
     @QtCore.pyqtSlot(object, str)
     def _set_plot_widget(self, controller,
                                plot_name=None,
                                force_plot=False):
         
-        if controller is None: return
-
+        if controller is None:
+            
+            if self._plot_context._bottom_contents is not None:
+                
+                self._clear_bottom_contents(self._plot_context)
+                self._last_plot_id = None
+                self._last_plot_name = "auto"
+            
+            return
+        
         if (controller._id == self._last_plot_id and
             plot_name == self._last_plot_name and
             not force_plot): return
@@ -2654,7 +2867,7 @@ class DTOceanWindow(MainWindow):
         # Draw the widget
         widget.draw_idle()
         
-        if len(plt.get_fignums()) > 2:
+        if len(plt.get_fignums()) > 3:
             
             num_strs = ["{}".format(x) for x in plt.get_fignums()]
             num_str = ", ".join(num_strs)
@@ -2675,7 +2888,7 @@ class DTOceanWindow(MainWindow):
 
         controller._save_plot(self._shell, file_path, size, plot_name)
         
-        if len(plt.get_fignums()) > 2:
+        if len(plt.get_fignums()) > 3:
             
             num_strs = ["{}".format(x) for x in plt.get_fignums()]
             num_str = ", ".join(num_strs)
@@ -2727,7 +2940,7 @@ class DTOceanWindow(MainWindow):
         # Draw the widget
         widget.draw_idle()
         
-        if len(plt.get_fignums()) > 2:
+        if len(plt.get_fignums()) > 3:
             
             num_strs = ["{}".format(x) for x in plt.get_fignums()]
             num_str = ", ".join(num_strs)
@@ -2829,7 +3042,7 @@ class DTOceanWindow(MainWindow):
         # Draw the widget
         widget.draw_idle()
         
-        if len(plt.get_fignums()) > 2:
+        if len(plt.get_fignums()) > 3:
             
             num_strs = ["{}".format(x) for x in plt.get_fignums()]
             num_str = ", ".join(num_strs)
@@ -2904,9 +3117,9 @@ class DTOceanWindow(MainWindow):
 
         fdialog_msg = "Save plot"
             
-        save_path = QtGui.QFileDialog.getSaveFileName(None,
+        save_path = QtGui.QFileDialog.getSaveFileName(self,
                                                       fdialog_msg,
-                                                      '.',
+                                                      HOME,
                                                       extStr)
         
         if save_path:
@@ -2922,9 +3135,9 @@ class DTOceanWindow(MainWindow):
 
         fdialog_msg = "Save data"
             
-        save_path = QtGui.QFileDialog.getSaveFileName(None,
+        save_path = QtGui.QFileDialog.getSaveFileName(self,
                                                       fdialog_msg,
-                                                      '.',
+                                                      HOME,
                                                       extStr)
         
         if save_path:
@@ -2954,9 +3167,9 @@ class DTOceanWindow(MainWindow):
         msg = "Open Project"
         valid_exts = "DTOcean Files (*.dto *.prj)"
         
-        file_path = QtGui.QFileDialog.getOpenFileName(None,
+        file_path = QtGui.QFileDialog.getOpenFileName(self,
                                                       msg,
-                                                      '.',
+                                                      HOME,
                                                       valid_exts)
         
         if not file_path: return
@@ -2970,6 +3183,9 @@ class DTOceanWindow(MainWindow):
         
     @QtCore.pyqtSlot()
     def _open_project_finalize(self):
+        
+        if self._shell.project is None:
+            return
         
         self._active_project_ui_switch()
         self._active_pipeline_ui_switch()
@@ -3011,6 +3227,7 @@ class DTOceanWindow(MainWindow):
                     
         self._pipeline_dock._set_branch_map(new_branch_map)
         self._active_dataflow_ui_switch()
+        self._strategy_box_ui_switch()
         
         # Update the active project
         active_sim_title = self._shell.project.get_simulation_title()
@@ -3040,9 +3257,9 @@ class DTOceanWindow(MainWindow):
         valid_exts = ("DTOcean Application File (*.dto);;"
                       "DTOcean Project File (*.prj)")
         
-        file_path = QtGui.QFileDialog.getSaveFileName(None,
+        file_path = QtGui.QFileDialog.getSaveFileName(self,
                                                       msg,
-                                                      '.',
+                                                      HOME,
                                                       valid_exts)
         
         result = False
@@ -3085,9 +3302,9 @@ class DTOceanWindow(MainWindow):
         msg = "Export Data"
         valid_exts = "Datastate Files (*.dts)"
         
-        file_path = QtGui.QFileDialog.getSaveFileName(None,
+        file_path = QtGui.QFileDialog.getSaveFileName(self,
                                                       msg,
-                                                      '.',
+                                                      HOME,
                                                       valid_exts)
                 
         if file_path:
@@ -3101,9 +3318,9 @@ class DTOceanWindow(MainWindow):
         msg = "Export Data (Mask Outputs)"
         valid_exts = "Datastate Files (*.dts)"
         
-        file_path = QtGui.QFileDialog.getSaveFileName(None,
+        file_path = QtGui.QFileDialog.getSaveFileName(self,
                                                       msg,
-                                                      '.',
+                                                      HOME,
                                                       valid_exts)
                 
         if file_path:
@@ -3117,9 +3334,9 @@ class DTOceanWindow(MainWindow):
         msg = "Import Data"
         valid_exts = "Datastate Files (*.dts)"
         
-        file_path = QtGui.QFileDialog.getOpenFileName(None,
+        file_path = QtGui.QFileDialog.getOpenFileName(self,
                                                       msg,
-                                                      '.',
+                                                      HOME,
                                                       valid_exts)
         
         if file_path:
@@ -3133,9 +3350,9 @@ class DTOceanWindow(MainWindow):
         msg = "Import Data (Skip Satisfied)"
         valid_exts = "Datastate Files (*.dts)"
         
-        file_path = QtGui.QFileDialog.getOpenFileName(None,
+        file_path = QtGui.QFileDialog.getOpenFileName(self,
                                                       msg,
-                                                      '.',
+                                                      HOME,
                                                       valid_exts)
         
         if file_path:
@@ -3565,18 +3782,30 @@ class DTOceanWindow(MainWindow):
         self.setEnabled(True)
         
         return
-
+    
     @QtCore.pyqtSlot(object)
     def _close_tool(self, tool):
         
         if tool.has_widget():
+            
             widget = tool.get_widget()
-            if widget is not None: widget.show()
+            
+            if widget is not None:
+                widget.setWindowModality(QtCore.Qt.ApplicationModal)
+                widget.show()
+                widget.closing.connect(lambda: self._close_tool_widget(tool))
+                self._tool_widget = widget
         
         self._thread_tool = None
         
         return
-
+    
+    @QtCore.pyqtSlot(object)
+    def _close_tool_widget(self, tool):
+        self._tool_widget = None
+        tool.destroy_widget()
+        return
+    
     @QtCore.pyqtSlot()
     def _close_progress(self):
         
@@ -3670,8 +3899,9 @@ class DTOceanWindow(MainWindow):
         if isinstance(context._bottom_contents, MPLWidget):
             
             fignum = context._bottom_contents.figure.number
+            n_figs = len(plt.get_fignums())
             
-            log_msg = "Closing figure {}".format(fignum)
+            log_msg = "Closing figure {} ({} open)".format(fignum, n_figs)
             module_logger.debug(log_msg)
             
             sip.delete(context._bottom_contents)

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 #    Copyright (C) 2016 Mathew Topper, Rui Duarte
-#    Copyright (C) 2016-2018 Mathew Topper
+#    Copyright (C) 2016-2022 Mathew Topper
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -15,6 +15,8 @@
 #
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# pylint: disable=protected-access
 
 import numpy as np
 import pandas as pd
@@ -204,12 +206,12 @@ class TableData(GUIStructure, TableData):
         widget = InputDataTable(self.parent,
                                 self.meta.result.labels,
                                 self.meta.result.units)
-        widget._set_value(self.data.result)
+        widget._set_value(self.data.result, self.meta.result.types)
         
         self.data.result = widget
         
         return
-        
+    
     @staticmethod
     def auto_output(self):
         
@@ -219,7 +221,7 @@ class TableData(GUIStructure, TableData):
         widget._set_value(self.data.result)
         
         self.data.result = widget
-
+        
         return
 
 
@@ -880,69 +882,91 @@ class SimpleData(GUIStructure, SimpleData):
     def auto_input(self):
         
         if self.meta.result.valid_values is not None:
-        
+            
             unit = None
             
             if self.meta.result.units is not None:
                 unit = self.meta.result.units[0]
-    
+            
             input_widget = ListSelect(
                                     self.parent,
                                     self.meta.result.valid_values,
                                     unit=unit,
                                     experimental=self.meta.result.experimental)
             input_widget._set_value(self.data.result)
-            
+        
         elif self.meta.result.types is None:
             
             input_widget = None
-            
+        
         elif self.meta.result.types[0] == "float":
             
+            unit = None
+            minimum = None
+            maximum = None
+            
             if self.meta.result.units is not None:
                 unit = self.meta.result.units[0]
-            else:
-                unit = None
             
-            input_widget = FloatSelect(self.parent,
-                                       unit)
+            if self.meta.result.minimum_equals is not None:
+                minimum = self.meta.result.minimum_equals[0]
+            elif self.meta.result.minimums is not None:
+                minimum = np.nextafter(self.meta.result.minimums[0], np.inf)
+            
+            if self.meta.result.maximum_equals is not None:
+                maximum = self.meta.result.maximum_equals[0]
+            elif self.meta.result.maximums is not None:
+                maximum = np.nextafter(self.meta.result.maximums[0], -np.inf)
+            
+            input_widget = FloatSelect(self.parent, unit, minimum, maximum)
             input_widget._set_value(self.data.result)
-            
+        
         elif self.meta.result.types[0] == "int":
             
+            unit = None
+            minimum = None
+            maximum = None
+            
             if self.meta.result.units is not None:
                 unit = self.meta.result.units[0]
-            else:
-                unit = None
             
-            input_widget = IntSelect(self.parent,
-                                     unit)
+            if self.meta.result.minimum_equals is not None:
+                minimum = self.meta.result.minimum_equals[0]
+            elif self.meta.result.minimums is not None:
+                minimum = self.meta.result.minimums[0] + 1
+            
+            if self.meta.result.maximum_equals is not None:
+                maximum = self.meta.result.maximum_equals[0]
+            elif self.meta.result.maximums is not None:
+                maximum = self.meta.result.maximums[0] - 1
+            
+            input_widget = IntSelect(self.parent, unit, minimum, maximum)
             input_widget._set_value(self.data.result)
-            
+        
         elif self.meta.result.types[0] == "str":
             
+            unit = None
+            
             if self.meta.result.units is not None:
                 unit = self.meta.result.units[0]
-            else:
-                unit = None
             
             input_widget = StringSelect(self.parent,
                                         unit)
             input_widget._set_value(self.data.result)
-            
+        
         elif self.meta.result.types[0] == "bool":
             
             input_widget = BoolSelect(self.parent)
             input_widget._set_value(self.data.result)
-                        
+        
         else:
-
-            input_widget = None
             
+            input_widget = None
+        
         self.data.result = input_widget
-
+        
         return
-
+    
     @staticmethod
     def auto_output(self):
         
@@ -957,9 +981,9 @@ class SimpleData(GUIStructure, SimpleData):
         output_widget._set_value(self.data.result)
             
         self.data.result = output_widget
-
-        return
         
+        return
+
 
 class PathData(GUIStructure, PathData):
     """Overloading PathData class"""

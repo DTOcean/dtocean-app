@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-#    Copyright (C) 2016-2018 Mathew Topper
+#    Copyright (C) 2016-2022 Mathew Topper
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -118,7 +118,7 @@ class ListDock(QtGui.QDockWidget, Ui_ListDock):
 
 class LogDock(QtGui.QDockWidget, Ui_SystemDock):
 
-    def __init__(self, parent, max_lines=1e5 - 1):
+    def __init__(self, parent=None, max_lines=1e5 - 1):
     
         QtGui.QDockWidget.__init__(self, "Dockable", parent)
         Ui_SystemDock.__init__(self)

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-#    Copyright (C) 2016-2022 Mathew Topper
+#    Copyright (C) 2022 Mathew Topper
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -15,40 +15,25 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import abc
+# pylint: disable=wrong-import-position
+
+import pytest
+
+pytest.importorskip("dtocean_hydro")
+
+from dtocean_app.tools.external import GUIWECSimulatorTool
 
 
-class GUITool(object):
-    
-    __metaclass__ = abc.ABCMeta
-    
-    """Plugin Discovery"""
-    
-    def __init__(self):
-        
-        self.parent = None
-        
-        return
-    
-    @abc.abstractmethod
-    def get_weight(self):
-        
-        '''A method for getting the order of priority of the tool.
-        
-        Returns:
-          int
-        '''
-        
-        return
-    
-    @abc.abstractmethod
-    def has_widget(self):
-        
-        '''A method for indicating if the tool creates a widget
-        
-        Returns:
-          bool
-        '''
-        
-        return
+def test_GUIWECSimulatorTool_init():
+    GUIWECSimulatorTool()
+    assert True
 
+
+def test_GUIWECSimulatorTool_get_weight():
+    test = GUIWECSimulatorTool()
+    assert test.get_weight() == 1
+
+
+def test_GUIWECSimulatorTool_has_widget():
+    test = GUIWECSimulatorTool()
+    assert test.has_widget() is False

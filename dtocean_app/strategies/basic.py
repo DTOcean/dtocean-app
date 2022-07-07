@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-#    Copyright (C) 2016-2018 Mathew Topper
+#    Copyright (C) 2016-2022 Mathew Topper
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -35,9 +35,7 @@ class GUIBasicStrategy(GUIStrategy, BasicStrategy):
         
         return
     
-    @property
-    def allow_rerun(self):
-        
+    def allow_run(self, core, project):
         return True
         
     def get_weight(self):
@@ -63,6 +61,7 @@ class BasicWidget(Message, StrategyWidget):
     
     config_set = QtCore.pyqtSignal()
     config_null = QtCore.pyqtSignal()
+    reset = QtCore.pyqtSignal()
     
     def __init__(self, parent, text):
         

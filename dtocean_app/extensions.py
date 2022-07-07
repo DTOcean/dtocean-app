@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-#    Copyright (C) 2016-2018 Mathew Topper
+#    Copyright (C) 2016-2022 Mathew Topper
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -36,18 +36,18 @@ class GUIStrategyManager(ListFrameEditor, StrategyManager):
     
     """Strategy discovery"""
     
-    def __init__(self, parent=None):
+    def __init__(self, shell, parent=None):
         
         StrategyManager.__init__(self, strategies, "GUIStrategy")
         ListFrameEditor.__init__(self, parent, "Strategy Manager")
-        self._shell = None
+        self._shell = shell
         self._strategy = None
         self._last_df = None
         self._last_selected = None
         
         # Store widget handles
         self._strategy_widget = None
-                        
+        
         return
         
     def _init_ui(self, title=None):
@@ -61,13 +61,10 @@ class GUIStrategyManager(ListFrameEditor, StrategyManager):
         self._init_list()
         
         self.listWidget.itemClicked.connect(self._update_configuration)
-        self.buttonBox.button(
-            QtGui.QDialogButtonBox.Reset).clicked.connect(self._reset_strategy)
-        self.buttonBox.button(
-            QtGui.QDialogButtonBox.Apply).clicked.connect(
-                                                    self._configure_strategy)
+        self.resetButton.clicked.connect(self._reset_strategy)
+        self.applyButton.clicked.connect(self._configure_strategy)
         
-        self.buttonBox.button(QtGui.QDialogButtonBox.Apply).setDisabled(True)
+        self.applyButton.setDisabled(True)
         
         return
         
@@ -81,16 +78,14 @@ class GUIStrategyManager(ListFrameEditor, StrategyManager):
     @QtCore.pyqtSlot()
     def _config_set_ui_switch(self):
         
-        self.buttonBox.button(QtGui.QDialogButtonBox.Apply).setEnabled(True)
-        self.buttonBox.button(QtGui.QDialogButtonBox.Apply).setDefault(True)
+        self.applyButton.setEnabled(True)
         
         return
         
     @QtCore.pyqtSlot()
     def _config_null_ui_switch(self):
         
-        self.buttonBox.button(QtGui.QDialogButtonBox.Apply).setDisabled(True)
-        self.buttonBox.button(QtGui.QDialogButtonBox.Reset).setDefault(True)
+        self.applyButton.setDisabled(True)
         
         return
     
@@ -230,25 +225,30 @@ class GUIStrategyManager(ListFrameEditor, StrategyManager):
     def _load_strategy(self, strategy):
         
         strategy_name = strategy.get_name()
-
+        
         self._strategy = strategy
         self._last_selected = strategy_name
         
-        if not strategy.strategy_run:
-             strategy_name = "{} (completed)".format(strategy_name)
-        
-        self._set_dynamic_label(strategy_name)
+        if strategy.allow_run(self._shell.core, self._shell.project):
+            self._set_strategy_name()
+        else:
+            self._set_strategy_name_unavailable()
         
         return
     
+    def _set_strategy_name(self):
+        self._set_dynamic_label(self._last_selected)
+        return
+
     @QtCore.pyqtSlot()
-    def _complete_strategy(self):
+    def _set_strategy_name_unavailable(self):
         
-        strategy_name = "{} (completed)".format(self._last_selected)
+        strategy_name = "{} (unavailable)".format(self._last_selected)
         self._set_dynamic_label(strategy_name)
         
         return
     
+    @QtCore.pyqtSlot(object)
     def _update_configuration(self, item=None):
         
         if item is None:
@@ -267,11 +267,8 @@ class GUIStrategyManager(ListFrameEditor, StrategyManager):
             
         self._last_selected = selected
         
-        self.buttonBox.button(
-                          QtGui.QDialogButtonBox.Apply).setDisabled(True)
-        self.buttonBox.button(
-                          QtGui.QDialogButtonBox.Reset).setDefault(True)
-                
+        self.applyButton.setDisabled(True)
+        
         if selected is None:
             
             self._strategy_widget = Message(self,
@@ -286,6 +283,7 @@ class GUIStrategyManager(ListFrameEditor, StrategyManager):
                                                             self._shell)
         self._strategy_widget.config_set.connect(self._config_set_ui_switch)
         self._strategy_widget.config_null.connect(self._config_null_ui_switch)
+        self._strategy_widget.reset.connect(self._reset_strategy)
         self._set_main_widget(self._strategy_widget)
 
         if (self._strategy is not None and
@@ -299,18 +297,24 @@ class GUIStrategyManager(ListFrameEditor, StrategyManager):
     def _reset_strategy(self):
         
         self.listWidget.clearSelection()
-    
+        
         self._last_selected = None
         self._strategy = None
+        
+        if self._strategy_widget is not None:
+            self._strategy_widget.reset.disconnect()
+            self._strategy_widget.config_set.disconnect()
+            self._strategy_widget.config_null.disconnect()
+        
         self._strategy_widget = None
-
+        
         self._update_configuration()
         self._set_dynamic_label("None")
         
         self.strategy_selected.emit(self._strategy)
         
         return
-        
+    
     @QtCore.pyqtSlot(object)
     def _configure_strategy(self):
         
@@ -318,38 +322,20 @@ class GUIStrategyManager(ListFrameEditor, StrategyManager):
         
         config = self.mainWidget.get_configuration()
         self._strategy.configure(**config)
-        self._set_dynamic_label(self._strategy.get_name())
+        
+        if self._strategy.allow_run(self._shell.core, self._shell.project):
+            self._set_strategy_name()
+        else:
+            self._set_strategy_name_unavailable()
         
         self.strategy_selected.emit(self._strategy)
         
         return
-        
-    def _get_dump_dict(self, strategy):
-        
-        # Store the additional strategy information
-        stg_dict = StrategyManager._get_dump_dict(self, strategy)
-        stg_dict["strategy_run"] = strategy.strategy_run
-                    
-        return stg_dict
-        
-    def _set_load_dict(self, stg_dict):
-        
-        # Now build the strategy
-        new_strategy = StrategyManager._set_load_dict(self, stg_dict)
-        
-        # Now deserialise the extra data
-        new_strategy.strategy_run = stg_dict["strategy_run"]
-
-        return new_strategy
-        
+    
     @QtCore.pyqtSlot(object)
-    def show(self, shell):
-        
-        self._shell = shell
+    def show(self):
         self._update_configuration()
-        
         super(GUIStrategyManager, self).show()
-        
         return
         
 class GUIToolManager(ToolManager):

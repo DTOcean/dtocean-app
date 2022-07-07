@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-#    Copyright (C) 2016-2018 Mathew Topper
+#    Copyright (C) 2016-2022 Mathew Topper
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -31,7 +31,7 @@ import re
 from PyQt4 import QtGui, QtCore
 
 from .widgets.docks import ListDock
-    
+
 
 class SimulationDock(ListDock):
     
@@ -80,17 +80,22 @@ class SimulationDock(ListDock):
             self.listWidget.addItem(sim_item)
             
         return
-        
+    
     def _make_menus(self, shell, position):
         
         menu = QtGui.QMenu()
-                
+        
         menu.addAction('Clone', lambda: self._clone_current(shell))
+        delete = menu.addAction('Delete', lambda: self._delete_current(shell))
+        
+        if len(shell.project) < 2:
+            delete.setEnabled(False)
+        
         menu.exec_(self.listWidget.mapToGlobal(position))
-
+        
         return
     
-    @QtCore.pyqtSlot(object)    
+    @QtCore.pyqtSlot(object)
     def _update_simulations(self, project):
                 
         if project is None:
@@ -158,6 +163,22 @@ class SimulationDock(ListDock):
         shell.core.clone_simulation(shell.project,
                                     clone_title,
                                     sim_title=title)
+        
+        return
+    
+    @QtCore.pyqtSlot(object)
+    def _delete_current(self, shell):
+        
+        currentItem = self.listWidget.currentItem()
+        title = currentItem._get_title()
+        
+        msg = "Deleting simulation '{}'".format(title)
+        module_logger.debug(msg)
+        
+        shell.core.remove_simulation(shell.project,
+                                     sim_title=title)
+        
+        self._update_simulations(shell.project)
         
         return
 

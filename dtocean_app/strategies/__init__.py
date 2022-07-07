@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-#    Copyright (C) 2016-2018 Mathew Topper
+#    Copyright (C) 2016-2022 Mathew Topper
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -17,7 +17,7 @@
 
 import abc
 
-from PyQt4.QtCore import pyqtWrapperType
+from PyQt4 import QtCore
 
 
 class GUIStrategy(object):
@@ -27,21 +27,13 @@ class GUIStrategy(object):
     '''The base abstract class for discovery of GUI supported strategy 
     classes'''
     
-    def __init__(self):
-        
-        self.strategy_run = None
-        
-        return
-    
-    @abc.abstractproperty
-    def allow_rerun(self):
-        
-        """Can the strategy be rerun after first execution"""
-        
+    @abc.abstractmethod
+    def allow_run(self, core, project): # pragma: no cover
+        """Can the strategy be run"""
         return NotImplementedError
 
     @abc.abstractmethod
-    def get_widget(self):
+    def get_widget(self, parent, shell): # pragma: no cover
 
         '''A method for getting the configuration widget of the strategy.
 
@@ -52,7 +44,7 @@ class GUIStrategy(object):
         return
         
     @abc.abstractmethod
-    def get_weight(self):
+    def get_weight(self): # pragma: no cover
 
         '''A method for getting the order of priority of the strategy.
 
@@ -71,7 +63,7 @@ class StrategyWidget(object):
     classes'''
     
     @abc.abstractmethod
-    def get_configuration(self):
+    def get_configuration(self): # pragma: no cover
         
         '''A method for getting the dictionary to configure the strategy.
 
@@ -82,7 +74,7 @@ class StrategyWidget(object):
         return {}
 
     @abc.abstractmethod
-    def set_configuration(self, config_dict=None):
+    def set_configuration(self, config_dict=None): # pragma: no cover
         
         '''A method for displaying the configuration in the gui.
 
@@ -120,7 +112,7 @@ class StrategyWidget(object):
             params.append(param)
             
         return params
-        
-class PyQtABCMeta(pyqtWrapperType, abc.ABCMeta):
-    
+
+
+class PyQtABCMeta(QtCore.pyqtWrapperType, abc.ABCMeta):
     pass

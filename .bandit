@@ -1,9 +1,3 @@
-
-# (optional) list included test IDs here, eg '[B101, B406]':
-# tests:
-
-# (optional) list skipped test IDs here, eg '[B101, B406]':
-skips: ['B101']
-
-exclude_dirs:
-    - dtocean_app/designer
+[bandit]
+exclude: ./dtocean_app/designer,./tests
+skips: B101,B110,B307,B311

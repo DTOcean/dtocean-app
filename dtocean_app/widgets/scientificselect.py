@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-#    Copyright (C) 2016-2018 Mathew Topper
+#    Copyright (C) 2016-2022 Mathew Topper
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -52,7 +52,7 @@ class ScientificDoubleSpinBox(QDoubleSpinBox):
         super(QDoubleSpinBox, self).__init__(*args, **kwargs)
         self.setMinimum(-1.e+18)
         self.setMaximum(1.e+18)
-        self.setDecimals(1000)
+        self.setDecimals(323)
 
     def validate(self, text, position):
         

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-#    Copyright (C) 2016-2018 Mathew Topper
+#    Copyright (C) 2016-2022 Mathew Topper
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -21,8 +21,9 @@ Created on Mon Jun 13 12:11:53 2016
 .. moduleauthor:: Mathew Topper <mathew.topper@dataonlygreater.com>
 """
 
-import pandas as pd
+import os
 
+import pandas as pd
 from PyQt4 import QtGui, QtCore
 
 from .widgets.dialogs import ListTableEditor
@@ -32,6 +33,9 @@ try:
 except AttributeError:
     def _fromUtf8(s):
         return s
+
+# User home directory
+HOME = os.path.expanduser("~")
 
 
 class DBSelector(ListTableEditor):
@@ -418,8 +422,13 @@ class DBSelector(ListTableEditor):
     def _dump_database(self):
     
         title_str = 'Select Directory for File Dump'
-        root_path = QtGui.QFileDialog.getExistingDirectory(self,
-                                                           title_str)
+        
+        root_path = QtGui.QFileDialog.getExistingDirectory(
+                                                self,
+                                                title_str,
+                                                HOME,
+                                                QtGui.QFileDialog.ShowDirsOnly)
+        
         section = self.sectionCombo.currentText()
         
         if not root_path: return
@@ -443,8 +452,13 @@ class DBSelector(ListTableEditor):
     def _load_database(self):
     
         title_str = 'Select Directory to Load'
-        root_path = QtGui.QFileDialog.getExistingDirectory(self,
-                                                           title_str)
+        
+        root_path = QtGui.QFileDialog.getExistingDirectory(
+                                                self,
+                                                title_str,
+                                                HOME,
+                                                QtGui.QFileDialog.ShowDirsOnly)
+        
         section = self.sectionCombo.currentText()
         
         if not root_path: return

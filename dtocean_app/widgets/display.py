@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-#    Copyright (C) 2016-2018 Mathew Topper
+#    Copyright (C) 2016-2022 Mathew Topper
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -128,43 +128,55 @@ class ImageDictLabel(ImageLabel):
 
 
 class MPLWidget(FigureCanvas):
-
+    
     """Ultimately, this is a QWidget (as well as a FigureCanvasAgg, etc.)."""
-
+    
+    closing = QtCore.pyqtSignal()
+    
     def __init__(self, figure, parent=None):
-
+        
         FigureCanvas.__init__(self, figure)
         FigureCanvas.setSizePolicy(self,
                                    QtGui.QSizePolicy.Expanding,
                                    QtGui.QSizePolicy.Expanding)
         FigureCanvas.updateGeometry(self)
-
+        
         return
+    
+    def closeEvent(self, event):
         
+        self.closing.emit()
+        event.accept()
         
+        return
+
+
 def get_current_filetypes():
     
-    fig = plt.gcf()
+    if not plt.get_fignums(): return {}
     
-    if not fig: return []
-
-    return fig.canvas.get_supported_filetypes()
+    fig = plt.gcf()
+    filetypes = fig.canvas.get_supported_filetypes()
+    
+    return filetypes
 
 
 def save_current_figure(figure_path):
     
+    if not plt.get_fignums(): return
+    
     fig = plt.gcf()
-    
-    if not fig: return
-    
     fig.savefig(figure_path)
-
+    
     return
+
 
 def get_current_figure_size():
     
-    if not plt.get_figlabels(): return
+    if not plt.get_fignums():
+        raise RuntimeError("No open plots")
     
     fig = plt.gcf()
+    size_inches = fig.get_size_inches()
     
-    return fig.get_size_inches()
+    return size_inches

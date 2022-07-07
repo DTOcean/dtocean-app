@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-#    Copyright (C) 2016-2018 Mathew Topper
+#    Copyright (C) 2016-2022 Mathew Topper
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -20,6 +20,9 @@ Created on Thu Apr 23 12:51:14 2015
 
 .. moduleauthor:: Mathew Topper <mathew.topper@dataonlygreater.com>
 """
+
+import os
+import logging
 
 import pandas as pd
 import numpy as np
@@ -58,6 +61,12 @@ else:
     from ..designer.low.boolselect import Ui_BoolSelect
     from ..designer.low.pathselect import Ui_PathSelect
     from ..designer.low.dateselect import Ui_DateSelect
+
+# Set up logging
+module_logger = logging.getLogger(__name__)
+
+# User home directory
+HOME = os.path.expanduser("~")
 
 # DOCK WINDOW INPUT WIDGETS
 
@@ -203,18 +212,21 @@ class FloatSelect(QtGui.QWidget, Ui_ScientificSelect):
     
     read_value = QtCore.pyqtSignal()
 
-    def __init__(self, parent=None, units=None):
+    def __init__(self, parent=None,
+                       units=None,
+                       minimum=None,
+                       maximum=None):
 
         QtGui.QWidget.__init__(self, parent)
         Ui_ScientificSelect.__init__(self)
         
         self.setupUi(self)
-        self._init_ui(units)
+        self._init_ui(units, minimum, maximum)
 
         return
 
-    def _init_ui(self, units):
-
+    def _init_ui(self, units, minimum, maximum):
+        
         if units is None:
             unitsStr = ""
         else:
@@ -222,10 +234,16 @@ class FloatSelect(QtGui.QWidget, Ui_ScientificSelect):
         
         self.unitsLabel.setText(unitsStr)
         
+        if minimum is not None:
+            self.doubleSpinBox.setMinimum(minimum)
+        
+        if maximum is not None:
+            self.doubleSpinBox.setMaximum(maximum)
+        
         self.doubleSpinBox.valueChanged.connect(self._emit_read)
         self.buttonBox.button(QtGui.QDialogButtonBox.Ok).clicked.connect(
                                           self._emit_read)
-
+        
         return
         
     def _set_value(self, value):
@@ -264,18 +282,21 @@ class IntSelect(QtGui.QWidget, Ui_IntSelect):
     
     read_value = QtCore.pyqtSignal()
 
-    def __init__(self, parent, units=None):
+    def __init__(self, parent=None,
+                       units=None,
+                       minimum=None,
+                       maximum=None):
 
         QtGui.QWidget.__init__(self, parent)
         Ui_IntSelect.__init__(self)
         
         self.setupUi(self)
-        self._init_ui(units)
+        self._init_ui(units, minimum, maximum)
 
         return
 
-    def _init_ui(self, units):
-
+    def _init_ui(self, units, minimum, maximum):
+        
         if units is None:
             unitsStr = ""
         else:
@@ -283,10 +304,16 @@ class IntSelect(QtGui.QWidget, Ui_IntSelect):
         
         self.unitsLabel.setText(unitsStr)
         
+        if minimum is not None:
+            self.spinBox.setMinimum(minimum)
+        
+        if maximum is not None:
+            self.spinBox.setMaximum(maximum)
+        
         self.spinBox.valueChanged.connect(self._emit_read)
         self.buttonBox.button(QtGui.QDialogButtonBox.Ok).clicked.connect(
                                           self._emit_read)
-
+        
         return
         
     def _set_value(self, value):
@@ -381,30 +408,30 @@ class StringSelect(QtGui.QWidget, Ui_StringSelect):
         
         return
 
-        
+
 class DirectorySelect(QtGui.QWidget, Ui_PathSelect):
     
     read_value = QtCore.pyqtSignal()
-
+    
     def __init__(self, parent=None):
-
+        
         QtGui.QWidget.__init__(self, parent)
         Ui_StringSelect.__init__(self)
         
         self.setupUi(self)
         self._init_ui()
-
+        
         return
-
+    
     def _init_ui(self):
-
+        
         self.toolButton.clicked.connect(self._set_path)
         self.lineEdit.returnPressed.connect(self._emit_read)
         self.buttonBox.button(QtGui.QDialogButtonBox.Ok).clicked.connect(
                                           self._emit_read)
-
-        return
         
+        return
+    
     def _set_value(self, value):
         
         valueStr = str(value)
@@ -414,39 +441,36 @@ class DirectorySelect(QtGui.QWidget, Ui_PathSelect):
             self.lineEdit.setText(value)
         
         return
-
+    
     def _get_result(self):
-
         result = str(self.lineEdit.text())
-        
         return result
        
     def _get_read_event(self):
-
         return self.read_value
-        
+    
     def _get_nullify_event(self):
-
         return self.buttonBox.button(QtGui.QDialogButtonBox.Cancel).clicked
-        
-    @QtCore.pyqtSlot()    
+    
+    @QtCore.pyqtSlot()
     def _set_path(self):
         
         msg = "Select directory"
-        file_path = QtGui.QFileDialog.getExistingDirectory(None,
-                                                           msg)
+        file_path = QtGui.QFileDialog.getExistingDirectory(self,
+                                                           msg,
+                                                           HOME)
         
         self.lineEdit.setText(file_path)
         
         return
-        
-    @QtCore.pyqtSlot(object)     
+    
+    @QtCore.pyqtSlot(object)
     def _emit_read(self, *args):
         
         self.read_value.emit()
         
         return
-        
+
 
 class BoolSelect(QtGui.QWidget, Ui_BoolSelect):
     
@@ -667,8 +691,8 @@ class PointSelect(CoordSelect):
         result = Point(*coords)
         
         return result
-        
-        
+
+
 class InputDataTable(QtGui.QWidget):
     
     null_signal = QtCore.pyqtSignal()
@@ -679,7 +703,7 @@ class InputDataTable(QtGui.QWidget):
                        fixed_index_col=None,
                        fixed_index_names=None,
                        edit_cols=False):
-
+        
         QtGui.QWidget.__init__(self, parent)
         self._columms = columns
         self._units = units
@@ -725,11 +749,11 @@ class InputDataTable(QtGui.QWidget):
         self.verticalLayout.addWidget(self.datatable)
         self.verticalLayout.addItem(spacerItem)
         self.verticalLayout.addWidget(self.buttonBox)
-
+        
         QtCore.QMetaObject.connectSlotsByName(self)
         
         return
-        
+    
     def _init_ui(self):
         
         "Store the metadata for modifying the DataFrame which is displayed"
@@ -738,7 +762,7 @@ class InputDataTable(QtGui.QWidget):
                                                               self._emit_null)
         
         return
-
+    
     def _set_value(self, value, dtypes=None):
                 
         # setup a new model
@@ -752,12 +776,12 @@ class InputDataTable(QtGui.QWidget):
             
             model.freeze_first = True
             self.datatable.hideVerticalHeader(True)
-
+        
         # set table view widget model
         self.datatable.setViewModel(model)
         
         return
-        
+    
     def _get_dataframe(self, value, dtypes=None):
         
         if self._units is None:
@@ -766,7 +790,7 @@ class InputDataTable(QtGui.QWidget):
             units = self._units
         
         # Build new columns
-        new_cols = []        
+        new_cols = []
         
         for col, unit in zip(self._columms, units):
             
@@ -776,7 +800,7 @@ class InputDataTable(QtGui.QWidget):
                 new_col = col
                 
             new_cols.append(new_col)
-
+        
         if value is None:
             
             data = pd.DataFrame(columns=new_cols)
@@ -793,8 +817,13 @@ class InputDataTable(QtGui.QWidget):
             if dtypes is not None:
                     
                 for column, dtype in zip(data.columns, dtypes):
-                    data[column] = data[column].astype(dtype)
                     
+                    try:
+                        data[column] = data[column].astype(dtype)
+                    except Exception:
+                        module_logger.debug('Failed to assign column type',
+                                            exc_info=True)
+        
         else:
             
             data = value
@@ -806,9 +835,9 @@ class InputDataTable(QtGui.QWidget):
                 data = data.set_index(self._fixed_index_col)
                 data = data.reindex(self._fixed_index_names)
                 data = data.reset_index()
-                            
+        
         return data
-
+    
     def _get_result(self):
         
         model = self.datatable.model()
@@ -823,28 +852,24 @@ class InputDataTable(QtGui.QWidget):
             df.columns = new_cols
         else:
             df.columns = self._columms
-
+        
         return df
-        
+    
     def _get_read_event(self):
-
         return self.buttonBox.button(QtGui.QDialogButtonBox.Ok).clicked
-        
+    
     def _get_nullify_event(self):
-
         return self.null_signal
-        
-    @QtCore.pyqtSlot(object)     
+    
+    @QtCore.pyqtSlot(object)
     def _emit_null(self, *args):
-        
         self.null_signal.emit()
-        
         return
     
     def _disable(self):
         
         self.buttonBox.setDisabled(True)
-                
+        
         self.datatable.view().setSelectionMode(
                                         QtGui.QAbstractItemView.NoSelection)
         self.datatable.view().setFocusPolicy(QtCore.Qt.NoFocus)

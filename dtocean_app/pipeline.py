@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-#    Copyright (C) 2016-2018 Mathew Topper
+#    Copyright (C) 2016-2022 Mathew Topper
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -254,15 +254,14 @@ class PipeLine(PipeLineDock):
                                            controller)
             
             if result is not None: return result
-
-        return None
         
+        return None
+    
     def _make_menus(self, shell, position):
-                
-        proxy_indexes = self.treeView.selectedIndexes()
-        proxy_index = proxy_indexes[0]
+        
+        proxy_index = self.treeView.indexAt(position)
         controller = self._find_controller(proxy_index)
-
+        
         if isinstance(controller, InputBranchControl):
             
             # Set the widget action

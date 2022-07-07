@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-#    Copyright (C) 2016-2018 Mathew Topper
+#    Copyright (C) 2016-2022 Mathew Topper
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -15,39 +15,42 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from dtocean_core.tools.constraints import ConstraintsTool, get_constraints
+import matplotlib.pyplot as plt
+
+from dtocean_core.tools.cable_constraints import (CableConstraintsTool,
+                                                  get_constraints)
 from dtocean_electrical.output import plot_devices
 
 from . import GUITool
 from ..widgets.display import MPLWidget
 
 
-class GUIConstraintsTool(GUITool, ConstraintsTool):
+class GUICableConstraintsTool(GUITool, CableConstraintsTool):
     
     """A basic strategy which will run all selected modules and themes in
     sequence."""
     
     def __init__(self):
         
-        ConstraintsTool.__init__(self)
+        CableConstraintsTool.__init__(self)
         GUITool.__init__(self)
         self._elec = None
         self._constrained_lines = None
+        self._fig = None
         
         return
     
     def get_weight(self):
-
+        
         '''A method for getting the order of priority of the strategy.
-
+        
         Returns:
           int
         '''
-
+        
         return 2
     
     def has_widget(self):
-
         return True
     
     def get_widget(self):
@@ -66,11 +69,15 @@ class GUIConstraintsTool(GUITool, ConstraintsTool):
                            []
                            )
         widget = MPLWidget(fig, self.parent)
+        self._fig = fig
         
         return widget
     
-    def connect(self, **kwargs):
-                
+    def destroy_widget(self):
+        plt.close(self._fig)
+        self._fig = None
+        return
+    
+    def connect(self, **kwargs): # pylint: disable=unused-argument
         self._elec, self._constrained_lines = get_constraints(self.data)
-
         return

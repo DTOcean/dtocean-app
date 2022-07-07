@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-#    Copyright (C) 2016-2018 Mathew Topper
+#    Copyright (C) 2016-2022 Mathew Topper
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -15,11 +15,14 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+# pylint: disable=protected-access
+
 import numpy as np
 import pandas as pd
 from PyQt4 import QtCore, QtGui
 
 from dtocean_app.widgets.input import (FloatSelect,
+                                       IntSelect,
                                        StringSelect,
                                        DirectorySelect,
                                        CoordSelect,
@@ -88,6 +91,95 @@ def test_FloatSelect_bad_input(qtbot):
     assert test == 0.
 
 
+def test_FloatSelect_min(qtbot):
+    
+    window = FloatSelect(minimum=0)
+    window.show()
+    qtbot.addWidget(window)
+    
+    window.doubleSpinBox.lineEdit().setText("-1")
+    
+    qtbot.mouseClick(
+                window.buttonBox.button(QtGui.QDialogButtonBox.Ok),
+                QtCore.Qt.LeftButton)
+    
+    test = window._get_result()
+    
+    assert test == 0.
+
+
+def test_FloatSelect_max(qtbot):
+    
+    window = FloatSelect(maximum=1000)
+    window.show()
+    qtbot.addWidget(window)
+    
+    window.doubleSpinBox.lineEdit().setText("2e3")
+    
+    qtbot.mouseClick(
+                window.buttonBox.button(QtGui.QDialogButtonBox.Ok),
+                QtCore.Qt.LeftButton)
+    
+    test = window._get_result()
+    
+    assert test == 1e3
+
+
+def test_IntSelect(qtbot):
+        
+    window = IntSelect(units="Test")
+    window.show()
+    qtbot.addWidget(window)
+    
+    assert str(window.unitsLabel.text()) == "(Test)"
+
+
+def test_IntSelect_get_result(qtbot):
+    
+    window = IntSelect()
+    window._set_value(1)
+    window.show()
+    qtbot.addWidget(window)
+    
+    test = window._get_result()
+    
+    assert test == 1
+
+
+def test_IntSelect_min(qtbot):
+    
+    window = IntSelect(minimum=0)
+    window.show()
+    qtbot.addWidget(window)
+    
+    window.spinBox.setValue(-1)
+    
+    qtbot.mouseClick(
+                window.buttonBox.button(QtGui.QDialogButtonBox.Ok),
+                QtCore.Qt.LeftButton)
+    
+    test = window._get_result()
+    
+    assert test == 0
+
+
+def test_IntSelect_max(qtbot):
+    
+    window = IntSelect(maximum=2)
+    window.show()
+    qtbot.addWidget(window)
+    
+    window.spinBox.setValue(3)
+    
+    qtbot.mouseClick(
+                window.buttonBox.button(QtGui.QDialogButtonBox.Ok),
+                QtCore.Qt.LeftButton)
+    
+    test = window._get_result()
+    
+    assert test == 2
+
+
 def test_StringSelect(qtbot):
 
     window = StringSelect(units="Test")
@@ -128,6 +220,22 @@ def test_DirectorySelect_get_result(qtbot):
     test = window._get_result()
     
     assert test == "Bob"
+
+
+def test_DirectorySelect_toolButton(mocker, qtbot, tmp_path):
+    
+    mocker.patch('dtocean_app.widgets.input.'
+                 'QtGui.QFileDialog.getExistingDirectory',
+                 return_value=str(tmp_path))
+    
+    window = DirectorySelect()
+    window.show()
+    qtbot.addWidget(window)
+    
+    qtbot.mouseClick(window.toolButton, QtCore.Qt.LeftButton)
+    test = window._get_result()
+    
+    assert test == str(tmp_path)
 
 
 def test_CoordSelect(qtbot):
@@ -207,13 +315,25 @@ def test_InputDataTable_edit_cols_get_result(qtbot):
                             ["Test", "Test [Brackets]"],
                             units=["test", "test"],
                             edit_cols=True)
-    window._set_value(vals_df)
+    window._set_value(vals_df, dtypes=["int", "int"])
     window.show()
     qtbot.addWidget(window)
     
     test = window._get_result()
     
     assert (test.columns.values == ["Test", "Test"]).all()
+
+
+def test_InputDataTable_get_dataframe_none():
+    
+    window = InputDataTable(None,
+                            ["Test", "Test [Brackets]"],
+                            units=["test", "test"],
+                            edit_cols=True)
+    df = window._get_dataframe(None, dtypes=["int", "int"])
+    
+    assert df.empty
+    assert (df.dtypes == ["int", "int"]).all()
 
 
 def test_InputLineTable(qtbot):

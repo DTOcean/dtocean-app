@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-#    Copyright (C) 2016-2018 Mathew Topper
+#    Copyright (C) 2016-2022 Mathew Topper
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -34,11 +34,6 @@ import pandas as pd
 from PyQt4 import QtGui, QtCore
 
 try:
-    from yaml import CLoader as Loader
-except ImportError:
-    from yaml import Loader
-
-try:
     _fromUtf8 = QtCore.QString.fromUtf8
 except AttributeError:
     def _fromUtf8(s):
@@ -70,6 +65,7 @@ else:
     from ..designer.low.listframeeditor import  Ui_ListFrameEditor
     from ..designer.low.about import  Ui_AboutDialog
 
+HOME = os.path.expanduser("~")
 DIR_PATH = os.path.dirname(__file__)
 
 
@@ -383,36 +379,29 @@ class ProjProperties(QtGui.QDialog, Ui_ProjectProperties):
         self.setupUi(self)
 
         return
-        
-        
+
+
 class TestDataPicker(QtGui.QDialog, Ui_TestDataPicker):
     
+    __test__ = False
     path_set = QtCore.pyqtSignal(str)
-
-    def __init__(self, parent=None):
     
+    def __init__(self, parent=None):
         super(TestDataPicker, self).__init__(parent)
-
+        self.browseButton = None
         self._init_ui()
-
-        return
-
+    
     def _init_ui(self):
-
         self.setupUi(self)
-        button = self.buttonBox.addButton("Browse...",
+        self.browseButton = self.buttonBox.addButton("Browse...",
                                           QtGui.QDialogButtonBox.ActionRole)
-        button.clicked.connect(self._write_path)
-
-        return
-
-    @QtCore.pyqtSlot()    
+        self.browseButton.clicked.connect(self._write_path)
+    
+    @QtCore.pyqtSlot()
     def _write_path(self):
-        
-        test_file_path = QtGui.QFileDialog.getOpenFileName()
+        test_file_path = QtGui.QFileDialog.getOpenFileName(self,
+                                                           directory=HOME)
         self.pathLineEdit.setText(test_file_path)
-        
-        return
 
 
 class ListTableEditor(QtGui.QDialog, Ui_ListTableEditor):
@@ -516,6 +505,8 @@ class ListFrameEditor(QtGui.QDialog, Ui_ListFrameEditor):
         self.mainLayout = QtGui.QVBoxLayout()
         self.mainFrame.setLayout(self.mainLayout)
         self.mainWidget = None
+        
+        self.closeButton.clicked.connect(self.close)
         
         return
         
@@ -637,7 +628,7 @@ class About(QtGui.QDialog, Ui_AboutDialog):
         software_path = os.path.join(resources_path, "software.yaml")
         
         with open(software_path, 'r') as stream:
-            software_dict = yaml.load(stream, Loader=Loader)
+            software_dict = yaml.load(stream, Loader=yaml.FullLoader) # nosec B506
             
         software_str = "DTOcean {} ({})".format(software_dict["version"],
                                                 arch_str)
@@ -647,7 +638,7 @@ class About(QtGui.QDialog, Ui_AboutDialog):
         names_path = os.path.join(resources_path, "people.yaml")
         
         with open(names_path, 'r') as stream:
-            names = yaml.load(stream, Loader=Loader)
+            names = yaml.load(stream, Loader=yaml.FullLoader) # nosec B506
         
         if names is None:
             
