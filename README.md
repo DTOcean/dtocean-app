@@ -53,8 +53,7 @@ $ conda activate _dtocean_app
 
 Download the [`.condarc`](
 https://raw.githubusercontent.com/DTOcean/dtocean-app/master/.condarc) file 
-for dtocean-app, save it and copy it to the root of the environment. For 
-64-bit:
+for dtocean-app, save it and copy it to the root of the environment:
 
 ```
 $ copy .condarc %CONDA_PREFIX%
@@ -66,13 +65,6 @@ Note that in PowerShell the copy command would be:
 $ copy .condarc $env:CONDA_PREFIX
 ```
 
-Or for 32-bit, download the [`.condarc-32`](
-https://raw.githubusercontent.com/DTOcean/dtocean-app/master/.condarc-32) file
-and copy it:
-
-```
-$ copy .condarc-32 %CONDA_PREFIX%\\.condarc
-```
 
 To install dtocean-app into the environment:
 
@@ -115,13 +107,6 @@ Note that in PowerShell the copy command would be:
 
 ```
 $ copy .condarc $env:CONDA_PREFIX
-```
-
-For 32-bit systems:
-
-```
-$ conda activate _dtocean_app
-$ copy .condarc-32 %CONDA_PREFIX%\\.condarc
 ```
 
 Install [polite](https://github.com/DTOcean/polite), [aneris](
