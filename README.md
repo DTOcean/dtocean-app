@@ -99,7 +99,7 @@ Conda can be used to install dependencies into a dedicated environment from
 the source code root directory:
 
 ```
-$ conda create -n _dtocean_app python=2.7 pip
+$ conda create -n _dtocean_app python=2.7 pip pyyaml
 ```
 
 Activate the environment, then copy the `.condrc` file to store installation  
