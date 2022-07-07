@@ -323,6 +323,6 @@ https://www.dataonlygreater.com/).
 The icons used with the graphical interface are source directly or derived from
 the following open source icon sets:
 
-* Crystal Clear ([LPGL-2.1](https://choosealicense.com/licenses/lgpl-2.1/))
-* GNOME ([GPL-2.0](https://choosealicense.com/licenses/gpl-2.0/))
-* ScreenRuler Tango ([GPL-3.0](https://choosealicense.com/licenses/gpl-3.0/))
+*   Crystal Clear ([LPGL-2.1](https://choosealicense.com/licenses/lgpl-2.1/))
+*   GNOME ([GPL-2.0](https://choosealicense.com/licenses/gpl-2.0/))
+*   ScreenRuler Tango ([GPL-3.0](https://choosealicense.com/licenses/gpl-3.0/))
