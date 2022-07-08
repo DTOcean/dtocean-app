@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [2.1.1] - 2021-07-08
+
+### Changed
+
+-   The version number in the about dialog is now set using the version number 
+    of the `dtocean` package, if installed. If the `dtocean` package is not 
+    installed the `dtocean-app` package version will be displayed instead.
+
+### Removed
+
+-   Removed 32 bit `.condarc-32` conda configuration file, as it is currently
+    identical to the 64bit version. 64 and 32 bit installation instructions are
+    now identical, also.
+
 ## [2.1.0] - 2021-07-07
 
 ### Added
