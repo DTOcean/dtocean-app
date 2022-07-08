@@ -33,14 +33,14 @@ import yaml
 import pandas as pd
 from PyQt4 import QtGui, QtCore
 
+from ..utils.config import get_software_version # pylint: disable=no-name-in-module
+from ..utils.display import is_high_dpi
+
 try:
     _fromUtf8 = QtCore.QString.fromUtf8
 except AttributeError:
     def _fromUtf8(s):
         return s
-
-from ..utils.config import get_software_version
-from ..utils.display import is_high_dpi
 
 if is_high_dpi():
 
