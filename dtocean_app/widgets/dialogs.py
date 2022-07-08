@@ -648,7 +648,12 @@ class About(QtGui.QDialog, Ui_AboutDialog):
             self.verticalLayout_3.removeWidget(self.line)
             self.line.deleteLater()
             self.line = None
-
+        
+        elif len(names) == 1:
+            
+            names_str = names[0]
+            self.peopleLabel.setText(names_str)
+        
         else:
             
             names_str = ", ".join(names[:-1])

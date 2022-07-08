@@ -531,7 +531,7 @@ QMenu::item:selected{
        <item>
         <widget class="QLabel" name="softwareLabel">
          <property name="text">
-          <string>Python 2.7.15, Qt 4.8.7, PyQt 4.11.4</string>
+          <string>Python 2.7, Qt 4.8.7, PyQt 4.11.4</string>
          </property>
          <property name="alignment">
           <set>Qt::AlignCenter</set>
