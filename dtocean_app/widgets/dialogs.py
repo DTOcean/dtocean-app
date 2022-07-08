@@ -39,6 +39,7 @@ except AttributeError:
     def _fromUtf8(s):
         return s
 
+from ..utils.config import get_software_version
 from ..utils.display import is_high_dpi
 
 if is_high_dpi():
@@ -613,28 +614,22 @@ class About(QtGui.QDialog, Ui_AboutDialog):
         self._fade_in = None
         self._fade_out = None
         self._effect = None
-                
-        self._init_ui(fade_duration)
-
-        return
         
+        self._init_ui(fade_duration)
+        
+        return
+    
     def _init_ui(self, fade_duration):
         
         self.setupUi(self)
         
+        software_version = get_software_version()
         arch_str = " ".join(platform.architecture())
-        
-        resources_path = os.path.join(DIR_PATH, "..", "resources")
-        software_path = os.path.join(resources_path, "software.yaml")
-        
-        with open(software_path, 'r') as stream:
-            software_dict = yaml.load(stream, Loader=yaml.FullLoader) # nosec B506
-            
-        software_str = "DTOcean {} ({})".format(software_dict["version"],
-                                                arch_str)
+        software_str = "{} ({})".format(software_version, arch_str)
         
         self.versionLabel.setText(software_str)
         
+        resources_path = os.path.join(DIR_PATH, "..", "resources")
         names_path = os.path.join(resources_path, "people.yaml")
         
         with open(names_path, 'r') as stream:

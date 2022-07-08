@@ -19,6 +19,8 @@ import sys
 import argparse
 import datetime
 
+import importlib_metadata as metadata
+
 from polite.configuration import ReadINI
 from polite.paths import (DirectoryMap,
                           ObjDirectory,
@@ -51,8 +53,28 @@ def get_install_paths():
                  
     path_dict = {"man_user_path": config["man"]["user_path"],
                  "man_technical_path": config["man"]["technical_path"]}
-
+    
     return path_dict
+
+
+def get_software_version():
+    
+    if 'dtocean' in get_distribution_names():
+        package = 'dtocean'
+    else:
+        package = 'dtocean-app'
+    
+    version = metadata.version(package)
+    
+    if package == 'dtocean':
+        values = [int(x) for x in version.split(".")]
+        version = "{}.{:02d}".format(*values)
+    
+    return"{} {}".format(package, version)
+
+
+def get_distribution_names():
+    return [x.metadata['Name'] for x in metadata.distributions()]
 
 
 def init_config(logging=False, files=False, install=False, overwrite=False):
