@@ -20,7 +20,7 @@
 import pytest
 from PyQt4 import QtCore, QtGui
 
-from dtocean_app.widgets.dialogs import TestDataPicker
+from dtocean_app.widgets.dialogs import TestDataPicker, About
 
 
 @pytest.fixture
@@ -52,3 +52,27 @@ def test_TestDataPicker_write_path(mocker, qtbot, picker_widget):
     qtbot.waitUntil(has_path)
     
     assert str(picker_widget.pathLineEdit.text()) == expected
+
+
+def test_About_init(qtbot):
+    
+    widget = About()
+    widget.show()
+    qtbot.addWidget(widget)
+    
+    assert widget.isVisible()
+
+
+def test_About_names_none(qtbot, mocker):
+    
+    from dtocean_app.widgets.dialogs import yaml
+    
+    mocker.patch.object(yaml, 'load', return_value=None)
+    
+    widget = About()
+    widget.show()
+    qtbot.addWidget(widget)
+    
+    assert widget.peopleIntroLabel is None
+    assert widget.peopleLabel is None
+    assert widget.line is None
