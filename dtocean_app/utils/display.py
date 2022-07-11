@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-#    Copyright (C) 2016-2018 Mathew Topper
+#    Copyright (C) 2016-2022 Mathew Topper
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -37,8 +37,8 @@ def is_high_dpi(dpi_freshold=100.):
     # 2.54 cm = in
     width_in = width_mm / 25.4
     height_in = height_mm / 25.4
-    width_dpi = width_px/width_in
-    height_dpi = height_px/height_in
+    width_dpi = width_px / width_in
+    height_dpi = height_px / height_in
     
     if (width_dpi + height_dpi) / 2. > dpi_freshold: return True
         
