@@ -37,3 +37,12 @@ def figure():
     yield fig
     
     plt.close(fig)
+
+
+@pytest.fixture
+def picture(tmp_path, figure):
+    
+    p = tmp_path / "mock.png"
+    figure.savefig(str(p))
+    
+    yield str(p)

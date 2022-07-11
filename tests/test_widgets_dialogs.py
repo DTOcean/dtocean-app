@@ -95,3 +95,43 @@ def test_About_names(qtbot, mocker, names, expected):
     assert widget.peopleIntroLabel is not None
     assert widget.line is not None
     assert str(widget.peopleLabel.text()) == expected
+
+
+def test_About_pix_none(qtbot, mocker):
+    
+    from dtocean_app.widgets.dialogs import glob
+    
+    mocker.patch.object(glob, 'glob', return_value=[])
+    
+    widget = About()
+    widget.show()
+    qtbot.addWidget(widget)
+    
+    assert widget._n_pix == 0
+    assert widget._image_files is None
+    assert widget.insitutionIntroLabel is None
+    assert widget.frame is None
+    assert widget.institutionLabel is None
+    assert widget.line_3 is None
+
+
+def test_About_pix_one(qtbot, mocker, picture):
+    
+    from dtocean_app.widgets.dialogs import glob
+    
+    mocker.patch.object(glob, 'glob', return_value=[picture])
+    
+    widget = About()
+    widget.show()
+    qtbot.addWidget(widget)
+    
+    assert widget._n_pix == 1
+    assert widget._image_files is not None
+    assert widget.insitutionIntroLabel is not None
+    assert widget.frame is not None
+    assert widget.institutionLabel is not None
+    assert widget.line_3 is not None
+    assert widget._timer is None
+    assert widget._effect is None
+    assert widget._fade_in is None
+    assert widget._fade_out is None
