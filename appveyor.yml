@@ -30,7 +30,7 @@ install:
   - conda info --all
   - conda create -n _dtocean_app python=%PYTHON_VERSION% pip pyyaml
   - activate _dtocean_app
-  - copy .condarc %CONDA_PREFIX%\\.condarc
+  - copy .condarc %CONDA_PREFIX%
   - conda install "polite>=0.10.1,<1" "dtocean-core>=3.0.2,<4" "dtocean-qt>=0.10.1,<1" "dtocean-hydrodynamics>=3.0.0,<4" "dtocean-electrical>=2.1.0,<3"
   - conda install --file requirements-conda-dev.txt
   - python setup.py bootstrap

@@ -74,5 +74,24 @@ def test_About_names_none(qtbot, mocker):
     qtbot.addWidget(widget)
     
     assert widget.peopleIntroLabel is None
-    assert widget.peopleLabel is None
     assert widget.line is None
+    assert widget.peopleLabel is None
+
+
+@pytest.mark.parametrize("names, expected", [
+                            (['mock'], 'mock'),
+                            (['mock', 'mok'], 'mock and mok'),
+                            (['mock', 'moc', 'mok'], 'mock, moc and mok')])
+def test_About_names(qtbot, mocker, names, expected):
+    
+    from dtocean_app.widgets.dialogs import yaml
+    
+    mocker.patch.object(yaml, 'load', return_value=names)
+    
+    widget = About()
+    widget.show()
+    qtbot.addWidget(widget)
+    
+    assert widget.peopleIntroLabel is not None
+    assert widget.line is not None
+    assert str(widget.peopleLabel.text()) == expected
