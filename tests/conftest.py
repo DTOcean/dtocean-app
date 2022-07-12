@@ -15,6 +15,8 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+# pylint: disable=redefined-outer-name
+
 import numpy as np
 import pytest
 import matplotlib.pyplot as plt
@@ -37,3 +39,12 @@ def figure():
     yield fig
     
     plt.close(fig)
+
+
+@pytest.fixture
+def picture(tmp_path, figure):
+    
+    p = tmp_path / "mock.png"
+    figure.savefig(str(p))
+    
+    yield str(p)

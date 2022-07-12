@@ -3,6 +3,8 @@ import pytest
 
 from polite.paths import Directory
 from dtocean_app.utils.config import (get_install_paths,
+                                      get_distribution_names,
+                                      get_software_version,
                                       init_config,
                                       init_config_parser,
                                       init_config_interface)
@@ -21,6 +23,28 @@ def test_get_install_paths(mocker, tmpdir):
     test_dict = get_install_paths()
     
     assert "man_user_path" in test_dict
+
+
+def test_get_distribution_names():
+    assert 'dtocean-app' in get_distribution_names()
+
+
+@pytest.mark.parametrize("names, version, expected", [
+                            (['dtocean-app'], '2.1.0', 'dtocean-app 2.1.0'),
+                            (['dtocean-app', 'dtocean'],
+                             '2022.7',
+                             'dtocean 2022.07'),
+                            (['dtocean-app', 'dtocean'],
+                             '2022.11',
+                             'dtocean 2022.11')])
+def test_get_software_version(mocker, names, version, expected):
+    
+    mocker.patch('dtocean_app.utils.config.get_distribution_names',
+                 return_value=names)
+    mocker.patch('dtocean_app.utils.config.metadata.version',
+                 return_value=version)
+    
+    assert get_software_version() == expected
 
 
 def test_init_config(mocker, tmpdir):

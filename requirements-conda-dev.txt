@@ -1,4 +1,5 @@
 # REQUIREMENTS FOR CONDA INSTALLATION (EXCLUDING DTOCEAN PACKAGES)
+importlib_metadata
 matplotlib <2
 numpy
 pandas >=0.18
