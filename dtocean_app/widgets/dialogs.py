@@ -687,7 +687,7 @@ class About(QtGui.QDialog, Ui_AboutDialog):
             self.verticalLayout_3.removeWidget(self.line_3)
             self.line_3.deleteLater()
             self.line_3 = None
-            
+        
         if self._n_pix > 1:
             
             self._timer = QtCore.QTimer(self)
@@ -737,19 +737,19 @@ class About(QtGui.QDialog, Ui_AboutDialog):
     
     @QtCore.pyqtSlot()
     def _start_timer(self):
-    
+        
         self._timer.start(self._delay)
         
         return
-            
+    
     @QtCore.pyqtSlot()
     def _end_image(self):
-    
+        
         self._timer.stop()
         self._fade_out.start()
        
         return
-        
+    
     @QtCore.pyqtSlot()
     def show(self):
         
@@ -763,7 +763,7 @@ class About(QtGui.QDialog, Ui_AboutDialog):
             self._start_image()
         
         return
-        
+    
     def closeEvent(self, evnt):
         
         super(About, self).closeEvent(evnt)
@@ -773,7 +773,6 @@ class About(QtGui.QDialog, Ui_AboutDialog):
             self._timer.stop()
         
         return
-        
 
 
 class Message(QtGui.QWidget):
@@ -785,23 +784,20 @@ class Message(QtGui.QWidget):
         self.text = text
         
         return
-        
+    
     def paintEvent(self, event):
-
+        
         qp = QtGui.QPainter()
         qp.begin(self)
         self.drawText(event, qp)
         qp.end()
         
         return
-        
+    
     def drawText(self, event, qp):
         
         qp.setPen(QtGui.QColor(25, 25, 25))
         qp.setFont(QtGui.QFont('Decorative', 10))
-        qp.drawText(event.rect(), QtCore.Qt.AlignCenter, self.text)  
+        qp.drawText(event.rect(), QtCore.Qt.AlignCenter, self.text)
         
         return
-        
-    
-    
