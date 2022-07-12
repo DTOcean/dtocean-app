@@ -15,7 +15,7 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-# pylint: disable=redefined-outer-name
+# pylint: disable=redefined-outer-name,protected-access
 
 import pytest
 from PyQt4 import QtCore, QtGui
@@ -135,3 +135,25 @@ def test_About_pix_one(qtbot, mocker, picture):
     assert widget._effect is None
     assert widget._fade_in is None
     assert widget._fade_out is None
+
+
+def test_About_pix_many(qtbot, mocker, picture):
+    
+    from dtocean_app.widgets.dialogs import glob
+    
+    mocker.patch.object(glob, 'glob', return_value=[picture, picture])
+    
+    widget = About()
+    widget.show()
+    qtbot.addWidget(widget)
+    
+    assert widget._n_pix == 2
+    assert widget._image_files is not None
+    assert widget.insitutionIntroLabel is not None
+    assert widget.frame is not None
+    assert widget.institutionLabel is not None
+    assert widget.line_3 is not None
+    assert widget._timer is not None
+    assert widget._effect is not None
+    assert widget._fade_in is not None
+    assert widget._fade_out is not None
