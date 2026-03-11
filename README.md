@@ -1,10 +1,9 @@
-[![appveyor](https://ci.appveyor.com/api/projects/status/github/DTOcean/dtocean-app?branch=master&svg=true)](https://ci.appveyor.com/project/DTOcean/dtocean-app)
-[![codecov](https://codecov.io/gh/DTOcean/dtocean-app/branch/master/graph/badge.svg)](https://codecov.io/gh/DTOcean/dtocean-app)
-[![Codacy Badge](https://app.codacy.com/project/badge/Grade/6466fab3dad14f0ea984ce2468bc0428)](https://www.codacy.com/gh/DTOcean/dtocean-app/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=DTOcean/dtocean-app&amp;utm_campaign=Badge_Grade)
-[![release](https://img.shields.io/github/release/DTOcean/dtocean-app.svg)](https://github.com/DTOcean/dtocean-app/releases/latest)
+***
 
-**For the DTOcean wizard based installer please see the [dtocean](
-https://github.com/DTOcean/dtocean) repository.**
+:loudspeaker: This repository was archived on 11 March 2026. It is now
+maintained in the [dtocean](https://github.com/DTOcean/dtocean) monorepo.
+
+***
 
 # DTOcean Graphical Application
 
